@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+supabase
+redis
+celery
+python-multipart
+groq
+google-generativeai
+firebase-admin
+httpx
+python-jose
+pytz
+python-dotenv
