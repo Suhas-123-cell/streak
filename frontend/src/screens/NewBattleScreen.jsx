@@ -1,9 +1,11 @@
 import React, {useState} from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, SafeAreaView, Alert, ActivityIndicator,
+  ScrollView, SafeAreaView, Alert, ActivityIndicator, StatusBar,
 } from 'react-native';
 import {useBattles} from '../hooks/useBattles';
+
+const PURPLE = '#7C3AED';
 
 export default function NewBattleScreen({navigation}) {
   const {createBattle} = useBattles();
@@ -20,13 +22,9 @@ export default function NewBattleScreen({navigation}) {
     setUsername('');
   }
 
-  function removeMember(u) {
-    setMembers(prev => prev.filter(m => m !== u));
-  }
-
   async function submit() {
     if (!habitName.trim()) {
-      Alert.alert('Required', 'Habit name is required');
+      Alert.alert('Required', 'Enter a habit name');
       return;
     }
     setLoading(true);
@@ -42,14 +40,16 @@ export default function NewBattleScreen({navigation}) {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.heading}>New Battle</Text>
+        <Text style={styles.headingSub}>Set the habit and invite your crew</Text>
 
-        <Text style={styles.label}>Habit Name</Text>
+        <Text style={styles.label}>Habit Name *</Text>
         <TextInput
           style={styles.input}
           placeholder="e.g. Go to the gym"
-          placeholderTextColor="#555"
+          placeholderTextColor="#9CA3AF"
           value={habitName}
           onChangeText={setHabitName}
         />
@@ -58,7 +58,7 @@ export default function NewBattleScreen({navigation}) {
         <TextInput
           style={[styles.input, styles.multiline]}
           placeholder="e.g. Must show gym equipment or entrance selfie"
-          placeholderTextColor="#555"
+          placeholderTextColor="#9CA3AF"
           value={habitDesc}
           onChangeText={setHabitDesc}
           multiline
@@ -67,32 +67,39 @@ export default function NewBattleScreen({navigation}) {
         <Text style={styles.label}>Add Members</Text>
         <View style={styles.row}>
           <TextInput
-            style={[styles.input, {flex: 1}]}
+            style={[styles.input, {flex: 1, marginBottom: 0}]}
             placeholder="Search by username"
-            placeholderTextColor="#555"
+            placeholderTextColor="#9CA3AF"
             value={username}
             onChangeText={setUsername}
             onSubmitEditing={addMember}
             returnKeyType="done"
+            autoCapitalize="none"
           />
           <TouchableOpacity style={styles.addBtn} onPress={addMember}>
             <Text style={styles.addBtnText}>Add</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.chips}>
-          {members.map(m => (
-            <TouchableOpacity key={m} style={styles.chip} onPress={() => removeMember(m)}>
-              <Text style={styles.chipText}>{m} ✕</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        {members.length > 0 && (
+          <View style={styles.chips}>
+            {members.map(m => (
+              <TouchableOpacity
+                key={m}
+                style={styles.chip}
+                onPress={() => setMembers(prev => prev.filter(x => x !== m))}>
+                <Text style={styles.chipText}>{m}</Text>
+                <Text style={styles.chipX}>✕</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
-        <TouchableOpacity style={styles.submitBtn} onPress={submit} disabled={loading}>
+        <TouchableOpacity style={[styles.submitBtn, loading && {opacity: 0.7}]} onPress={submit} disabled={loading}>
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.submitText}>⚔️ Send Challenge</Text>
+            <Text style={styles.submitText}>⚔️  Send Challenge</Text>
           )}
         </TouchableOpacity>
       </ScrollView>
@@ -101,43 +108,42 @@ export default function NewBattleScreen({navigation}) {
 }
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: '#0A0A1A'},
+  safe: {flex: 1, backgroundColor: '#F9FAFB'},
   content: {padding: 20, paddingBottom: 60},
-  heading: {color: '#fff', fontSize: 26, fontWeight: '800', marginBottom: 24},
-  label: {color: '#aaa', fontSize: 13, fontWeight: '600', marginBottom: 6, marginTop: 16},
-  input: {
-    backgroundColor: '#12122A',
-    borderRadius: 10,
-    color: '#fff',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    borderWidth: 1,
-    borderColor: '#1E1E3F',
+  heading: {fontSize: 26, fontWeight: '800', color: '#111827'},
+  headingSub: {fontSize: 14, color: '#9CA3AF', marginTop: 4, marginBottom: 28},
+  label: {
+    fontSize: 12, fontWeight: '700', color: '#6B7280',
+    textTransform: 'uppercase', letterSpacing: 0.8,
+    marginBottom: 8, marginTop: 20,
   },
-  multiline: {height: 90, textAlignVertical: 'top'},
+  input: {
+    backgroundColor: '#fff', borderRadius: 12,
+    color: '#111827', paddingHorizontal: 14, paddingVertical: 13,
+    fontSize: 15, borderWidth: 1, borderColor: '#E5E7EB', marginBottom: 0,
+    shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 4,
+    shadowOffset: {width: 0, height: 1},
+  },
+  multiline: {height: 96, textAlignVertical: 'top', paddingTop: 13},
   row: {flexDirection: 'row', gap: 10, alignItems: 'center'},
   addBtn: {
-    backgroundColor: '#6C47FF',
-    borderRadius: 10,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
+    backgroundColor: PURPLE, borderRadius: 12,
+    paddingHorizontal: 18, paddingVertical: 13,
   },
-  addBtnText: {color: '#fff', fontWeight: '700'},
-  chips: {flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12},
+  addBtnText: {color: '#fff', fontWeight: '700', fontSize: 15},
+  chips: {flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14},
   chip: {
-    backgroundColor: '#1E1E3F',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: '#EDE9FE', borderRadius: 20,
+    paddingHorizontal: 12, paddingVertical: 7,
   },
-  chipText: {color: '#A78BFF', fontSize: 13},
+  chipText: {color: PURPLE, fontSize: 13, fontWeight: '600'},
+  chipX: {color: '#A78BFA', fontSize: 11},
   submitBtn: {
-    backgroundColor: '#6C47FF',
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 32,
+    backgroundColor: PURPLE, borderRadius: 16,
+    paddingVertical: 17, alignItems: 'center', marginTop: 36,
+    shadowColor: PURPLE, shadowOpacity: 0.3, shadowRadius: 10,
+    shadowOffset: {width: 0, height: 4}, elevation: 6,
   },
-  submitText: {color: '#fff', fontWeight: '800', fontSize: 17},
+  submitText: {color: '#fff', fontWeight: '800', fontSize: 16},
 });
