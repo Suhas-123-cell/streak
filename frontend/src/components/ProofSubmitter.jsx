@@ -6,25 +6,22 @@ import {useCheckin} from '../hooks/useCheckin';
 import AIVerdictCard from './AIVerdictCard';
 
 const recorder = new AudioRecorderPlayer();
+const PURPLE = '#7C3AED';
 
 export default function ProofSubmitter({battleId, onSuccess}) {
   const {submitCheckin, loading, result} = useCheckin();
   const [recording, setRecording] = useState(false);
-  const [audioPath, setAudioPath] = useState(null);
 
   async function handlePhoto() {
-    launchCamera({mediaType: 'photo', quality: 0.7}, async response => {
+    launchCamera({mediaType: 'photo', quality: 0.8}, async response => {
       if (response.didCancel || response.errorCode) return;
       const asset = response.assets[0];
       try {
         const data = await submitCheckin(
-          battleId,
-          'photo',
-          asset.uri,
-          asset.fileName || 'photo.jpg',
-          asset.type || 'image/jpeg',
+          battleId, 'photo', asset.uri,
+          asset.fileName || 'photo.jpg', asset.type || 'image/jpeg',
         );
-        if (data.ai_verified) onSuccess?.();
+        if (data?.ai_verified) onSuccess?.();
       } catch (e) {
         Alert.alert('Error', e.message);
       }
@@ -32,8 +29,7 @@ export default function ProofSubmitter({battleId, onSuccess}) {
   }
 
   async function startRecording() {
-    const path = await recorder.startRecorder();
-    setAudioPath(path);
+    await recorder.startRecorder();
     setRecording(true);
     setTimeout(stopRecording, 10000);
   }
@@ -41,16 +37,11 @@ export default function ProofSubmitter({battleId, onSuccess}) {
   async function stopRecording() {
     const path = await recorder.stopRecorder();
     setRecording(false);
-    setAudioPath(path);
     try {
       const data = await submitCheckin(
-        battleId,
-        'voice',
-        `file://${path}`,
-        'voice.m4a',
-        'audio/m4a',
+        battleId, 'voice', `file://${path}`, 'voice.m4a', 'audio/m4a',
       );
-      if (data.ai_verified) onSuccess?.();
+      if (data?.ai_verified) onSuccess?.();
     } catch (e) {
       Alert.alert('Error', e.message);
     }
@@ -59,34 +50,50 @@ export default function ProofSubmitter({battleId, onSuccess}) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Submit Proof</Text>
-      <View style={styles.row}>
+      <Text style={styles.sub}>Show you completed the habit today</Text>
+      <View style={styles.btnRow}>
         <TouchableOpacity style={styles.btn} onPress={handlePhoto} disabled={loading}>
-          <Text style={styles.btnText}>📸 Photo</Text>
+          <Text style={styles.btnIcon}>📸</Text>
+          <Text style={styles.btnLabel}>Photo</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.btn, recording && styles.recording]}
+          style={[styles.btn, recording && styles.btnActive]}
           onPress={recording ? stopRecording : startRecording}
           disabled={loading}>
-          <Text style={styles.btnText}>{recording ? '⏹ Stop' : '🎤 Voice'}</Text>
+          <Text style={styles.btnIcon}>{recording ? '⏹' : '🎤'}</Text>
+          <Text style={[styles.btnLabel, recording && {color: '#fff'}]}>
+            {recording ? 'Stop' : 'Voice'}
+          </Text>
         </TouchableOpacity>
       </View>
-      {loading && <ActivityIndicator color="#6C47FF" style={{marginTop: 12}} />}
+      {loading && (
+        <View style={styles.loadingRow}>
+          <ActivityIndicator color={PURPLE} />
+          <Text style={styles.loadingText}>AI is verifying...</Text>
+        </View>
+      )}
       {result && <AIVerdictCard checkin={result} />}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {padding: 16},
-  title: {color: '#fff', fontSize: 18, fontWeight: '700', marginBottom: 12},
-  row: {flexDirection: 'row', gap: 12},
-  btn: {
-    flex: 1,
-    backgroundColor: '#6C47FF',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
+  container: {
+    backgroundColor: '#fff', borderRadius: 16, padding: 20, margin: 16,
+    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 12,
+    shadowOffset: {width: 0, height: 3}, elevation: 3,
   },
-  recording: {backgroundColor: '#FF4444'},
-  btnText: {color: '#fff', fontWeight: '700', fontSize: 15},
+  title: {fontSize: 17, fontWeight: '700', color: '#111827'},
+  sub: {fontSize: 13, color: '#9CA3AF', marginTop: 2, marginBottom: 16},
+  btnRow: {flexDirection: 'row', gap: 12},
+  btn: {
+    flex: 1, backgroundColor: '#F5F3FF', borderRadius: 14,
+    paddingVertical: 18, alignItems: 'center', gap: 6,
+    borderWidth: 1, borderColor: '#EDE9FE',
+  },
+  btnActive: {backgroundColor: PURPLE, borderColor: PURPLE},
+  btnIcon: {fontSize: 24},
+  btnLabel: {fontSize: 13, fontWeight: '600', color: '#7C3AED'},
+  loadingRow: {flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14},
+  loadingText: {color: '#9CA3AF', fontSize: 13},
 });
