@@ -1,18 +1,18 @@
 import React, {useState, useEffect} from 'react';
 import {
   View, Text, StyleSheet, SafeAreaView, ScrollView,
-  Switch, TouchableOpacity, Alert, Platform,
+  Switch, TouchableOpacity, Alert, StatusBar,
 } from 'react-native';
 import {useAuth} from '../context/AuthContext';
 import {endpoints} from '../constants/api';
 
+const PURPLE = '#7C3AED';
 const HOURS = Array.from({length: 24}, (_, i) => `${String(i).padStart(2, '0')}:00`);
 
 export default function ProfileScreen() {
   const {user, token, logout} = useAuth();
   const [profile, setProfile] = useState(null);
-  const [prefs, setPrefs] = useState({enabled: true, reminder_time: '21:00', timezone: 'Asia/Kolkata'});
-  const [saving, setSaving] = useState(false);
+  const [prefs, setPrefs] = useState({enabled: true, reminder_time: '21:00'});
 
   const headers = {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'};
 
@@ -22,74 +22,81 @@ export default function ProfileScreen() {
       .then(data => {
         setProfile(data);
         if (data.preferences) setPrefs(p => ({...p, ...data.preferences}));
-      });
+      })
+      .catch(() => {});
   }, []);
 
-  async function save(updates) {
-    setSaving(true);
+  async function savePref(updates) {
     try {
       await fetch(endpoints.profile(user.id), {
-        method: 'PUT',
-        headers,
+        method: 'PUT', headers,
         body: JSON.stringify(updates),
       });
     } catch (e) {
       Alert.alert('Error', e.message);
-    } finally {
-      setSaving(false);
     }
   }
 
   function cycleTime() {
     const idx = HOURS.indexOf(prefs.reminder_time);
     const next = HOURS[(idx + 1) % HOURS.length];
-    const updated = {...prefs, reminder_time: next};
-    setPrefs(updated);
-    save({reminder_time: next});
+    setPrefs(p => ({...p, reminder_time: next}));
+    savePref({reminder_time: next});
   }
 
   function toggleReminder(val) {
-    const updated = {...prefs, enabled: val};
-    setPrefs(updated);
-    save({reminders_enabled: val});
+    setPrefs(p => ({...p, enabled: val}));
+    savePref({reminders_enabled: val});
   }
+
+  const initial = (profile?.username || user?.email || '?')[0].toUpperCase();
 
   return (
     <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {(profile?.username || user?.email || '?')[0].toUpperCase()}
-          </Text>
+
+        <View style={styles.avatarWrap}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{initial}</Text>
+          </View>
+          <Text style={styles.username}>{profile?.username}</Text>
+          <Text style={styles.email}>{user?.email}</Text>
         </View>
-        <Text style={styles.username}>{profile?.username}</Text>
-        <Text style={styles.email}>{user?.email}</Text>
 
         <View style={styles.statsRow}>
-          <View style={styles.stat}>
+          <View style={styles.statCard}>
             <Text style={styles.statNum}>{profile?.total_wins || 0}</Text>
-            <Text style={styles.statLabel}>Wins</Text>
+            <Text style={styles.statLabel}>Total Wins</Text>
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Reminders</Text>
+        <Text style={styles.sectionLabel}>Reminders</Text>
         <View style={styles.card}>
-          <View style={styles.row}>
-            <Text style={styles.rowLabel}>Daily Reminder</Text>
+          <View style={styles.settingRow}>
+            <View>
+              <Text style={styles.settingTitle}>Daily Reminder</Text>
+              <Text style={styles.settingHint}>Get nudged if you haven't checked in</Text>
+            </View>
             <Switch
               value={prefs.enabled}
               onValueChange={toggleReminder}
-              trackColor={{true: '#6C47FF'}}
-              thumbColor={prefs.enabled ? '#fff' : '#888'}
+              trackColor={{false: '#E5E7EB', true: '#A78BFA'}}
+              thumbColor={prefs.enabled ? PURPLE : '#9CA3AF'}
             />
           </View>
-          <View style={[styles.row, {marginTop: 16}]}>
-            <Text style={styles.rowLabel}>Reminder Time</Text>
+
+          <View style={styles.divider} />
+
+          <View style={styles.settingRow}>
+            <View>
+              <Text style={styles.settingTitle}>Reminder Time</Text>
+              <Text style={styles.settingHint}>Tap to cycle through hours</Text>
+            </View>
             <TouchableOpacity style={styles.timePill} onPress={cycleTime}>
               <Text style={styles.timeText}>{prefs.reminder_time}</Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.hint}>Tap the time to cycle through hours</Text>
         </View>
 
         <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
@@ -101,40 +108,53 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: '#0A0A1A'},
-  content: {padding: 20, alignItems: 'center', paddingBottom: 60},
+  safe: {flex: 1, backgroundColor: '#F9FAFB'},
+  content: {padding: 20, paddingBottom: 60},
+  avatarWrap: {alignItems: 'center', paddingVertical: 24},
   avatar: {
     width: 80, height: 80, borderRadius: 40,
-    backgroundColor: '#6C47FF', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: PURPLE, alignItems: 'center', justifyContent: 'center',
     marginBottom: 12,
+    shadowColor: PURPLE, shadowOpacity: 0.3, shadowRadius: 12,
+    shadowOffset: {width: 0, height: 4},
   },
   avatarText: {color: '#fff', fontSize: 32, fontWeight: '800'},
-  username: {color: '#fff', fontSize: 22, fontWeight: '800'},
-  email: {color: '#888', fontSize: 13, marginTop: 4, marginBottom: 16},
-  statsRow: {flexDirection: 'row', gap: 24, marginBottom: 24},
-  stat: {alignItems: 'center'},
-  statNum: {color: '#6C47FF', fontSize: 28, fontWeight: '800'},
-  statLabel: {color: '#888', fontSize: 12, marginTop: 2},
-  sectionTitle: {
-    color: '#A78BFF', fontSize: 13, fontWeight: '700',
-    alignSelf: 'flex-start', marginBottom: 8,
-    textTransform: 'uppercase', letterSpacing: 1,
+  username: {fontSize: 22, fontWeight: '800', color: '#111827'},
+  email: {fontSize: 13, color: '#9CA3AF', marginTop: 4},
+  statsRow: {flexDirection: 'row', justifyContent: 'center', marginBottom: 28},
+  statCard: {
+    backgroundColor: '#fff', borderRadius: 16, padding: 20,
+    alignItems: 'center', minWidth: 110,
+    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8,
+    shadowOffset: {width: 0, height: 2}, elevation: 2,
+  },
+  statNum: {fontSize: 32, fontWeight: '800', color: PURPLE},
+  statLabel: {fontSize: 12, color: '#9CA3AF', marginTop: 4},
+  sectionLabel: {
+    fontSize: 11, fontWeight: '700', color: '#9CA3AF',
+    textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10,
   },
   card: {
-    backgroundColor: '#12122A', borderRadius: 14, padding: 16,
-    width: '100%', marginBottom: 20,
+    backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden',
+    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8,
+    shadowOffset: {width: 0, height: 2}, elevation: 2,
+    marginBottom: 28,
   },
-  row: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'},
-  rowLabel: {color: '#ccc', fontSize: 15},
+  settingRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    padding: 16,
+  },
+  settingTitle: {fontSize: 15, fontWeight: '600', color: '#111827'},
+  settingHint: {fontSize: 12, color: '#9CA3AF', marginTop: 2},
+  divider: {height: 1, backgroundColor: '#F3F4F6'},
   timePill: {
-    backgroundColor: '#6C47FF', borderRadius: 20,
-    paddingHorizontal: 16, paddingVertical: 6,
+    backgroundColor: '#EDE9FE', borderRadius: 20,
+    paddingHorizontal: 16, paddingVertical: 8,
   },
-  timeText: {color: '#fff', fontWeight: '700', fontSize: 15},
-  hint: {color: '#555', fontSize: 11, marginTop: 8},
+  timeText: {color: PURPLE, fontWeight: '700', fontSize: 15},
   logoutBtn: {
-    backgroundColor: '#1A0A0A', borderRadius: 12, paddingVertical: 14,
-    paddingHorizontal: 40, borderWidth: 1, borderColor: '#FF4444',
+    borderRadius: 14, paddingVertical: 15, alignItems: 'center',
+    borderWidth: 1.5, borderColor: '#EF4444',
   },
-  logoutText: {color: '#FF4444', fontWeight: '700', fontSize: 15},
+  logoutText: {color: '#EF4444', fontWeight: '700', fontSize: 15},
 });
