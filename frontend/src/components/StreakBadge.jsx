@@ -1,20 +1,22 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 
-export default function StreakBadge({streak}) {
+export default function StreakBadge({streak, large}) {
   return (
-    <View style={styles.badge}>
-      <Text style={styles.text}>🔥 {streak}</Text>
+    <View style={[styles.badge, large && styles.large]}>
+      <Text style={[styles.text, large && styles.largeText]}>🔥 {streak}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   badge: {
-    backgroundColor: '#FF6B00',
+    backgroundColor: '#FFF7ED',
     borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
-  text: {color: '#fff', fontWeight: '700', fontSize: 12},
+  text: {color: '#92400E', fontWeight: '700', fontSize: 12},
+  large: {paddingHorizontal: 14, paddingVertical: 8, borderRadius: 16},
+  largeText: {fontSize: 16},
 });
