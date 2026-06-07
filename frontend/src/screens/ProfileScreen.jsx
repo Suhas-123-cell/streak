@@ -6,18 +6,11 @@ import {
 import {useAuth} from '../context/AuthContext';
 import {endpoints} from '../constants/api';
 
-const PURPLE = '#7C3AED';
-const DARK_PURPLE = '#4C1D95';
-
-function StatCard({emoji, value, label}) {
-  return (
-    <View style={styles.statCard}>
-      <Text style={styles.statEmoji}>{emoji}</Text>
-      <Text style={styles.statNum}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
+const BG = '#F8F7F4';
+const ACCENT = '#7C3AED';
+const TEXT_1 = '#1C1917';
+const TEXT_2 = '#78716C';
+const BORDER = '#E7E5E4';
 
 export default function ProfileScreen() {
   const {user, token, logout} = useAuth();
@@ -34,40 +27,48 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="light-content" backgroundColor={DARK_PURPLE} />
+      <StatusBar barStyle="dark-content" backgroundColor={BG} />
       <ScrollView contentContainerStyle={styles.content}>
 
-        {/* Hero banner */}
-        <View style={styles.heroBanner}>
-          <View style={styles.circle1} />
-          <View style={styles.circle2} />
-          <View style={styles.avatarRing}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{initial}</Text>
-            </View>
+        <View style={styles.topSection}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{initial}</Text>
           </View>
-          <Text style={styles.username}>{profile?.username}</Text>
+          <Text style={styles.username}>{profile?.username || '—'}</Text>
           <Text style={styles.email}>{user?.email}</Text>
         </View>
 
-        {/* Stats 2x2 grid */}
-        <View style={styles.statsGrid}>
-          <StatCard emoji="🏆" value={profile?.total_wins || 0} label="Total Wins" />
-          <StatCard emoji="🔥" value={profile?.active_streak || 0} label="Best Streak" />
-          <StatCard emoji="⚔️" value={profile?.battles_count || 0} label="Battles" />
-          <StatCard emoji="✅" value={profile?.total_checkins || 0} label="Check-ins" />
+        <View style={styles.divider} />
+
+        <View style={styles.statsRow}>
+          <View style={styles.stat}>
+            <Text style={styles.statNum}>{profile?.total_wins || 0}</Text>
+            <Text style={styles.statLabel}>Wins</Text>
+          </View>
+          <View style={styles.stat}>
+            <Text style={styles.statNum}>{profile?.active_streak || 0}</Text>
+            <Text style={styles.statLabel}>Streak</Text>
+          </View>
+          <View style={styles.stat}>
+            <Text style={styles.statNum}>{profile?.battles_count || 0}</Text>
+            <Text style={styles.statLabel}>Battles</Text>
+          </View>
+          <View style={styles.stat}>
+            <Text style={styles.statNum}>{profile?.total_checkins || 0}</Text>
+            <Text style={styles.statLabel}>Check-ins</Text>
+          </View>
         </View>
 
-        {/* Motivational quote */}
-        <View style={styles.quoteCard}>
-          <Text style={styles.quoteText}>
-            💪 Every check-in is a vote for who you're becoming.
-          </Text>
-        </View>
+        <View style={styles.divider} />
+
+        <Text style={styles.quote}>
+          Every check-in is a vote for who you want to be.
+        </Text>
 
       </ScrollView>
+
       <View style={styles.logoutWrap}>
-        <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
+        <TouchableOpacity style={styles.logoutBtn} onPress={logout} activeOpacity={0.8}>
           <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
       </View>
@@ -76,70 +77,42 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: '#F9FAFB'},
+  safe: {flex: 1, backgroundColor: BG},
   content: {paddingBottom: 20},
 
-  heroBanner: {
-    backgroundColor: DARK_PURPLE,
-    paddingTop: 36, paddingBottom: 36,
-    alignItems: 'center',
-    position: 'relative', overflow: 'hidden',
-  },
-  circle1: {
-    position: 'absolute', width: 160, height: 160, borderRadius: 80,
-    backgroundColor: 'rgba(124,58,237,0.35)', top: -40, right: -40,
-  },
-  circle2: {
-    position: 'absolute', width: 100, height: 100, borderRadius: 50,
-    backgroundColor: 'rgba(167,139,250,0.2)', bottom: -20, left: -20,
-  },
-  avatarRing: {
-    width: 92, height: 92, borderRadius: 46,
-    borderWidth: 3, borderColor: 'rgba(255,255,255,0.6)',
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: 12,
-  },
+  topSection: {paddingTop: 32, paddingHorizontal: 20},
   avatar: {
-    width: 80, height: 80, borderRadius: 40,
-    backgroundColor: PURPLE, alignItems: 'center', justifyContent: 'center',
+    width: 72, height: 72, borderRadius: 36,
+    backgroundColor: ACCENT,
+    alignItems: 'center', justifyContent: 'center',
   },
-  avatarText: {color: '#fff', fontSize: 32, fontWeight: '800'},
-  username: {fontSize: 22, fontWeight: '800', color: '#fff', marginBottom: 4},
-  email: {fontSize: 13, color: 'rgba(196,181,253,0.8)'},
+  avatarText: {color: '#fff', fontSize: 28, fontWeight: '800'},
+  username: {fontSize: 22, fontWeight: '800', color: TEXT_1, marginTop: 12},
+  email: {fontSize: 13, color: TEXT_2, marginTop: 2},
 
-  statsGrid: {
-    flexDirection: 'row', flexWrap: 'wrap',
-    paddingHorizontal: 16, paddingTop: 20, gap: 12,
-  },
-  statCard: {
-    width: '48%',
-    backgroundColor: '#fff', borderRadius: 16, padding: 18,
-    alignItems: 'center',
-    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8,
-    shadowOffset: {width: 0, height: 2}, elevation: 2,
-  },
-  statEmoji: {fontSize: 22, marginBottom: 6},
-  statNum: {fontSize: 28, fontWeight: '800', color: PURPLE},
-  statLabel: {fontSize: 11, color: '#9CA3AF', marginTop: 4, fontWeight: '600'},
+  divider: {height: 1, backgroundColor: BORDER, marginHorizontal: 20, marginVertical: 20},
 
-  quoteCard: {
-    backgroundColor: '#EDE9FE', borderWidth: 1, borderColor: '#DDD6FE',
-    borderRadius: 14, marginHorizontal: 16, marginTop: 16, marginBottom: 4,
-    paddingHorizontal: 18, paddingVertical: 14,
+  statsRow: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    paddingHorizontal: 20,
   },
-  quoteText: {
-    color: '#5B21B6', fontSize: 13, fontStyle: 'italic',
-    textAlign: 'center', lineHeight: 20,
+  stat: {},
+  statNum: {fontSize: 24, fontWeight: '800', color: TEXT_1},
+  statLabel: {fontSize: 11, color: TEXT_2, marginTop: 2},
+
+  quote: {
+    fontSize: 14, fontStyle: 'italic', color: TEXT_2,
+    lineHeight: 20, paddingHorizontal: 20, marginBottom: 8,
   },
 
   logoutWrap: {
-    paddingHorizontal: 16, paddingVertical: 12,
-    backgroundColor: '#F9FAFB',
-    borderTopWidth: 1, borderTopColor: '#F3F4F6',
+    paddingHorizontal: 20, paddingVertical: 14,
+    backgroundColor: BG,
+    borderTopWidth: 1, borderTopColor: BORDER,
   },
   logoutBtn: {
-    borderRadius: 14, paddingVertical: 15, alignItems: 'center',
-    borderWidth: 1.5, borderColor: '#EF4444',
+    borderRadius: 10, paddingVertical: 14, alignItems: 'center',
+    borderWidth: 1, borderColor: '#FCA5A5',
   },
-  logoutText: {color: '#EF4444', fontWeight: '700', fontSize: 15},
+  logoutText: {color: '#DC2626', fontWeight: '600', fontSize: 15},
 });
