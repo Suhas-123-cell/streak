@@ -1,23 +1,40 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel, EmailStr, field_validator
 from database import supabase
+from extensions import limiter
 
 router = APIRouter()
 
 
 class SignupRequest(BaseModel):
-    email: str
+    email: EmailStr
     password: str
     username: str
 
+    @field_validator("password")
+    @classmethod
+    def password_min_length(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters")
+        return v
+
+    @field_validator("username")
+    @classmethod
+    def username_format(cls, v: str) -> str:
+        v = v.strip()
+        if not v or len(v) > 30:
+            raise ValueError("Username must be 1-30 characters")
+        return v
+
 
 class LoginRequest(BaseModel):
-    email: str
+    email: EmailStr
     password: str
 
 
 @router.post("/signup")
-async def signup(req: SignupRequest):
+@limiter.limit("5/minute")
+async def signup(request: Request, req: SignupRequest):
     try:
         resp = supabase.auth.sign_up({"email": req.email, "password": req.password})
         user = resp.user
@@ -26,12 +43,13 @@ async def signup(req: SignupRequest):
         ).execute()
         supabase.table("reminder_preferences").insert({"user_id": user.id}).execute()
         return {"user_id": user.id, "access_token": resp.session.access_token if resp.session else None}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=400, detail="Signup failed. Email may already be in use.")
 
 
 @router.post("/login")
-async def login(req: LoginRequest):
+@limiter.limit("5/minute")
+async def login(request: Request, req: LoginRequest):
     try:
         resp = supabase.auth.sign_in_with_password(
             {"email": req.email, "password": req.password}
@@ -40,5 +58,5 @@ async def login(req: LoginRequest):
             "user_id": resp.user.id,
             "access_token": resp.session.access_token,
         }
-    except Exception as e:
-        raise HTTPException(status_code=401, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid email or password.")

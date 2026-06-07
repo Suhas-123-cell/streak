@@ -14,14 +14,15 @@ export function useMembers(battleId) {
     setLoading(true);
     try {
       const res = await fetch(endpoints.members(battleId), {headers});
-      setMembers(await res.json());
+      if (res.ok) setMembers(await res.json());
+    } catch (_) {
     } finally {
       setLoading(false);
     }
   }, [battleId, token]);
 
   useEffect(() => {
-    fetchMembers();
+    fetchMembers().catch(() => {});
   }, [fetchMembers]);
 
   return {members, loading, fetchMembers};

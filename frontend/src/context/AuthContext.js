@@ -1,5 +1,6 @@
 import React, {createContext, useContext, useState, useEffect} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Keychain from 'react-native-keychain';
 import {endpoints} from '../constants/api';
 
 const AuthContext = createContext(null);
@@ -10,11 +11,17 @@ export function AuthProvider({children}) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    AsyncStorage.multiGet(['token', 'user']).then(([[, t], [, u]]) => {
-      if (t && u) {
-        setToken(t);
+    Promise.all([
+      Keychain.getGenericPassword({service: 'streakfight_token'}),
+      AsyncStorage.getItem('user'),
+    ]).then(([creds, u]) => {
+      if (creds && u) {
+        setToken(creds.password);
         setUser(JSON.parse(u));
       }
+    }).catch(() => {
+      // Keychain or storage unavailable — start unauthenticated
+    }).finally(() => {
       setLoading(false);
     });
   }, []);
@@ -25,7 +32,11 @@ export function AuthProvider({children}) {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({email, password, username}),
     });
-    if (!res.ok) throw new Error((await res.json()).detail);
+    if (!res.ok) {
+      let msg = 'Signup failed';
+      try { msg = (await res.json()).detail || msg; } catch (_) {}
+      throw new Error(msg);
+    }
     const data = await res.json();
     await _persist(data.access_token, {id: data.user_id, email, username});
   }
@@ -36,7 +47,11 @@ export function AuthProvider({children}) {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({email, password}),
     });
-    if (!res.ok) throw new Error((await res.json()).detail);
+    if (!res.ok) {
+      let msg = 'Invalid email or password';
+      try { msg = (await res.json()).detail || msg; } catch (_) {}
+      throw new Error(msg);
+    }
     const data = await res.json();
     await _persist(data.access_token, {id: data.user_id, email});
   }
@@ -44,14 +59,15 @@ export function AuthProvider({children}) {
   async function _persist(t, u) {
     setToken(t);
     setUser(u);
-    await AsyncStorage.setItem('token', t);
+    await Keychain.setGenericPassword('token', t, {service: 'streakfight_token'});
     await AsyncStorage.setItem('user', JSON.stringify(u));
   }
 
   async function logout() {
     setToken(null);
     setUser(null);
-    await AsyncStorage.multiRemove(['token', 'user']);
+    await Keychain.resetGenericPassword({service: 'streakfight_token'});
+    await AsyncStorage.removeItem('user');
   }
 
   return (

@@ -18,6 +18,8 @@ class ProfileUpdate(BaseModel):
 
 @router.get("/profile/{user_id}")
 async def get_profile(user_id: str, user=Depends(get_current_user)):
+    if user.id != user_id:
+        raise HTTPException(403, "Forbidden")
     profile = (
         supabase.table("profiles").select("*").eq("id", user_id).single().execute()
     )

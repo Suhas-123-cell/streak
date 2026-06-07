@@ -47,14 +47,16 @@ export default function LeaderboardScreen() {
       const res = await fetch(endpoints.globalLeaderboard, {
         headers: {Authorization: `Bearer ${token}`},
       });
+      if (!res.ok) return;
       const json = await res.json();
       setData(Array.isArray(json) ? json : []);
+    } catch (_) {
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load().catch(() => {}); }, []);
 
   return (
     <SafeAreaView style={styles.safe}>

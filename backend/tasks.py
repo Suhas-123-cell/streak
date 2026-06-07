@@ -40,9 +40,12 @@ def send_reminders():
     for pref in prefs:
         if not pref.get("fcm_token"):
             continue
-        tz = pytz.timezone(pref["timezone"])
-        local_now = now_utc.replace(tzinfo=pytz.utc).astimezone(tz)
-        reminder_h, reminder_m = map(int, pref["reminder_time"].split(":")[:2])
+        try:
+            tz = pytz.timezone(pref["timezone"])
+            local_now = now_utc.replace(tzinfo=pytz.utc).astimezone(tz)
+            reminder_h, reminder_m = map(int, pref["reminder_time"].split(":")[:2])
+        except Exception:
+            continue
         if local_now.hour != reminder_h or local_now.minute != reminder_m:
             continue
 

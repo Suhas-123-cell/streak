@@ -2,15 +2,23 @@
 __pycache__/
 *.pyc
 *.pyo
-.env
 *.egg-info/
 .venv/
 venv/
 dist/
 build/
 
-# Firebase
+# Environment / secrets (never commit real credentials)
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env
+
+# Firebase credentials
 backend/firebase-service-account.json
+frontend/android/app/google-services.json
+frontend/ios/GoogleService-Info.plist
 
 # React Native
 frontend/node_modules/
@@ -21,13 +29,11 @@ frontend/android/app/debug/
 frontend/android/app/release/
 frontend/ios/build/
 frontend/ios/Pods/
-frontend/.env
 frontend/**/*.jks
 frontend/**/*.p8
 frontend/**/*.p12
 frontend/**/*.mobileprovision
 frontend/**/*.orig.*
-frontend/android/app/google-services.json
 
 # General
 .DS_Store
