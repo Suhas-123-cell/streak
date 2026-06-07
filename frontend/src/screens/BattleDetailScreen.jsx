@@ -1,14 +1,17 @@
 import React, {useState, useEffect, useCallback} from 'react';
 import {
   View, Text, StyleSheet, SafeAreaView, ScrollView,
-  RefreshControl, StatusBar,
+  RefreshControl, StatusBar, Switch, TouchableOpacity,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useAuth} from '../context/AuthContext';
 import {useMembers} from '../hooks/useMembers';
 import MemberRow from '../components/MemberRow';
 import ProofSubmitter from '../components/ProofSubmitter';
 import PenaltyAssigner from '../components/PenaltyAssigner';
 import {endpoints} from '../constants/api';
+
+const HOURS = Array.from({length: 24}, (_, i) => `${String(i).padStart(2, '0')}:00`);
 
 const PURPLE = '#7C3AED';
 
@@ -20,6 +23,38 @@ export default function BattleDetailScreen({route}) {
   const [penalties, setPenalties] = useState([]);
   const [myCheckin, setMyCheckin] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderTime, setReminderTime] = useState('21:00');
+
+  const REMINDER_KEY = `reminder_${battle.id}`;
+
+  useEffect(() => {
+    AsyncStorage.getItem(REMINDER_KEY)
+      .then(raw => {
+        if (raw) {
+          const saved = JSON.parse(raw);
+          setReminderEnabled(saved.enabled ?? false);
+          setReminderTime(saved.time ?? '21:00');
+        }
+      })
+      .catch(() => {});
+  }, [REMINDER_KEY]);
+
+  function saveReminder(enabled, time) {
+    AsyncStorage.setItem(REMINDER_KEY, JSON.stringify({enabled, time})).catch(() => {});
+  }
+
+  function toggleReminder(val) {
+    setReminderEnabled(val);
+    saveReminder(val, reminderTime);
+  }
+
+  function cycleTime() {
+    const idx = HOURS.indexOf(reminderTime);
+    const next = HOURS[(idx + 1) % HOURS.length];
+    setReminderTime(next);
+    saveReminder(reminderEnabled, next);
+  }
 
   const headers = {Authorization: `Bearer ${token}`};
 
@@ -125,6 +160,36 @@ export default function BattleDetailScreen({route}) {
             </View>
           </>
         )}
+
+        <Text style={styles.section}>Reminders</Text>
+        <View style={styles.reminderCard}>
+          <View style={styles.reminderRow}>
+            <View>
+              <Text style={styles.reminderTitle}>Daily Reminder</Text>
+              <Text style={styles.reminderHint}>Nudge me if I haven't checked in</Text>
+            </View>
+            <Switch
+              value={reminderEnabled}
+              onValueChange={toggleReminder}
+              trackColor={{false: '#E5E7EB', true: '#A78BFA'}}
+              thumbColor={reminderEnabled ? PURPLE : '#9CA3AF'}
+            />
+          </View>
+          {reminderEnabled && (
+            <>
+              <View style={styles.reminderDivider} />
+              <View style={styles.reminderRow}>
+                <View>
+                  <Text style={styles.reminderTitle}>Remind me at</Text>
+                  <Text style={styles.reminderHint}>Tap to change time</Text>
+                </View>
+                <TouchableOpacity style={styles.timePill} onPress={cycleTime}>
+                  <Text style={styles.timeText}>{reminderTime}</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+        </View>
 
         {penalties.length > 0 && (
           <>
@@ -238,4 +303,21 @@ const styles = StyleSheet.create({
   feedName: {fontWeight: '700', color: '#111827', fontSize: 14},
   feedScore: {color: '#6B7280', fontSize: 12, marginTop: 2},
   empty: {padding: 20, color: '#9CA3AF', textAlign: 'center'},
+  reminderCard: {
+    backgroundColor: '#fff', marginHorizontal: 16, borderRadius: 14, overflow: 'hidden',
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8,
+    shadowOffset: {width: 0, height: 2}, elevation: 2,
+  },
+  reminderRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    padding: 16,
+  },
+  reminderTitle: {fontSize: 15, fontWeight: '600', color: '#111827'},
+  reminderHint: {fontSize: 12, color: '#9CA3AF', marginTop: 2},
+  reminderDivider: {height: 1, backgroundColor: '#F3F4F6'},
+  timePill: {
+    backgroundColor: '#EDE9FE', borderRadius: 20,
+    paddingHorizontal: 16, paddingVertical: 8,
+  },
+  timeText: {color: PURPLE, fontWeight: '700', fontSize: 15},
 });
