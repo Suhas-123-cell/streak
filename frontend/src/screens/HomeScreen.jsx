@@ -13,6 +13,9 @@ const BG = '#F8F7F4';
 const ACCENT = '#7C3AED';
 const TEXT_1 = '#1C1917';
 const TEXT_2 = '#78716C';
+const BORDER = '#E7E5E4';
+const SUCCESS = '#16A34A';
+const PENDING = '#EA580C';
 
 function BattleItem({battle, onPress, token, userId, onCheckinStatus}) {
   const {members} = useMembers(battle.id);
@@ -41,6 +44,83 @@ function BattleItem({battle, onPress, token, userId, onCheckinStatus}) {
   );
 }
 
+function HoursLeft() {
+  const now = new Date();
+  const hoursLeft = 23 - now.getHours();
+  return hoursLeft;
+}
+
+function DailySummary({total, done, onCreatePress}) {
+  const pending = total - done;
+
+  if (total === 0) return null;
+
+  if (pending === 0) {
+    return (
+      <View style={[styles.summaryCard, styles.summaryDone]}>
+        <Text style={styles.summaryDoneTitle}>All done for today ✓</Text>
+        <Text style={styles.summaryDoneSub}>You showed up. Come back tomorrow.</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.summaryCard, styles.summaryPending]}>
+      <View style={styles.summaryTop}>
+        <Text style={styles.summaryPendingTitle}>
+          {pending} battle{pending !== 1 ? 's' : ''} need{pending === 1 ? 's' : ''} proof
+        </Text>
+        <Text style={styles.summaryHours}>{HoursLeft()}h left</Text>
+      </View>
+      <View style={styles.summaryTrack}>
+        <View style={[styles.summaryFill, {width: `${(done / total) * 100}%`}]} />
+      </View>
+      <Text style={styles.summaryCount}>{done} of {total} done today</Text>
+    </View>
+  );
+}
+
+function OnboardingEmpty({onPress}) {
+  return (
+    <View style={styles.onboarding}>
+      <Text style={styles.onboardingTitle}>No battles yet.</Text>
+      <Text style={styles.onboardingDesc}>
+        Challenge a friend to build a habit together.{'\n'}Miss a day and they'll know.
+      </Text>
+
+      <View style={styles.steps}>
+        <View style={styles.step}>
+          <View style={styles.stepNum}><Text style={styles.stepNumText}>1</Text></View>
+          <View style={styles.stepContent}>
+            <Text style={styles.stepTitle}>Pick a habit</Text>
+            <Text style={styles.stepDesc}>Gym, reading, running — anything daily</Text>
+          </View>
+        </View>
+        <View style={styles.stepDivider} />
+        <View style={styles.step}>
+          <View style={styles.stepNum}><Text style={styles.stepNumText}>2</Text></View>
+          <View style={styles.stepContent}>
+            <Text style={styles.stepTitle}>Invite your people</Text>
+            <Text style={styles.stepDesc}>They'll hold you accountable, and vice versa</Text>
+          </View>
+        </View>
+        <View style={styles.stepDivider} />
+        <View style={styles.step}>
+          <View style={styles.stepNum}><Text style={styles.stepNumText}>3</Text></View>
+          <View style={styles.stepContent}>
+            <Text style={styles.stepTitle}>Prove it daily</Text>
+            <Text style={styles.stepDesc}>Photo proof — AI verifies it's real</Text>
+          </View>
+        </View>
+      </View>
+
+      <TouchableOpacity style={styles.onboardingBtn} onPress={onPress} activeOpacity={0.85}>
+        <Text style={styles.onboardingBtnText}>Start your first battle</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 export default function HomeScreen({navigation}) {
   const {user, token} = useAuth();
   const {battles, loading, fetchBattles} = useBattles();
@@ -50,7 +130,17 @@ export default function HomeScreen({navigation}) {
     setCheckinStatus(prev => ({...prev, [battleId]: status}));
   }, []);
 
+  const doneCount = battles.filter(b => checkinStatus[b.id] === true).length;
   const pendingCount = battles.filter(b => checkinStatus[b.id] === false).length;
+
+  // Sort: pending battles first, done after
+  const sortedBattles = [...battles].sort((a, b) => {
+    const aStatus = checkinStatus[a.id];
+    const bStatus = checkinStatus[b.id];
+    if (aStatus === false && bStatus !== false) return -1;
+    if (bStatus === false && aStatus !== false) return 1;
+    return 0;
+  });
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long', month: 'short', day: 'numeric',
@@ -62,55 +152,45 @@ export default function HomeScreen({navigation}) {
         <Text style={styles.title}>Battles</Text>
         <Text style={styles.dateText}>{today}</Text>
       </View>
-
-      {pendingCount > 0 && (
-        <View style={styles.pendingBanner}>
-          <Text style={styles.pendingLine1}>
-            {pendingCount} battle{pendingCount !== 1 ? 's' : ''} still waiting on your proof
-          </Text>
-          <Text style={styles.pendingLine2}>Don't let your streak die today</Text>
-        </View>
-      )}
-    </View>
-  );
-
-  const EmptyState = !loading && (
-    <View style={styles.emptyWrap}>
-      <Text style={styles.emptyTitle}>No battles yet.</Text>
-      <Text style={styles.emptyDesc}>
-        Start one and make your habits impossible to fake.
-      </Text>
-      <TouchableOpacity
-        style={styles.emptyBtn}
-        onPress={() => navigation.navigate('NewBattle')}
-        activeOpacity={0.8}>
-        <Text style={styles.emptyBtnText}>Start a battle</Text>
-      </TouchableOpacity>
+      <DailySummary
+        total={battles.length}
+        done={doneCount}
+        onCreatePress={() => navigation.navigate('NewBattle')}
+      />
     </View>
   );
 
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" backgroundColor={BG} />
-      <FlatList
-        data={battles}
-        keyExtractor={b => b.id}
-        renderItem={({item}) => (
-          <BattleItem
-            battle={item}
-            token={token}
-            userId={user.id}
-            onCheckinStatus={handleCheckinStatus}
-            onPress={b => navigation.navigate('BattleDetail', {battle: b})}
-          />
-        )}
-        refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={fetchBattles} tintColor={ACCENT} />
-        }
-        ListHeaderComponent={ListHeader}
-        ListEmptyComponent={EmptyState}
-        contentContainerStyle={{paddingBottom: 110}}
-      />
+      {battles.length === 0 && !loading ? (
+        <View style={styles.safe}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Battles</Text>
+            <Text style={styles.dateText}>{today}</Text>
+          </View>
+          <OnboardingEmpty onPress={() => navigation.navigate('NewBattle')} />
+        </View>
+      ) : (
+        <FlatList
+          data={sortedBattles}
+          keyExtractor={b => b.id}
+          renderItem={({item}) => (
+            <BattleItem
+              battle={item}
+              token={token}
+              userId={user.id}
+              onCheckinStatus={handleCheckinStatus}
+              onPress={b => navigation.navigate('BattleDetail', {battle: b})}
+            />
+          )}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={fetchBattles} tintColor={ACCENT} />
+          }
+          ListHeaderComponent={ListHeader}
+          contentContainerStyle={{paddingBottom: 110}}
+        />
+      )}
 
       <TouchableOpacity
         style={styles.fab}
@@ -125,26 +205,59 @@ export default function HomeScreen({navigation}) {
 const styles = StyleSheet.create({
   safe: {flex: 1, backgroundColor: BG},
 
-  header: {paddingHorizontal: 20, paddingTop: 24, paddingBottom: 12},
+  header: {paddingHorizontal: 20, paddingTop: 24, paddingBottom: 16},
   title: {fontSize: 28, fontWeight: '800', color: TEXT_1},
   dateText: {fontSize: 13, color: TEXT_2, marginTop: 2},
 
-  pendingBanner: {
-    backgroundColor: '#FEF3E2', borderRadius: 10,
-    padding: 14, marginHorizontal: 16, marginBottom: 4,
+  summaryCard: {
+    marginHorizontal: 16, marginBottom: 8,
+    borderRadius: 14, padding: 16,
   },
-  pendingLine1: {fontSize: 14, fontWeight: '600', color: '#92400E'},
-  pendingLine2: {fontSize: 12, color: '#B45309', marginTop: 2},
+  summaryDone: {backgroundColor: '#F0FDF4'},
+  summaryPending: {backgroundColor: '#FEF3E2'},
 
-  emptyWrap: {paddingTop: 60, paddingHorizontal: 28},
-  emptyTitle: {fontSize: 22, fontWeight: '700', color: TEXT_1},
-  emptyDesc: {fontSize: 15, color: TEXT_2, lineHeight: 22, marginTop: 8},
-  emptyBtn: {
-    borderWidth: 1.5, borderColor: ACCENT, borderRadius: 10,
-    paddingVertical: 12, paddingHorizontal: 20,
-    alignSelf: 'flex-start', marginTop: 24,
+  summaryDoneTitle: {fontSize: 15, fontWeight: '700', color: SUCCESS},
+  summaryDoneSub: {fontSize: 13, color: '#166534', marginTop: 2},
+
+  summaryTop: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start'},
+  summaryPendingTitle: {fontSize: 15, fontWeight: '700', color: '#92400E', flex: 1},
+  summaryHours: {fontSize: 12, fontWeight: '600', color: PENDING},
+  summaryTrack: {
+    height: 4, backgroundColor: 'rgba(0,0,0,0.08)',
+    borderRadius: 2, overflow: 'hidden', marginTop: 10,
   },
-  emptyBtnText: {color: ACCENT, fontWeight: '600', fontSize: 15},
+  summaryFill: {height: 4, borderRadius: 2, backgroundColor: PENDING},
+  summaryCount: {fontSize: 12, color: '#B45309', marginTop: 6},
+
+  // Onboarding empty state
+  onboarding: {paddingHorizontal: 24, paddingTop: 24, flex: 1},
+  onboardingTitle: {fontSize: 22, fontWeight: '700', color: TEXT_1},
+  onboardingDesc: {fontSize: 15, color: TEXT_2, lineHeight: 22, marginTop: 8, marginBottom: 32},
+
+  steps: {
+    borderWidth: 1, borderColor: BORDER, borderRadius: 14,
+    overflow: 'hidden', marginBottom: 28,
+  },
+  step: {
+    flexDirection: 'row', alignItems: 'flex-start',
+    padding: 16, gap: 14, backgroundColor: '#fff',
+  },
+  stepDivider: {height: 1, backgroundColor: BORDER},
+  stepNum: {
+    width: 28, height: 28, borderRadius: 14,
+    backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center',
+    marginTop: 1,
+  },
+  stepNumText: {color: '#fff', fontWeight: '700', fontSize: 13},
+  stepContent: {flex: 1},
+  stepTitle: {fontSize: 15, fontWeight: '600', color: TEXT_1},
+  stepDesc: {fontSize: 13, color: TEXT_2, marginTop: 2, lineHeight: 18},
+
+  onboardingBtn: {
+    backgroundColor: ACCENT, borderRadius: 12,
+    paddingVertical: 16, alignItems: 'center',
+  },
+  onboardingBtnText: {color: '#fff', fontWeight: '700', fontSize: 15},
 
   fab: {
     position: 'absolute', bottom: 28, right: 24,
