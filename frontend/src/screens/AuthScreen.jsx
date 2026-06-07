@@ -6,8 +6,12 @@ import {
 } from 'react-native';
 import {useAuth} from '../context/AuthContext';
 
-const PURPLE = '#7C3AED';
-const DARK_PURPLE = '#4C1D95';
+const BG = '#F8F7F4';
+const ACCENT = '#7C3AED';
+const TEXT_1 = '#1C1917';
+const TEXT_2 = '#78716C';
+const TEXT_3 = '#A8A29E';
+const BORDER = '#E7E5E4';
 
 export default function AuthScreen() {
   const {login, signup} = useAuth();
@@ -35,14 +39,13 @@ export default function AuthScreen() {
     }
   }
 
-  const inputStyle = field => [
-    styles.input,
-    focusedField === field && styles.inputFocused,
-  ];
+  function inputStyle(field) {
+    return [styles.input, focusedField === field && styles.inputFocused];
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="light-content" backgroundColor={DARK_PURPLE} />
+      <StatusBar barStyle="dark-content" backgroundColor={BG} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.kav}>
@@ -51,107 +54,88 @@ export default function AuthScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
 
-          {/* ── Hero ── */}
-          <View style={styles.hero}>
-            <View style={styles.circle1} />
-            <View style={styles.circle2} />
-            <View style={styles.circle3} />
-
-            <View style={styles.iconWrap}>
-              <Text style={styles.iconEmoji}>⚔️</Text>
-            </View>
-            <Text style={styles.appLabel}>STREAK FIGHT</Text>
-            <Text style={styles.heroHeadline}>{'Win habits.\nCrush friends.'}</Text>
-
-            <View style={styles.pills}>
-              <View style={styles.pill}><Text style={styles.pillText}>🤖 AI Verified</Text></View>
-              <View style={styles.pill}><Text style={styles.pillText}>💀 Real Stakes</Text></View>
-              <View style={styles.pill}><Text style={styles.pillText}>🔥 Daily Battles</Text></View>
-            </View>
+          <View style={styles.top}>
+            <Text style={styles.logoEmoji}>⚔️</Text>
+            <Text style={styles.appName}>Streak Fight</Text>
+            <Text style={styles.tagline}>Your group knows when you skip.</Text>
           </View>
 
-          {/* ── Form card ── */}
-          <View style={styles.card}>
-            <View style={styles.tabs}>
-              <TouchableOpacity
-                style={[styles.tab, mode === 'login' && styles.tabActive]}
-                onPress={() => setMode('login')}>
-                <Text style={[styles.tabText, mode === 'login' && styles.tabTextActive]}>Log In</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.tab, mode === 'signup' && styles.tabActive]}
-                onPress={() => setMode('signup')}>
-                <Text style={[styles.tabText, mode === 'signup' && styles.tabTextActive]}>Sign Up</Text>
-              </TouchableOpacity>
-            </View>
-
-            <Text style={styles.cardSub}>
-              {mode === 'login' ? 'Welcome back, warrior.' : 'Your streak journey starts now.'}
-            </Text>
-
-            <View style={styles.form}>
-              {mode === 'signup' && (
-                <View>
-                  <Text style={styles.fieldLabel}>USERNAME</Text>
-                  <TextInput
-                    style={inputStyle('username')}
-                    placeholder="Choose your fighter name"
-                    placeholderTextColor="#9CA3AF"
-                    value={username}
-                    onChangeText={setUsername}
-                    autoCapitalize="none"
-                    onFocus={() => setFocusedField('username')}
-                    onBlur={() => setFocusedField(null)}
-                  />
-                </View>
-              )}
-              <View>
-                <Text style={styles.fieldLabel}>EMAIL</Text>
-                <TextInput
-                  style={inputStyle('email')}
-                  placeholder="your@email.com"
-                  placeholderTextColor="#9CA3AF"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  onFocus={() => setFocusedField('email')}
-                  onBlur={() => setFocusedField(null)}
-                />
-              </View>
-              <View>
-                <Text style={styles.fieldLabel}>PASSWORD</Text>
-                <TextInput
-                  style={inputStyle('password')}
-                  placeholder="••••••••"
-                  placeholderTextColor="#9CA3AF"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                  onFocus={() => setFocusedField('password')}
-                  onBlur={() => setFocusedField(null)}
-                />
-              </View>
-
-              <TouchableOpacity style={styles.btn} onPress={submit} disabled={loading}>
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.btnText}>
-                    {mode === 'login' ? 'Enter the Arena →' : 'Start Fighting →'}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-              style={styles.toggleWrap}
-              onPress={() => setMode(mode === 'login' ? 'signup' : 'login')}>
-              <Text style={styles.toggle}>
-                {mode === 'login' ? 'New fighter? Sign up' : 'Already a fighter? Log in'}
+          <View style={styles.modeSwitcher}>
+            <TouchableOpacity onPress={() => setMode('login')}>
+              <Text style={[styles.modeLink, mode === 'login' && styles.modeLinkActive]}>
+                Log In
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setMode('signup')}>
+              <Text style={[styles.modeLink, mode === 'signup' && styles.modeLinkActive]}>
+                Sign Up
               </Text>
             </TouchableOpacity>
           </View>
+
+          <View style={styles.form}>
+            {mode === 'signup' && (
+              <View style={styles.fieldWrap}>
+                <Text style={styles.fieldLabel}>Username</Text>
+                <TextInput
+                  style={inputStyle('username')}
+                  placeholder="your fighter name"
+                  placeholderTextColor={TEXT_3}
+                  value={username}
+                  onChangeText={setUsername}
+                  autoCapitalize="none"
+                  onFocus={() => setFocusedField('username')}
+                  onBlur={() => setFocusedField(null)}
+                />
+              </View>
+            )}
+            <View style={styles.fieldWrap}>
+              <Text style={styles.fieldLabel}>Email</Text>
+              <TextInput
+                style={inputStyle('email')}
+                placeholder="you@example.com"
+                placeholderTextColor={TEXT_3}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                onFocus={() => setFocusedField('email')}
+                onBlur={() => setFocusedField(null)}
+              />
+            </View>
+            <View style={styles.fieldWrap}>
+              <Text style={styles.fieldLabel}>Password</Text>
+              <TextInput
+                style={inputStyle('password')}
+                placeholder="••••••••"
+                placeholderTextColor={TEXT_3}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                onFocus={() => setFocusedField('password')}
+                onBlur={() => setFocusedField(null)}
+              />
+            </View>
+
+            <TouchableOpacity style={styles.btn} onPress={submit} disabled={loading} activeOpacity={0.85}>
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.btnText}>
+                  {mode === 'login' ? 'Continue' : 'Join the fight'}
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity
+            style={styles.switchWrap}
+            onPress={() => setMode(mode === 'login' ? 'signup' : 'login')}>
+            <Text style={styles.switchText}>
+              {mode === 'login' ? 'New here? Create account' : 'Already in? Sign in'}
+            </Text>
+          </TouchableOpacity>
+
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -159,89 +143,38 @@ export default function AuthScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: DARK_PURPLE},
+  safe: {flex: 1, backgroundColor: BG},
   kav: {flex: 1},
-  scroll: {flexGrow: 1},
+  scroll: {flexGrow: 1, paddingHorizontal: 28, paddingBottom: 40},
 
-  hero: {
-    backgroundColor: DARK_PURPLE,
-    paddingTop: 36, paddingBottom: 44,
-    alignItems: 'center',
-    position: 'relative', overflow: 'hidden',
-  },
-  circle1: {
-    position: 'absolute', width: 200, height: 200, borderRadius: 100,
-    backgroundColor: 'rgba(124,58,237,0.3)', top: -60, right: -50,
-  },
-  circle2: {
-    position: 'absolute', width: 140, height: 140, borderRadius: 70,
-    backgroundColor: 'rgba(167,139,250,0.2)', bottom: 10, left: -30,
-  },
-  circle3: {
-    position: 'absolute', width: 80, height: 80, borderRadius: 40,
-    backgroundColor: 'rgba(196,181,253,0.15)', top: 20, left: 30,
-  },
-  iconWrap: {
-    width: 76, height: 76, borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: 14,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
-  },
-  iconEmoji: {fontSize: 38},
-  appLabel: {
-    color: 'rgba(196,181,253,0.8)', fontSize: 11, fontWeight: '800',
-    letterSpacing: 4, marginBottom: 10,
-  },
-  heroHeadline: {
-    color: '#fff', fontSize: 34, fontWeight: '900',
-    textAlign: 'center', lineHeight: 40, marginBottom: 24,
-  },
-  pills: {flexDirection: 'row', gap: 8, flexWrap: 'wrap', justifyContent: 'center'},
-  pill: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)',
-  },
-  pillText: {color: '#fff', fontSize: 12, fontWeight: '600'},
+  top: {paddingTop: 64, marginBottom: 44},
+  logoEmoji: {fontSize: 36},
+  appName: {fontSize: 32, fontWeight: '800', color: TEXT_1, marginTop: 10},
+  tagline: {fontSize: 16, color: TEXT_2, marginTop: 8, lineHeight: 24},
 
-  card: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 30, borderTopRightRadius: 30,
-    flex: 1, paddingHorizontal: 24, paddingTop: 28, paddingBottom: 40,
+  modeSwitcher: {flexDirection: 'row', gap: 24, marginBottom: 32},
+  modeLink: {
+    fontSize: 15, fontWeight: '400', color: TEXT_3,
+    textDecorationLine: 'underline',
   },
-  tabs: {
-    flexDirection: 'row', backgroundColor: '#F3F4F6',
-    borderRadius: 14, padding: 4, marginBottom: 20,
-  },
-  tab: {flex: 1, paddingVertical: 10, borderRadius: 11, alignItems: 'center'},
-  tabActive: {
-    backgroundColor: '#fff',
-    shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 6,
-    shadowOffset: {width: 0, height: 2}, elevation: 3,
-  },
-  tabText: {fontSize: 14, fontWeight: '600', color: '#9CA3AF'},
-  tabTextActive: {color: '#111827'},
-  cardSub: {fontSize: 14, color: '#6B7280', marginBottom: 20, textAlign: 'center'},
-  form: {gap: 14},
-  fieldLabel: {
-    fontSize: 10, fontWeight: '800', color: '#9CA3AF',
-    letterSpacing: 1.2, marginBottom: 6, textTransform: 'uppercase',
-  },
+  modeLinkActive: {fontWeight: '700', color: TEXT_1, textDecorationLine: 'none'},
+
+  form: {gap: 20},
+  fieldWrap: {},
+  fieldLabel: {fontSize: 11, fontWeight: '600', color: TEXT_3, marginBottom: 6},
   input: {
-    backgroundColor: '#F9FAFB', borderRadius: 14,
-    color: '#111827', paddingHorizontal: 16, paddingVertical: 14,
-    fontSize: 15, borderWidth: 1.5, borderColor: '#E5E7EB',
+    borderBottomWidth: 1, borderBottomColor: BORDER,
+    paddingVertical: 12, fontSize: 16, color: TEXT_1,
+    backgroundColor: 'transparent',
   },
-  inputFocused: {borderColor: PURPLE, backgroundColor: '#FAF5FF'},
+  inputFocused: {borderBottomColor: ACCENT},
+
   btn: {
-    backgroundColor: PURPLE, borderRadius: 14,
-    paddingVertical: 16, alignItems: 'center',
-    shadowColor: PURPLE, shadowOpacity: 0.35, shadowRadius: 12,
-    shadowOffset: {width: 0, height: 4}, elevation: 6,
-    marginTop: 4,
+    backgroundColor: ACCENT, borderRadius: 12,
+    paddingVertical: 16, alignItems: 'center', marginTop: 8,
   },
-  btnText: {color: '#fff', fontWeight: '800', fontSize: 16},
-  toggleWrap: {marginTop: 20, alignItems: 'center'},
-  toggle: {color: PURPLE, fontSize: 14, fontWeight: '600'},
+  btnText: {color: '#fff', fontWeight: '700', fontSize: 16},
+
+  switchWrap: {marginTop: 20, alignItems: 'center'},
+  switchText: {color: ACCENT, fontSize: 13},
 });
