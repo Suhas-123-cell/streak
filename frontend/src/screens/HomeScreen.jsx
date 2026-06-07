@@ -1,7 +1,8 @@
-import React, {useEffect, useState, useCallback} from 'react';
+import React, {useEffect, useState, useCallback, useRef} from 'react';
 import {
   View, FlatList, Text, TouchableOpacity, StyleSheet,
   SafeAreaView, RefreshControl, StatusBar,
+  Animated, Easing,
 } from 'react-native';
 import {useAuth} from '../context/AuthContext';
 import {useBattles} from '../hooks/useBattles';
@@ -17,7 +18,7 @@ const BORDER = '#E7E5E4';
 const SUCCESS = '#16A34A';
 const PENDING = '#EA580C';
 
-function BattleItem({battle, onPress, token, userId, onCheckinStatus}) {
+function BattleItem({battle, onPress, token, userId, onCheckinStatus, index}) {
   const {members} = useMembers(battle.id);
   const [checkedIn, setCheckedIn] = useState(false);
   const me = members.find(m => m.user_id === userId);
@@ -40,87 +41,178 @@ function BattleItem({battle, onPress, token, userId, onCheckinStatus}) {
       myStreak={me?.current_streak || 0}
       checkedIn={checkedIn}
       onPress={() => onPress(battle)}
+      index={index}
     />
   );
 }
 
-function HoursLeft() {
-  const now = new Date();
-  const hoursLeft = 23 - now.getHours();
-  return hoursLeft;
-}
+// ── Animated summary bar ─────────────────────────────────────────
+function DailySummary({total, done}) {
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(-16)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
 
-function DailySummary({total, done, onCreatePress}) {
-  const pending = total - done;
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(slideAnim, {toValue: 0, tension: 60, friction: 8, useNativeDriver: true}),
+      Animated.timing(opacityAnim, {toValue: 1, duration: 300, useNativeDriver: true}),
+      Animated.timing(progressAnim, {
+        toValue: total > 0 ? done / total : 0,
+        duration: 700, delay: 250,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }),
+    ]).start();
+  }, [done, total]);
 
   if (total === 0) return null;
 
-  if (pending === 0) {
-    return (
-      <View style={[styles.summaryCard, styles.summaryDone]}>
-        <Text style={styles.summaryDoneTitle}>All done for today ✓</Text>
-        <Text style={styles.summaryDoneSub}>You showed up. Come back tomorrow.</Text>
-      </View>
-    );
-  }
+  const pending = total - done;
+  const isDone = pending === 0;
+
+  const progressWidth = progressAnim.interpolate({
+    inputRange: [0, 1], outputRange: ['0%', '100%'],
+  });
 
   return (
-    <View style={[styles.summaryCard, styles.summaryPending]}>
-      <View style={styles.summaryTop}>
-        <Text style={styles.summaryPendingTitle}>
-          {pending} battle{pending !== 1 ? 's' : ''} need{pending === 1 ? 's' : ''} proof
-        </Text>
-        <Text style={styles.summaryHours}>{HoursLeft()}h left</Text>
-      </View>
-      <View style={styles.summaryTrack}>
-        <View style={[styles.summaryFill, {width: `${(done / total) * 100}%`}]} />
-      </View>
-      <Text style={styles.summaryCount}>{done} of {total} done today</Text>
-    </View>
+    <Animated.View style={[
+      styles.summaryCard,
+      isDone ? styles.summaryCardDone : styles.summaryCardPending,
+      {opacity: opacityAnim, transform: [{translateY: slideAnim}]},
+    ]}>
+      {isDone ? (
+        <>
+          <Text style={styles.summaryDoneTitle}>All done for today ✓</Text>
+          <Text style={styles.summaryDoneSub}>You showed up. Come back tomorrow.</Text>
+        </>
+      ) : (
+        <>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryPendingTitle}>
+              {pending} battle{pending !== 1 ? 's' : ''} waiting on proof
+            </Text>
+            <Text style={styles.summaryHours}>{23 - new Date().getHours()}h left</Text>
+          </View>
+          <View style={styles.summaryTrack}>
+            <Animated.View style={[styles.summaryFill, {width: progressWidth}]} />
+          </View>
+          <Text style={styles.summaryCount}>{done} of {total} done today</Text>
+        </>
+      )}
+    </Animated.View>
   );
 }
 
+// ── Step row with own animation ──────────────────────────────────
+function StepRow({num, title, desc, delay, showDivider}) {
+  const anim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.spring(anim, {
+      toValue: 1, delay, tension: 60, friction: 8, useNativeDriver: true,
+    }).start();
+  }, []);
+  return (
+    <>
+      <Animated.View style={[
+        styles.step,
+        {
+          opacity: anim,
+          transform: [{translateX: anim.interpolate({inputRange: [0, 1], outputRange: [-14, 0]})}],
+        },
+      ]}>
+        <View style={styles.stepNum}>
+          <Text style={styles.stepNumText}>{num}</Text>
+        </View>
+        <View style={{flex: 1}}>
+          <Text style={styles.stepTitle}>{title}</Text>
+          <Text style={styles.stepDesc}>{desc}</Text>
+        </View>
+      </Animated.View>
+      {showDivider && <View style={styles.stepDivider} />}
+    </>
+  );
+}
+
+// ── Animated onboarding empty state ──────────────────────────────
 function OnboardingEmpty({onPress}) {
+  const floatAnim = useRef(new Animated.Value(0)).current;
+  const btnScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, {toValue: -7, duration: 1600, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
+        Animated.timing(floatAnim, {toValue: 0, duration: 1600, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
+      ])
+    ).start();
+
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(btnScale, {toValue: 1.035, duration: 950, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
+        Animated.timing(btnScale, {toValue: 1, duration: 950, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, []);
+
+  const steps = [
+    {num: '1', title: 'Pick a habit', desc: 'Gym, reading, running — anything daily'},
+    {num: '2', title: 'Invite your people', desc: 'They'll keep you honest, and vice versa'},
+    {num: '3', title: 'Prove it daily', desc: 'Photo proof — AI verifies it's real'},
+  ];
+
   return (
     <View style={styles.onboarding}>
+      <Animated.Text style={[styles.onboardingIcon, {transform: [{translateY: floatAnim}]}]}>
+        ⚔️
+      </Animated.Text>
       <Text style={styles.onboardingTitle}>No battles yet.</Text>
       <Text style={styles.onboardingDesc}>
-        Challenge a friend to build a habit together.{'\n'}Miss a day and they'll know.
+        Challenge a friend to build a habit.{'\n'}Miss a day and they'll know.
       </Text>
 
       <View style={styles.steps}>
-        <View style={styles.step}>
-          <View style={styles.stepNum}><Text style={styles.stepNumText}>1</Text></View>
-          <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Pick a habit</Text>
-            <Text style={styles.stepDesc}>Gym, reading, running — anything daily</Text>
-          </View>
-        </View>
-        <View style={styles.stepDivider} />
-        <View style={styles.step}>
-          <View style={styles.stepNum}><Text style={styles.stepNumText}>2</Text></View>
-          <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Invite your people</Text>
-            <Text style={styles.stepDesc}>They'll hold you accountable, and vice versa</Text>
-          </View>
-        </View>
-        <View style={styles.stepDivider} />
-        <View style={styles.step}>
-          <View style={styles.stepNum}><Text style={styles.stepNumText}>3</Text></View>
-          <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Prove it daily</Text>
-            <Text style={styles.stepDesc}>Photo proof — AI verifies it's real</Text>
-          </View>
-        </View>
+        {steps.map((s, i) => (
+          <StepRow
+            key={s.num}
+            num={s.num}
+            title={s.title}
+            desc={s.desc}
+            delay={200 + i * 120}
+            showDivider={i < steps.length - 1}
+          />
+        ))}
       </View>
 
-      <TouchableOpacity style={styles.onboardingBtn} onPress={onPress} activeOpacity={0.85}>
-        <Text style={styles.onboardingBtnText}>Start your first battle</Text>
-      </TouchableOpacity>
+      <Animated.View style={{transform: [{scale: btnScale}]}}>
+        <TouchableOpacity style={styles.onboardingBtn} onPress={onPress} activeOpacity={0.85}>
+          <Text style={styles.onboardingBtnText}>Start your first battle →</Text>
+        </TouchableOpacity>
+      </Animated.View>
     </View>
   );
 }
 
+// ── Animated header ───────────────────────────────────────────────
+function AnimatedHeader() {
+  const anim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(anim, {toValue: 1, duration: 350, useNativeDriver: true}).start();
+  }, []);
+  const today = new Date().toLocaleDateString('en-US', {weekday: 'long', month: 'short', day: 'numeric'});
+  return (
+    <Animated.View style={[
+      styles.header,
+      {opacity: anim, transform: [{translateY: anim.interpolate({inputRange: [0, 1], outputRange: [-10, 0]})}]},
+    ]}>
+      <Text style={styles.title}>Battles</Text>
+      <Text style={styles.dateText}>{today}</Text>
+    </Animated.View>
+  );
+}
+
+// ── Main screen ────────────────────────────────────────────────────
 export default function HomeScreen({navigation}) {
   const {user, token} = useAuth();
   const {battles, loading, fetchBattles} = useBattles();
@@ -131,67 +223,60 @@ export default function HomeScreen({navigation}) {
   }, []);
 
   const doneCount = battles.filter(b => checkinStatus[b.id] === true).length;
-  const pendingCount = battles.filter(b => checkinStatus[b.id] === false).length;
 
-  // Sort: pending battles first, done after
   const sortedBattles = [...battles].sort((a, b) => {
-    const aStatus = checkinStatus[a.id];
-    const bStatus = checkinStatus[b.id];
-    if (aStatus === false && bStatus !== false) return -1;
-    if (bStatus === false && aStatus !== false) return 1;
+    const aP = checkinStatus[a.id] === false;
+    const bP = checkinStatus[b.id] === false;
+    if (aP && !bP) return -1;
+    if (bP && !aP) return 1;
     return 0;
-  });
-
-  const today = new Date().toLocaleDateString('en-US', {
-    weekday: 'long', month: 'short', day: 'numeric',
   });
 
   const ListHeader = (
     <View>
-      <View style={styles.header}>
-        <Text style={styles.title}>Battles</Text>
-        <Text style={styles.dateText}>{today}</Text>
-      </View>
-      <DailySummary
-        total={battles.length}
-        done={doneCount}
-        onCreatePress={() => navigation.navigate('NewBattle')}
-      />
+      <AnimatedHeader />
+      <DailySummary total={battles.length} done={doneCount} />
     </View>
   );
+
+  if (!loading && battles.length === 0) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <StatusBar barStyle="dark-content" backgroundColor={BG} />
+        <AnimatedHeader />
+        <OnboardingEmpty onPress={() => navigation.navigate('NewBattle')} />
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => navigation.navigate('NewBattle')}
+          activeOpacity={0.85}>
+          <Text style={styles.fabText}>+</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" backgroundColor={BG} />
-      {battles.length === 0 && !loading ? (
-        <View style={styles.safe}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Battles</Text>
-            <Text style={styles.dateText}>{today}</Text>
-          </View>
-          <OnboardingEmpty onPress={() => navigation.navigate('NewBattle')} />
-        </View>
-      ) : (
-        <FlatList
-          data={sortedBattles}
-          keyExtractor={b => b.id}
-          renderItem={({item}) => (
-            <BattleItem
-              battle={item}
-              token={token}
-              userId={user.id}
-              onCheckinStatus={handleCheckinStatus}
-              onPress={b => navigation.navigate('BattleDetail', {battle: b})}
-            />
-          )}
-          refreshControl={
-            <RefreshControl refreshing={loading} onRefresh={fetchBattles} tintColor={ACCENT} />
-          }
-          ListHeaderComponent={ListHeader}
-          contentContainerStyle={{paddingBottom: 110}}
-        />
-      )}
-
+      <FlatList
+        data={sortedBattles}
+        keyExtractor={b => b.id}
+        renderItem={({item, index}) => (
+          <BattleItem
+            battle={item}
+            token={token}
+            userId={user.id}
+            onCheckinStatus={handleCheckinStatus}
+            onPress={b => navigation.navigate('BattleDetail', {battle: b})}
+            index={index}
+          />
+        )}
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={fetchBattles} tintColor={ACCENT} />
+        }
+        ListHeaderComponent={ListHeader}
+        contentContainerStyle={{paddingBottom: 110}}
+      />
       <TouchableOpacity
         style={styles.fab}
         onPress={() => navigation.navigate('NewBattle')}
@@ -210,16 +295,13 @@ const styles = StyleSheet.create({
   dateText: {fontSize: 13, color: TEXT_2, marginTop: 2},
 
   summaryCard: {
-    marginHorizontal: 16, marginBottom: 8,
-    borderRadius: 14, padding: 16,
+    marginHorizontal: 16, marginBottom: 8, borderRadius: 14, padding: 16,
   },
-  summaryDone: {backgroundColor: '#F0FDF4'},
-  summaryPending: {backgroundColor: '#FEF3E2'},
-
+  summaryCardDone: {backgroundColor: '#F0FDF4'},
+  summaryCardPending: {backgroundColor: '#FEF3E2'},
   summaryDoneTitle: {fontSize: 15, fontWeight: '700', color: SUCCESS},
   summaryDoneSub: {fontSize: 13, color: '#166534', marginTop: 2},
-
-  summaryTop: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start'},
+  summaryRow: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start'},
   summaryPendingTitle: {fontSize: 15, fontWeight: '700', color: '#92400E', flex: 1},
   summaryHours: {fontSize: 12, fontWeight: '600', color: PENDING},
   summaryTrack: {
@@ -229,18 +311,18 @@ const styles = StyleSheet.create({
   summaryFill: {height: 4, borderRadius: 2, backgroundColor: PENDING},
   summaryCount: {fontSize: 12, color: '#B45309', marginTop: 6},
 
-  // Onboarding empty state
-  onboarding: {paddingHorizontal: 24, paddingTop: 24, flex: 1},
+  // Onboarding
+  onboarding: {flex: 1, paddingHorizontal: 24, paddingTop: 8},
+  onboardingIcon: {fontSize: 48, marginBottom: 16},
   onboardingTitle: {fontSize: 22, fontWeight: '700', color: TEXT_1},
-  onboardingDesc: {fontSize: 15, color: TEXT_2, lineHeight: 22, marginTop: 8, marginBottom: 32},
-
+  onboardingDesc: {fontSize: 15, color: TEXT_2, lineHeight: 22, marginTop: 8, marginBottom: 28},
   steps: {
     borderWidth: 1, borderColor: BORDER, borderRadius: 14,
-    overflow: 'hidden', marginBottom: 28,
+    overflow: 'hidden', marginBottom: 28, backgroundColor: '#fff',
   },
   step: {
     flexDirection: 'row', alignItems: 'flex-start',
-    padding: 16, gap: 14, backgroundColor: '#fff',
+    padding: 16, gap: 14,
   },
   stepDivider: {height: 1, backgroundColor: BORDER},
   stepNum: {
@@ -249,10 +331,8 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   stepNumText: {color: '#fff', fontWeight: '700', fontSize: 13},
-  stepContent: {flex: 1},
   stepTitle: {fontSize: 15, fontWeight: '600', color: TEXT_1},
   stepDesc: {fontSize: 13, color: TEXT_2, marginTop: 2, lineHeight: 18},
-
   onboardingBtn: {
     backgroundColor: ACCENT, borderRadius: 12,
     paddingVertical: 16, alignItems: 'center',
@@ -264,8 +344,8 @@ const styles = StyleSheet.create({
     width: 56, height: 56, borderRadius: 28,
     backgroundColor: ACCENT,
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: ACCENT, shadowOpacity: 0.35, shadowRadius: 10,
+    shadowColor: ACCENT, shadowOpacity: 0.4, shadowRadius: 12,
     shadowOffset: {width: 0, height: 4}, elevation: 8,
   },
-  fabText: {color: '#fff', fontSize: 26, fontWeight: '400', lineHeight: 30},
+  fabText: {color: '#fff', fontSize: 26, lineHeight: 30},
 });
