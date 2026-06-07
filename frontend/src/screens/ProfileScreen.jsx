@@ -123,17 +123,19 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+      </ScrollView>
+      <View style={styles.logoutWrap}>
         <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
           <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: {flex: 1, backgroundColor: '#F9FAFB'},
-  content: {paddingBottom: 60},
+  content: {paddingBottom: 20},
 
   heroBanner: {
     backgroundColor: DARK_PURPLE,
@@ -211,9 +213,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 8,
   },
   timeText: {color: PURPLE, fontWeight: '700', fontSize: 15},
+  logoutWrap: {
+    paddingHorizontal: 16, paddingVertical: 12,
+    backgroundColor: '#F9FAFB',
+    borderTopWidth: 1, borderTopColor: '#F3F4F6',
+  },
   logoutBtn: {
     borderRadius: 14, paddingVertical: 15, alignItems: 'center',
-    borderWidth: 1.5, borderColor: '#EF4444', marginHorizontal: 16,
+    borderWidth: 1.5, borderColor: '#EF4444',
   },
   logoutText: {color: '#EF4444', fontWeight: '700', fontSize: 15},
 });
