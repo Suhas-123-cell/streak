@@ -1,8 +1,9 @@
-import React, {useState} from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   SafeAreaView, Alert, ActivityIndicator,
   KeyboardAvoidingView, Platform, StatusBar, ScrollView,
+  Animated, Easing,
 } from 'react-native';
 import {useAuth} from '../context/AuthContext';
 
@@ -21,6 +22,40 @@ export default function AuthScreen() {
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
+
+  // Entrance animations
+  const topSlide = useRef(new Animated.Value(-24)).current;
+  const topOp = useRef(new Animated.Value(0)).current;
+  const formSlide = useRef(new Animated.Value(36)).current;
+  const formOp = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(topSlide, {toValue: 0, tension: 55, friction: 9, useNativeDriver: true}),
+      Animated.timing(topOp, {toValue: 1, duration: 300, useNativeDriver: true}),
+      Animated.spring(formSlide, {toValue: 0, delay: 140, tension: 60, friction: 8, useNativeDriver: true}),
+      Animated.timing(formOp, {toValue: 1, duration: 280, delay: 140, useNativeDriver: true}),
+    ]).start();
+  }, []);
+
+  // Mode switch animation
+  const modeAnim = useRef(new Animated.Value(0)).current;
+  function switchMode(newMode) {
+    Animated.sequence([
+      Animated.timing(formOp, {toValue: 0.4, duration: 80, useNativeDriver: true}),
+      Animated.timing(formOp, {toValue: 1, duration: 180, useNativeDriver: true}),
+    ]).start();
+    setMode(newMode);
+  }
+
+  // Submit button press feedback
+  const btnScale = useRef(new Animated.Value(1)).current;
+  function btnPressIn() {
+    Animated.spring(btnScale, {toValue: 0.97, useNativeDriver: true, tension: 300, friction: 10}).start();
+  }
+  function btnPressOut() {
+    Animated.spring(btnScale, {toValue: 1, useNativeDriver: true, tension: 300, friction: 10}).start();
+  }
 
   async function submit() {
     if (!email || !password) return;
@@ -54,87 +89,106 @@ export default function AuthScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
 
-          <View style={styles.top}>
+          <Animated.View style={[
+            styles.top,
+            {opacity: topOp, transform: [{translateY: topSlide}]},
+          ]}>
             <Text style={styles.logoEmoji}>⚔️</Text>
             <Text style={styles.appName}>Streak Fight</Text>
             <Text style={styles.tagline}>Your group knows when you skip.</Text>
-          </View>
+          </Animated.View>
 
-          <View style={styles.modeSwitcher}>
-            <TouchableOpacity onPress={() => setMode('login')}>
-              <Text style={[styles.modeLink, mode === 'login' && styles.modeLinkActive]}>
-                Log In
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setMode('signup')}>
-              <Text style={[styles.modeLink, mode === 'signup' && styles.modeLinkActive]}>
-                Sign Up
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <Animated.View style={{opacity: formOp, transform: [{translateY: formSlide}]}}>
+            <View style={styles.modeSwitcher}>
+              <TouchableOpacity onPress={() => switchMode('login')}>
+                <Text style={[styles.modeLink, mode === 'login' && styles.modeLinkActive]}>
+                  Log In
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => switchMode('signup')}>
+                <Text style={[styles.modeLink, mode === 'signup' && styles.modeLinkActive]}>
+                  Sign Up
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-          <View style={styles.form}>
-            {mode === 'signup' && (
+            <View style={styles.form}>
+              {mode === 'signup' && (
+                <View style={styles.fieldWrap}>
+                  <Text style={[styles.fieldLabel, focusedField === 'username' && styles.fieldLabelFocused]}>
+                    Username
+                  </Text>
+                  <TextInput
+                    style={inputStyle('username')}
+                    placeholder="your fighter name"
+                    placeholderTextColor={TEXT_3}
+                    value={username}
+                    onChangeText={setUsername}
+                    autoCapitalize="none"
+                    onFocus={() => setFocusedField('username')}
+                    onBlur={() => setFocusedField(null)}
+                  />
+                </View>
+              )}
               <View style={styles.fieldWrap}>
-                <Text style={styles.fieldLabel}>Username</Text>
+                <Text style={[styles.fieldLabel, focusedField === 'email' && styles.fieldLabelFocused]}>
+                  Email
+                </Text>
                 <TextInput
-                  style={inputStyle('username')}
-                  placeholder="your fighter name"
+                  style={inputStyle('email')}
+                  placeholder="you@example.com"
                   placeholderTextColor={TEXT_3}
-                  value={username}
-                  onChangeText={setUsername}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
                   autoCapitalize="none"
-                  onFocus={() => setFocusedField('username')}
+                  onFocus={() => setFocusedField('email')}
                   onBlur={() => setFocusedField(null)}
                 />
               </View>
-            )}
-            <View style={styles.fieldWrap}>
-              <Text style={styles.fieldLabel}>Email</Text>
-              <TextInput
-                style={inputStyle('email')}
-                placeholder="you@example.com"
-                placeholderTextColor={TEXT_3}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                onFocus={() => setFocusedField('email')}
-                onBlur={() => setFocusedField(null)}
-              />
-            </View>
-            <View style={styles.fieldWrap}>
-              <Text style={styles.fieldLabel}>Password</Text>
-              <TextInput
-                style={inputStyle('password')}
-                placeholder="••••••••"
-                placeholderTextColor={TEXT_3}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                onFocus={() => setFocusedField('password')}
-                onBlur={() => setFocusedField(null)}
-              />
-            </View>
-
-            <TouchableOpacity style={styles.btn} onPress={submit} disabled={loading} activeOpacity={0.85}>
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.btnText}>
-                  {mode === 'login' ? 'Continue' : 'Join the fight'}
+              <View style={styles.fieldWrap}>
+                <Text style={[styles.fieldLabel, focusedField === 'password' && styles.fieldLabelFocused]}>
+                  Password
                 </Text>
-              )}
-            </TouchableOpacity>
-          </View>
+                <TextInput
+                  style={inputStyle('password')}
+                  placeholder="••••••••"
+                  placeholderTextColor={TEXT_3}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                  onFocus={() => setFocusedField('password')}
+                  onBlur={() => setFocusedField(null)}
+                />
+              </View>
 
-          <TouchableOpacity
-            style={styles.switchWrap}
-            onPress={() => setMode(mode === 'login' ? 'signup' : 'login')}>
-            <Text style={styles.switchText}>
-              {mode === 'login' ? 'New here? Create account' : 'Already in? Sign in'}
-            </Text>
-          </TouchableOpacity>
+              <Animated.View style={{transform: [{scale: btnScale}], marginTop: 8}}>
+                <TouchableOpacity
+                  style={styles.btn}
+                  onPress={submit}
+                  onPressIn={btnPressIn}
+                  onPressOut={btnPressOut}
+                  disabled={loading}
+                  activeOpacity={1}>
+                  {loading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.btnText}>
+                      {mode === 'login' ? 'Continue' : 'Join the fight'}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </Animated.View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.switchWrap}
+              onPress={() => switchMode(mode === 'login' ? 'signup' : 'login')}>
+              <Text style={styles.switchText}>
+                {mode === 'login' ? 'New here? Create account' : 'Already in? Sign in'}
+              </Text>
+            </TouchableOpacity>
+          </Animated.View>
 
         </ScrollView>
       </KeyboardAvoidingView>
@@ -162,6 +216,7 @@ const styles = StyleSheet.create({
   form: {gap: 20},
   fieldWrap: {},
   fieldLabel: {fontSize: 11, fontWeight: '600', color: TEXT_3, marginBottom: 6},
+  fieldLabelFocused: {color: ACCENT},
   input: {
     borderBottomWidth: 1, borderBottomColor: BORDER,
     paddingVertical: 12, fontSize: 16, color: TEXT_1,
@@ -171,7 +226,7 @@ const styles = StyleSheet.create({
 
   btn: {
     backgroundColor: ACCENT, borderRadius: 12,
-    paddingVertical: 16, alignItems: 'center', marginTop: 8,
+    paddingVertical: 16, alignItems: 'center',
   },
   btnText: {color: '#fff', fontWeight: '700', fontSize: 16},
 
