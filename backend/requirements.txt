@@ -11,3 +11,5 @@ httpx
 python-jose
 pytz
 python-dotenv
+slowapi
+email-validator

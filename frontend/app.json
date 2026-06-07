@@ -1,4 +1,11 @@
 {
-  "name": "StreakFight",
-  "displayName": "Streak Fight"
+  "name": "StreakFightNew",
+  "slug": "streakfight",
+  "displayName": "Streak Fight",
+  "ios": {
+    "bundleIdentifier": "com.streakfight.app"
+  },
+  "android": {
+    "package": "com.streakfight.app"
+  }
 }

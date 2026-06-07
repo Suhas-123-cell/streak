@@ -4,4 +4,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-r = redis.from_url(os.environ.get("REDIS_URL", "redis://localhost:6379"), decode_responses=True)
+r = redis.from_url(
+    os.environ.get("REDIS_URL", "redis://localhost:6379"),
+    decode_responses=True,
+    socket_connect_timeout=2,
+    socket_timeout=2,
+)

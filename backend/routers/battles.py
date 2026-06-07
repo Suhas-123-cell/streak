@@ -55,6 +55,8 @@ async def create_battle(req: CreateBattleRequest, user=Depends(get_current_user)
 
 @router.get("/user/{user_id}")
 async def get_user_battles(user_id: str, user=Depends(get_current_user)):
+    if user.id != user_id:
+        raise HTTPException(403, "Forbidden")
     memberships = (
         supabase.table("battle_members")
         .select("battle_id")

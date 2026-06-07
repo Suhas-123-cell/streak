@@ -25,6 +25,17 @@ async def assign_penalty(req: CreatePenaltyRequest, user=Depends(get_current_use
         if not r.sismember(yesterday_key, user.id):
             raise HTTPException(403, "Only members who checked in can assign penalties")
 
+    target = (
+        supabase.table("battle_members")
+        .select("id")
+        .eq("battle_id", req.battle_id)
+        .eq("user_id", req.assigned_to)
+        .eq("status", "active")
+        .execute()
+    )
+    if not target.data:
+        raise HTTPException(400, "Target user is not an active member of this battle")
+
     penalty = (
         supabase.table("penalties")
         .insert(

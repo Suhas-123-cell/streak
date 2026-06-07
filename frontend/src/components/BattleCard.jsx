@@ -3,7 +3,7 @@ import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import MemberAvatarStack from './MemberAvatarStack';
 
 const PURPLE = '#7C3AED';
-const ORANGE = '#FF6B00';
+const ORANGE = '#F97316';
 const GREEN = '#22C55E';
 
 export default function BattleCard({battle, members, myStreak, checkedIn, onPress}) {
@@ -13,7 +13,14 @@ export default function BattleCard({battle, members, myStreak, checkedIn, onPres
   const pct = members.length ? checkedInCount / members.length : 0;
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
+    <TouchableOpacity
+      style={[
+        styles.card,
+        checkedIn ? styles.cardDone : styles.cardPending,
+      ]}
+      onPress={onPress}
+      activeOpacity={0.9}>
+
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
@@ -31,7 +38,7 @@ export default function BattleCard({battle, members, myStreak, checkedIn, onPres
       </View>
 
       {/* Streak badge */}
-      <View style={styles.streakBox}>
+      <View style={[styles.streakBox, !checkedIn && styles.streakBoxPending]}>
         <View style={styles.streakLeft}>
           <View style={styles.fireCircle}>
             <Text style={styles.fireEmoji}>🔥</Text>
@@ -41,11 +48,15 @@ export default function BattleCard({battle, members, myStreak, checkedIn, onPres
             <Text style={styles.streakLabel}>day streak</Text>
           </View>
         </View>
-        <View style={[styles.checkinPill, {backgroundColor: checkedIn ? PURPLE : '#F3F4F6'}]}>
-          <Text style={[styles.checkinPillText, {color: checkedIn ? '#fff' : '#9CA3AF'}]}>
-            {checkedIn ? 'Checked in' : 'Pending'}
-          </Text>
-        </View>
+        {checkedIn ? (
+          <View style={styles.checkinPillDone}>
+            <Text style={styles.checkinPillTextDone}>✅ Done today</Text>
+          </View>
+        ) : (
+          <View style={styles.checkinPillRisk}>
+            <Text style={styles.checkinPillTextRisk}>🔥 At risk!</Text>
+          </View>
+        )}
       </View>
 
       {/* Progress bar */}
@@ -64,7 +75,7 @@ export default function BattleCard({battle, members, myStreak, checkedIn, onPres
         <View style={styles.leaderboard}>
           {top3.map((m, i) => (
             <View key={m.user_id} style={styles.lbRow}>
-              <Text style={[styles.lbMedal, i === 0 && styles.gold, i === 1 && styles.silver, i === 2 && styles.bronze]}>
+              <Text style={styles.lbMedal}>
                 {i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'}
               </Text>
               <Text style={styles.lbName} numberOfLines={1}>
@@ -73,6 +84,13 @@ export default function BattleCard({battle, members, myStreak, checkedIn, onPres
               <Text style={styles.lbStreak}>🔥 {m.current_streak}</Text>
             </View>
           ))}
+        </View>
+      )}
+
+      {/* Check-in CTA strip — only shown when pending */}
+      {!checkedIn && (
+        <View style={styles.ctaStrip}>
+          <Text style={styles.ctaText}>CHECK IN NOW →</Text>
         </View>
       )}
     </TouchableOpacity>
@@ -91,7 +109,12 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     shadowOffset: {width: 0, height: 4},
     elevation: 4,
+    borderLeftWidth: 4,
+    overflow: 'hidden',
   },
+  cardDone: {borderLeftColor: GREEN},
+  cardPending: {borderLeftColor: ORANGE},
+
   header: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start'},
   headerLeft: {flex: 1, marginRight: 12},
   habitName: {fontSize: 18, fontWeight: '700', color: '#111827', lineHeight: 24},
@@ -101,11 +124,14 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   statusEmoji: {color: '#fff', fontWeight: '800', fontSize: 14},
+
   avatarRow: {marginTop: 16},
+
   streakBox: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: '#FFF7ED', borderRadius: 14, padding: 14, marginTop: 14,
   },
+  streakBoxPending: {backgroundColor: '#FFF3E0'},
   streakLeft: {flexDirection: 'row', alignItems: 'center', gap: 12},
   fireCircle: {
     width: 40, height: 40, borderRadius: 20,
@@ -114,17 +140,25 @@ const styles = StyleSheet.create({
   fireEmoji: {fontSize: 20},
   streakNum: {fontSize: 28, fontWeight: '800', color: '#111827', lineHeight: 32},
   streakLabel: {fontSize: 12, color: '#9CA3AF'},
-  checkinPill: {borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6},
-  checkinPillText: {fontSize: 12, fontWeight: '600'},
+
+  checkinPillDone: {
+    backgroundColor: '#DCFCE7', borderRadius: 20,
+    paddingHorizontal: 12, paddingVertical: 6,
+  },
+  checkinPillTextDone: {fontSize: 12, fontWeight: '700', color: '#15803D'},
+  checkinPillRisk: {
+    backgroundColor: '#FEF3C7', borderRadius: 20,
+    paddingHorizontal: 12, paddingVertical: 6,
+  },
+  checkinPillTextRisk: {fontSize: 12, fontWeight: '700', color: '#92400E'},
+
   progressSection: {marginTop: 14},
   progressHeader: {flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6},
   progressLabel: {fontSize: 12, color: '#6B7280'},
   progressCount: {fontSize: 12, fontWeight: '700', color: '#111827'},
   progressTrack: {height: 6, backgroundColor: '#F3F4F6', borderRadius: 3, overflow: 'hidden'},
-  progressFill: {
-    height: 6, borderRadius: 3,
-    backgroundColor: PURPLE,
-  },
+  progressFill: {height: 6, borderRadius: 3, backgroundColor: PURPLE},
+
   leaderboard: {
     marginTop: 14, paddingTop: 14,
     borderTopWidth: 1, borderTopColor: '#F3F4F6',
@@ -132,9 +166,14 @@ const styles = StyleSheet.create({
   },
   lbRow: {flexDirection: 'row', alignItems: 'center', gap: 8},
   lbMedal: {fontSize: 16, width: 24},
-  gold: {},
-  silver: {},
-  bronze: {},
   lbName: {flex: 1, fontSize: 13, color: '#374151', fontWeight: '500'},
   lbStreak: {fontSize: 13, color: '#6B7280'},
+
+  ctaStrip: {
+    marginTop: 14, marginHorizontal: -20, marginBottom: -20,
+    backgroundColor: ORANGE,
+    paddingVertical: 12,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  ctaText: {color: '#fff', fontWeight: '800', fontSize: 13, letterSpacing: 1},
 });

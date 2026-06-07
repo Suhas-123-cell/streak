@@ -14,14 +14,15 @@ export function useBattles() {
     setLoading(true);
     try {
       const res = await fetch(endpoints.userBattles(user.id), {headers});
-      setBattles(await res.json());
+      if (res.ok) setBattles(await res.json());
+    } catch (_) {
     } finally {
       setLoading(false);
     }
   }, [user, token]);
 
   useEffect(() => {
-    fetchBattles();
+    fetchBattles().catch(() => {});
   }, [fetchBattles]);
 
   async function createBattle(habitName, habitDescription, memberUsernames, endsAt) {
@@ -35,9 +36,10 @@ export function useBattles() {
         ends_at: endsAt,
       }),
     });
-    if (!res.ok) throw new Error((await res.json()).detail);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail);
     await fetchBattles();
-    return res.json();
+    return data;
   }
 
   return {battles, loading, fetchBattles, createBattle};
