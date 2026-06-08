@@ -25,35 +25,39 @@ export default function BattleDetailScreen({route}) {
   const [refreshing, setRefreshing] = useState(false);
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [reminderTime, setReminderTime] = useState('21:00');
+  const [reminderCreatorId, setReminderCreatorId] = useState(null);
 
-  const REMINDER_KEY = `reminder_${battle.id}`;
+  const isCreator = reminderCreatorId === user.id;
 
   useEffect(() => {
-    AsyncStorage.getItem(REMINDER_KEY)
-      .then(raw => {
-        if (raw) {
-          const saved = JSON.parse(raw);
-          setReminderEnabled(saved.enabled ?? false);
-          setReminderTime(saved.time ?? '21:00');
-        }
-      })
-      .catch(() => {});
-  }, [REMINDER_KEY]);
-
-  function saveReminder(enabled, time) {
-    AsyncStorage.setItem(REMINDER_KEY, JSON.stringify({enabled, time})).catch(() => {});
-  }
+    Promise.all([
+      AsyncStorage.getItem(`reminder_enabled_${battle.id}`),
+      AsyncStorage.getItem(`reminder_time_${battle.id}`),
+      AsyncStorage.getItem(`reminder_creator_${battle.id}`),
+    ]).then(([rawEnabled, rawTime, rawCreator]) => {
+      if (rawEnabled) {
+        const saved = JSON.parse(rawEnabled);
+        setReminderEnabled(saved.enabled ?? false);
+      }
+      if (rawTime) setReminderTime(rawTime);
+      if (rawCreator) setReminderCreatorId(rawCreator);
+    }).catch(() => {});
+  }, [battle.id]);
 
   function toggleReminder(val) {
     setReminderEnabled(val);
-    saveReminder(val, reminderTime);
+    AsyncStorage.setItem(
+      `reminder_enabled_${battle.id}`,
+      JSON.stringify({enabled: val}),
+    ).catch(() => {});
   }
 
   function cycleTime() {
+    if (!isCreator) return;
     const idx = HOURS.indexOf(reminderTime);
     const next = HOURS[(idx + 1) % HOURS.length];
     setReminderTime(next);
-    saveReminder(reminderEnabled, next);
+    AsyncStorage.setItem(`reminder_time_${battle.id}`, next).catch(() => {});
   }
 
   const headers = {Authorization: `Bearer ${token}`};
@@ -180,12 +184,20 @@ export default function BattleDetailScreen({route}) {
               <View style={styles.reminderDivider} />
               <View style={styles.reminderRow}>
                 <View>
-                  <Text style={styles.reminderTitle}>Remind me at</Text>
-                  <Text style={styles.reminderHint}>Tap to change time</Text>
+                  <Text style={styles.reminderTitle}>Reminder time</Text>
+                  <Text style={styles.reminderHint}>
+                    {isCreator ? 'Tap to change' : 'Set by group creator'}
+                  </Text>
                 </View>
-                <TouchableOpacity style={styles.timePill} onPress={cycleTime}>
-                  <Text style={styles.timeText}>{reminderTime}</Text>
-                </TouchableOpacity>
+                {isCreator ? (
+                  <TouchableOpacity style={styles.timePill} onPress={cycleTime}>
+                    <Text style={styles.timeText}>{reminderTime}</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <View style={styles.timePillReadOnly}>
+                    <Text style={styles.timeTextReadOnly}>{reminderTime}</Text>
+                  </View>
+                )}
               </View>
             </>
           )}
@@ -320,4 +332,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 8,
   },
   timeText: {color: PURPLE, fontWeight: '700', fontSize: 15},
+  timePillReadOnly: {
+    backgroundColor: '#F3F4F6', borderRadius: 20,
+    paddingHorizontal: 16, paddingVertical: 8,
+  },
+  timeTextReadOnly: {color: '#9CA3AF', fontWeight: '600', fontSize: 15},
 });
