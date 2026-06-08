@@ -1,8 +1,9 @@
 import React, {useState, useEffect, useCallback} from 'react';
 import {
   View, Text, StyleSheet, SafeAreaView, ScrollView,
-  RefreshControl, StatusBar, Switch, TouchableOpacity,
+  RefreshControl, StatusBar, Switch, TouchableOpacity, Modal,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useAuth} from '../context/AuthContext';
 import {useMembers} from '../hooks/useMembers';
@@ -11,9 +12,18 @@ import ProofSubmitter from '../components/ProofSubmitter';
 import PenaltyAssigner from '../components/PenaltyAssigner';
 import {endpoints} from '../constants/api';
 
-const HOURS = Array.from({length: 24}, (_, i) => `${String(i).padStart(2, '0')}:00`);
-
 const PURPLE = '#7C3AED';
+
+function parseTimeToDate(timeStr) {
+  const [h, m] = (timeStr || '21:00').split(':').map(Number);
+  const d = new Date();
+  d.setHours(h, m || 0, 0, 0);
+  return d;
+}
+
+function formatTime(date) {
+  return date.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit', hour12: false});
+}
 
 export default function BattleDetailScreen({route}) {
   const {battle} = route.params;
@@ -24,8 +34,9 @@ export default function BattleDetailScreen({route}) {
   const [myCheckin, setMyCheckin] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [reminderEnabled, setReminderEnabled] = useState(false);
-  const [reminderTime, setReminderTime] = useState('21:00');
+  const [reminderDate, setReminderDate] = useState(() => parseTimeToDate('21:00'));
   const [reminderCreatorId, setReminderCreatorId] = useState(null);
+  const [showPicker, setShowPicker] = useState(false);
 
   const isCreator = reminderCreatorId === user.id;
 
@@ -39,7 +50,7 @@ export default function BattleDetailScreen({route}) {
         const saved = JSON.parse(rawEnabled);
         setReminderEnabled(saved.enabled ?? false);
       }
-      if (rawTime) setReminderTime(rawTime);
+      if (rawTime) setReminderDate(parseTimeToDate(rawTime));
       if (rawCreator) setReminderCreatorId(rawCreator);
     }).catch(() => {});
   }, [battle.id]);
@@ -52,12 +63,10 @@ export default function BattleDetailScreen({route}) {
     ).catch(() => {});
   }
 
-  function cycleTime() {
-    if (!isCreator) return;
-    const idx = HOURS.indexOf(reminderTime);
-    const next = HOURS[(idx + 1) % HOURS.length];
-    setReminderTime(next);
-    AsyncStorage.setItem(`reminder_time_${battle.id}`, next).catch(() => {});
+  function onPickerChange(_, selected) {
+    if (!selected || !isCreator) return;
+    setReminderDate(selected);
+    AsyncStorage.setItem(`reminder_time_${battle.id}`, formatTime(selected)).catch(() => {});
   }
 
   const headers = {Authorization: `Bearer ${token}`};
@@ -190,18 +199,43 @@ export default function BattleDetailScreen({route}) {
                   </Text>
                 </View>
                 {isCreator ? (
-                  <TouchableOpacity style={styles.timePill} onPress={cycleTime}>
-                    <Text style={styles.timeText}>{reminderTime}</Text>
+                  <TouchableOpacity style={styles.timePill} onPress={() => setShowPicker(true)}>
+                    <Text style={styles.timeText}>{formatTime(reminderDate)}</Text>
                   </TouchableOpacity>
                 ) : (
                   <View style={styles.timePillReadOnly}>
-                    <Text style={styles.timeTextReadOnly}>{reminderTime}</Text>
+                    <Text style={styles.timeTextReadOnly}>{formatTime(reminderDate)}</Text>
                   </View>
                 )}
               </View>
             </>
           )}
         </View>
+
+        {/* Native time picker — creator only */}
+        <Modal
+          visible={showPicker}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowPicker(false)}>
+          <View style={styles.pickerOverlay}>
+            <View style={styles.pickerSheet}>
+              <View style={styles.pickerHeader}>
+                <Text style={styles.pickerTitle}>Set reminder time</Text>
+                <TouchableOpacity onPress={() => setShowPicker(false)}>
+                  <Text style={styles.pickerDone}>Done</Text>
+                </TouchableOpacity>
+              </View>
+              <DateTimePicker
+                value={reminderDate}
+                mode="time"
+                display="spinner"
+                onChange={onPickerChange}
+                textColor="#111827"
+              />
+            </View>
+          </View>
+        </Modal>
 
         {penalties.length > 0 && (
           <>
@@ -337,4 +371,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 8,
   },
   timeTextReadOnly: {color: '#9CA3AF', fontWeight: '600', fontSize: 15},
+  pickerOverlay: {
+    flex: 1, justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  pickerSheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    paddingBottom: 32,
+  },
+  pickerHeader: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16,
+    borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
+  },
+  pickerTitle: {fontSize: 16, fontWeight: '700', color: '#111827'},
+  pickerDone: {fontSize: 16, fontWeight: '700', color: PURPLE},
 });
