@@ -3,32 +3,30 @@ import {useAuth} from '../context/AuthContext';
 import {endpoints} from '../constants/api';
 
 export function useBattles() {
-  const {user, token} = useAuth();
+  const {user, fetchWithAuth} = useAuth();
   const [battles, setBattles] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  const headers = {'Authorization': `Bearer ${token}`};
 
   const fetchBattles = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const res = await fetch(endpoints.userBattles(user.id), {headers});
+      const res = await fetchWithAuth(endpoints.userBattles(user.id));
       if (res.ok) setBattles(await res.json());
     } catch (_) {
     } finally {
       setLoading(false);
     }
-  }, [user, token]);
+  }, [user, fetchWithAuth]);
 
   useEffect(() => {
     fetchBattles().catch(() => {});
   }, [fetchBattles]);
 
   async function createBattle(habitName, habitDescription, memberUsernames, endsAt) {
-    const res = await fetch(endpoints.battles, {
+    const res = await fetchWithAuth(endpoints.battles, {
       method: 'POST',
-      headers: {...headers, 'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         habit_name: habitName,
         habit_description: habitDescription,
@@ -37,7 +35,7 @@ export function useBattles() {
       }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail);
+    if (!res.ok) throw new Error(data.detail || 'Failed to create battle');
     await fetchBattles();
     return data;
   }

@@ -1,4 +1,4 @@
-import React, {createContext, useContext, useState, useEffect} from 'react';
+import React, {createContext, useContext, useState, useEffect, useCallback} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Keychain from 'react-native-keychain';
 import {endpoints} from '../constants/api';
@@ -19,11 +19,7 @@ export function AuthProvider({children}) {
         setToken(creds.password);
         setUser(JSON.parse(u));
       }
-    }).catch(() => {
-      // Keychain or storage unavailable — start unauthenticated
-    }).finally(() => {
-      setLoading(false);
-    });
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   async function signup(email, password, username) {
@@ -63,15 +59,35 @@ export function AuthProvider({children}) {
     await AsyncStorage.setItem('user', JSON.stringify(u));
   }
 
-  async function logout() {
+  const _clearSession = useCallback(async () => {
     setToken(null);
     setUser(null);
     await Keychain.resetGenericPassword({service: 'streakfight_token'});
     await AsyncStorage.removeItem('user');
+  }, []);
+
+  async function logout() {
+    await _clearSession();
   }
 
+  // Wraps fetch with the auth header. On 401 → clears session (sends user to login screen).
+  const fetchWithAuth = useCallback(async (url, options = {}) => {
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        ...(options.headers || {}),
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (res.status === 401) {
+      await _clearSession();
+      throw new Error('Session expired. Please sign in again.');
+    }
+    return res;
+  }, [token, _clearSession]);
+
   return (
-    <AuthContext.Provider value={{user, token, loading, signup, login, logout}}>
+    <AuthContext.Provider value={{user, token, loading, signup, login, logout, fetchWithAuth}}>
       {children}
     </AuthContext.Provider>
   );
