@@ -4,6 +4,7 @@ import {
   SafeAreaView, RefreshControl, StatusBar,
   Animated, Easing,
 } from 'react-native';
+import {useFocusEffect} from '@react-navigation/native';
 import {useAuth} from '../context/AuthContext';
 import {useBattles} from '../hooks/useBattles';
 import {useMembers} from '../hooks/useMembers';
@@ -217,6 +218,10 @@ export default function HomeScreen({navigation}) {
   const {user, token} = useAuth();
   const {battles, loading, fetchBattles} = useBattles();
   const [checkinStatus, setCheckinStatus] = useState({});
+
+  useFocusEffect(useCallback(() => {
+    fetchBattles();
+  }, [fetchBattles]));
 
   const handleCheckinStatus = useCallback((battleId, status) => {
     setCheckinStatus(prev => ({...prev, [battleId]: status}));
