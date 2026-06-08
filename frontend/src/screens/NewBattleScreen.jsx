@@ -15,7 +15,11 @@ const TEXT_3 = '#9CA3AF';
 const BORDER = '#E5E7EB';
 
 function formatTime(date) {
-  return date.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit', hour12: false});
+  if (!date) return '21:00';
+  const d = date instanceof Date ? date : new Date(date);
+  const h = d.getHours();
+  const m = d.getMinutes();
+  return (h < 10 ? '0' + h : '' + h) + ':' + (m < 10 ? '0' + m : '' + m);
 }
 
 const TEMPLATES = [
@@ -218,7 +222,7 @@ export default function NewBattleScreen({navigation}) {
                 value={reminderDate}
                 mode="time"
                 display="spinner"
-                onChange={(_, selected) => {if (selected) setReminderDate(selected);}}
+                onValueChange={(val) => {if (val) setReminderDate(val instanceof Date ? val : new Date(val));}}
                 textColor="#111827"
               />
             </View>
