@@ -1,9 +1,10 @@
 import React, {useState} from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, SafeAreaView, Alert, ActivityIndicator, StatusBar, Switch,
+  ScrollView, SafeAreaView, Alert, ActivityIndicator, StatusBar, Switch, Modal, Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import {useBattles} from '../hooks/useBattles';
 import {useAuth} from '../context/AuthContext';
 
@@ -13,7 +14,9 @@ const TEXT_2 = '#6B7280';
 const TEXT_3 = '#9CA3AF';
 const BORDER = '#E5E7EB';
 
-const HOURS = Array.from({length: 24}, (_, i) => `${String(i).padStart(2, '0')}:00`);
+function formatTime(date) {
+  return date.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit', hour12: false});
+}
 
 const TEMPLATES = [
   {emoji: '🏋️', name: 'Gym', desc: 'Show gym equipment or entrance selfie'},
@@ -36,7 +39,12 @@ export default function NewBattleScreen({navigation}) {
 
   // Reminder — creator sets this for the whole group
   const [reminderEnabled, setReminderEnabled] = useState(false);
-  const [reminderTime, setReminderTime] = useState('21:00');
+  const [reminderDate, setReminderDate] = useState(() => {
+    const d = new Date();
+    d.setHours(21, 0, 0, 0);
+    return d;
+  });
+  const [showPicker, setShowPicker] = useState(false);
 
   function pickTemplate(t) {
     setSelectedTemplate(t.name);
@@ -51,11 +59,6 @@ export default function NewBattleScreen({navigation}) {
     setUsername('');
   }
 
-  function cycleTime() {
-    const idx = HOURS.indexOf(reminderTime);
-    setReminderTime(HOURS[(idx + 1) % HOURS.length]);
-  }
-
   async function submit() {
     if (!habitName.trim()) {
       Alert.alert('Required', 'Enter a habit name');
@@ -67,7 +70,7 @@ export default function NewBattleScreen({navigation}) {
       // Persist reminder so BattleDetail knows the creator and their chosen time
       if (newBattle?.id) {
         await Promise.all([
-          AsyncStorage.setItem(`reminder_time_${newBattle.id}`, reminderTime),
+          AsyncStorage.setItem(`reminder_time_${newBattle.id}`, formatTime(reminderDate)),
           AsyncStorage.setItem(`reminder_creator_${newBattle.id}`, user.id),
           AsyncStorage.setItem(
             `reminder_enabled_${newBattle.id}`,
@@ -187,17 +190,40 @@ export default function NewBattleScreen({navigation}) {
               <View style={styles.reminderRow}>
                 <View style={{flex: 1}}>
                   <Text style={styles.reminderTitle}>Reminder time</Text>
-                  <Text style={styles.reminderHint}>
-                    Tap to change — only you can edit this
-                  </Text>
+                  <Text style={styles.reminderHint}>Only you can edit this</Text>
                 </View>
-                <TouchableOpacity style={styles.timePill} onPress={cycleTime}>
-                  <Text style={styles.timeText}>{reminderTime}</Text>
+                <TouchableOpacity style={styles.timePill} onPress={() => setShowPicker(true)}>
+                  <Text style={styles.timeText}>{formatTime(reminderDate)}</Text>
                 </TouchableOpacity>
               </View>
             </>
           )}
         </View>
+
+        {/* ── Native time picker modal ── */}
+        <Modal
+          visible={showPicker}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowPicker(false)}>
+          <View style={styles.pickerOverlay}>
+            <View style={styles.pickerSheet}>
+              <View style={styles.pickerHeader}>
+                <Text style={styles.pickerTitle}>Set reminder time</Text>
+                <TouchableOpacity onPress={() => setShowPicker(false)}>
+                  <Text style={styles.pickerDone}>Done</Text>
+                </TouchableOpacity>
+              </View>
+              <DateTimePicker
+                value={reminderDate}
+                mode="time"
+                display="spinner"
+                onChange={(_, selected) => {if (selected) setReminderDate(selected);}}
+                textColor="#111827"
+              />
+            </View>
+          </View>
+        </Modal>
 
         <TouchableOpacity
           style={[styles.submitBtn, loading && {opacity: 0.7}]}
@@ -285,4 +311,21 @@ const styles = StyleSheet.create({
     shadowOffset: {width: 0, height: 4}, elevation: 6,
   },
   submitText: {color: '#fff', fontWeight: '800', fontSize: 16},
+
+  pickerOverlay: {
+    flex: 1, justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  pickerSheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    paddingBottom: 32,
+  },
+  pickerHeader: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16,
+    borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
+  },
+  pickerTitle: {fontSize: 16, fontWeight: '700', color: '#111827'},
+  pickerDone: {fontSize: 16, fontWeight: '700', color: PURPLE},
 });

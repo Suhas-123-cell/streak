@@ -1988,6 +1988,28 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNDateTimePicker (9.1.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RNFBApp (20.5.0):
     - Firebase/CoreOnly (= 10.29.0)
     - React-Core
@@ -2155,6 +2177,7 @@ DEPENDENCIES:
   - ReactNativeDependencies (from `../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
   - RNAudioRecorderPlayer (from `../node_modules/react-native-audio-recorder-player`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
+  - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
   - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
   - "RNFBMessaging (from `../node_modules/@react-native-firebase/messaging`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
@@ -2334,6 +2357,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-audio-recorder-player"
   RNCAsyncStorage:
     :path: "../node_modules/@react-native-async-storage/async-storage"
+  RNDateTimePicker:
+    :path: "../node_modules/@react-native-community/datetimepicker"
   RNFBApp:
     :path: "../node_modules/@react-native-firebase/app"
   RNFBMessaging:
@@ -2438,6 +2463,7 @@ SPEC CHECKSUMS:
   ReactNativeDependencies: e71c5636a9515e388e06ffe3d51302c0031123bf
   RNAudioRecorderPlayer: b5ed41ccfe72a211a870bfe09ab36c046eb27d2a
   RNCAsyncStorage: 5e197bc83d4c08d6efb9d7620b7ad2c73dbc2414
+  RNDateTimePicker: 7b2738f1e595f83c14580a11c476872755c5befc
   RNFBApp: 0e66b9f844efdf2ac3fa2b30e64c9db41a263b3d
   RNFBMessaging: 70b12c9f22c7c9d5011ac9b12ac2bafbfb081267
   RNGestureHandler: 2ff61eac036eaf89f6818bf4ed9c39771a17d134
