@@ -13,19 +13,19 @@ export default function ProofSubmitter({battleId, onSuccess}) {
   const [recording, setRecording] = useState(false);
 
   async function handlePhoto() {
-    launchCamera({mediaType: 'photo', quality: 0.8}, async response => {
-      if (response.didCancel || response.errorCode) return;
-      const asset = response.assets[0];
-      try {
-        const data = await submitCheckin(
-          battleId, 'photo', asset.uri,
-          asset.fileName || 'photo.jpg', asset.type || 'image/jpeg',
-        );
-        if (data?.ai_verified) onSuccess?.();
-      } catch (e) {
-        Alert.alert('Error', e.message);
-      }
-    });
+    const response = await launchCamera({mediaType: 'photo', quality: 0.8, saveToPhotos: false});
+    if (response.didCancel || response.errorCode) return;
+    const asset = response.assets?.[0];
+    if (!asset?.uri) return;
+    try {
+      const data = await submitCheckin(
+        battleId, 'photo', asset.uri,
+        asset.fileName || 'photo.jpg', asset.type || 'image/jpeg',
+      );
+      if (data?.ai_verified) onSuccess?.();
+    } catch (e) {
+      Alert.alert('Error', e.message);
+    }
   }
 
   async function startRecording() {
