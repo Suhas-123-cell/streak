@@ -158,8 +158,8 @@ function OnboardingEmpty({onPress}) {
 
   const steps = [
     {num: '1', title: 'Pick a habit', desc: 'Gym, reading, running — anything daily'},
-    {num: '2', title: 'Invite your people', desc: 'They'll keep you honest, and vice versa'},
-    {num: '3', title: 'Prove it daily', desc: 'Photo proof — AI verifies it's real'},
+    {num: '2', title: 'Invite your people', desc: "They'll keep you honest, and vice versa"},
+    {num: '3', title: 'Prove it daily', desc: "Photo proof — AI verifies it's real"},
   ];
 
   return (
