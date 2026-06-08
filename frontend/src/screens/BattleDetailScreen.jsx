@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useCallback} from 'react';
 import {
   View, Text, StyleSheet, SafeAreaView, ScrollView,
-  RefreshControl, StatusBar, Switch, TouchableOpacity, Modal,
+  RefreshControl, StatusBar, Switch, TouchableOpacity, Modal, Alert,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -22,12 +22,16 @@ function parseTimeToDate(timeStr) {
 }
 
 function formatTime(date) {
-  return date.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit', hour12: false});
+  if (!date) return '21:00';
+  const d = date instanceof Date ? date : new Date(date);
+  const h = d.getHours();
+  const m = d.getMinutes();
+  return (h < 10 ? '0' + h : '' + h) + ':' + (m < 10 ? '0' + m : '' + m);
 }
 
-export default function BattleDetailScreen({route}) {
+export default function BattleDetailScreen({route, navigation}) {
   const {battle} = route.params;
-  const {user, token} = useAuth();
+  const {user, token, fetchWithAuth} = useAuth();
   const {members, fetchMembers} = useMembers(battle.id);
   const [todayCheckins, setTodayCheckins] = useState([]);
   const [penalties, setPenalties] = useState([]);
@@ -63,8 +67,28 @@ export default function BattleDetailScreen({route}) {
     ).catch(() => {});
   }
 
-  function onPickerChange(_, selected) {
-    if (!selected || !isCreator) return;
+  async function handleDelete() {
+    Alert.alert(
+      'Delete Battle',
+      'This will permanently delete the battle for everyone. Continue?',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {text: 'Delete', style: 'destructive', onPress: async () => {
+          try {
+            const res = await fetchWithAuth(endpoints.battle(battle.id), {method: 'DELETE'});
+            if (res.ok) navigation.goBack();
+            else Alert.alert('Error', 'Could not delete battle.');
+          } catch (e) {
+            Alert.alert('Error', e.message);
+          }
+        }},
+      ],
+    );
+  }
+
+  function onPickerChange(val) {
+    if (!val || !isCreator) return;
+    const selected = val instanceof Date ? val : new Date(val);
     setReminderDate(selected);
     AsyncStorage.setItem(`reminder_time_${battle.id}`, formatTime(selected)).catch(() => {});
   }
@@ -111,7 +135,14 @@ export default function BattleDetailScreen({route}) {
 
         {/* Hero */}
         <View style={styles.hero}>
-          <Text style={styles.heroTitle}>{battle.habit_name}</Text>
+          <View style={styles.heroTop}>
+            <Text style={styles.heroTitle}>{battle.habit_name}</Text>
+            {battle.created_by === user.id && (
+              <TouchableOpacity onPress={handleDelete} hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                <Text style={styles.deleteBtn}>Delete</Text>
+              </TouchableOpacity>
+            )}
+          </View>
           <Text style={styles.heroSub}>{members.length} members · {checkedInIds.size} checked in today</Text>
           {battle.habit_description ? (
             <Text style={styles.heroDesc}>{battle.habit_description}</Text>
@@ -230,7 +261,7 @@ export default function BattleDetailScreen({route}) {
                 value={reminderDate}
                 mode="time"
                 display="spinner"
-                onChange={onPickerChange}
+                onValueChange={onPickerChange}
                 textColor="#111827"
               />
             </View>
@@ -288,7 +319,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff', padding: 20,
     borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
   },
-  heroTitle: {fontSize: 22, fontWeight: '800', color: '#111827'},
+  heroTop: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'},
+  heroTitle: {fontSize: 22, fontWeight: '800', color: '#111827', flex: 1},
+  deleteBtn: {fontSize: 14, fontWeight: '600', color: '#DC2626'},
   heroSub: {fontSize: 13, color: '#9CA3AF', marginTop: 4},
   heroDesc: {
     fontSize: 13, color: '#6B7280', marginTop: 10,
