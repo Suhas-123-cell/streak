@@ -35,6 +35,17 @@ frontend/**/*.p12
 frontend/**/*.mobileprovision
 frontend/**/*.orig.*
 
+# Claude Code agent worktrees
+.claude/worktrees/
+
+# Xcode
+frontend/ios/*.xcworkspace/xcuserdata/
+frontend/ios/*.xcodeproj/xcuserdata/
+frontend/ios/DerivedData/
+frontend/ios/**/*.hmap
+
 # General
 .DS_Store
+Thumbs.db
 *.log
+*.orig
