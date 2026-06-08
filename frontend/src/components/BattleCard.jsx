@@ -195,7 +195,7 @@ export default function BattleCard({battle, members, myStreak, checkedIn, onPres
         </View>
         <Text style={styles.trackLabel}>
           {checkedInCount === members.length && members.length > 0
-            ? 'Everyone's in today ✓'
+            ? "Everyone's in today ✓"
             : `${checkedInCount} of ${members.length} checked in`}
         </Text>
 
