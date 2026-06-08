@@ -222,7 +222,7 @@ export default function NewBattleScreen({navigation}) {
                 value={reminderDate}
                 mode="time"
                 display="spinner"
-                onValueChange={(val) => {if (val) setReminderDate(val instanceof Date ? val : new Date(val));}}
+                onChange={(_, val) => {if (val) setReminderDate(val instanceof Date ? val : new Date(val));}}
                 textColor="#111827"
               />
             </View>
