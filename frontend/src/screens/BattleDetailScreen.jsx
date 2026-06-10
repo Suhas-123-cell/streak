@@ -40,23 +40,19 @@ export default function BattleDetailScreen({route, navigation}) {
   const [refreshing, setRefreshing] = useState(false);
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [reminderDate, setReminderDate] = useState(() => parseTimeToDate('21:00'));
-  const [reminderCreatorId, setReminderCreatorId] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
-
-  const isCreator = user?.id && reminderCreatorId === user.id;
+  const [reminderSaved, setReminderSaved] = useState(false);
 
   useEffect(() => {
     Promise.all([
       AsyncStorage.getItem(`reminder_enabled_${battle.id}`),
       AsyncStorage.getItem(`reminder_time_${battle.id}`),
-      AsyncStorage.getItem(`reminder_creator_${battle.id}`),
-    ]).then(([rawEnabled, rawTime, rawCreator]) => {
+    ]).then(([rawEnabled, rawTime]) => {
       if (rawEnabled) {
         const saved = JSON.parse(rawEnabled);
         setReminderEnabled(saved.enabled ?? false);
       }
       if (rawTime) setReminderDate(parseTimeToDate(rawTime));
-      if (rawCreator) setReminderCreatorId(rawCreator);
     }).catch(() => {});
   }, [battle.id]);
 
@@ -100,27 +96,28 @@ export default function BattleDetailScreen({route, navigation}) {
     );
   }
 
-  function onPickerChange(val) {
-    if (!val || !isCreator) return;
+  function onPickerChange(_, val) {
+    if (!val) return;
     const selected = val instanceof Date ? val : new Date(val);
     setReminderDate(selected);
-    AsyncStorage.setItem(`reminder_time_${battle.id}`, formatTime(selected)).catch(() => {});
+  }
 
-    // Sync updated time to backend if reminder is enabled (non-blocking)
-    if (reminderEnabled) {
-      AsyncStorage.getItem('fcm_token').then(fcmToken => {
-        fetchWithAuth(endpoints.reminderPrefs, {
-          method: 'PUT',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            enabled: true,
-            reminder_time: formatTime(selected),
-            fcm_token: fcmToken || undefined,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          }),
-        }).catch(() => {});
-      }).catch(() => {});
-    }
+  async function saveReminderTime() {
+    setShowPicker(false);
+    AsyncStorage.setItem(`reminder_time_${battle.id}`, formatTime(reminderDate)).catch(() => {});
+    const fcmToken = await AsyncStorage.getItem('fcm_token').catch(() => null);
+    fetchWithAuth(endpoints.reminderPrefs, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        enabled: reminderEnabled,
+        reminder_time: formatTime(reminderDate),
+        fcm_token: fcmToken || undefined,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      }),
+    }).catch(() => {});
+    setReminderSaved(true);
+    setTimeout(() => setReminderSaved(false), 2000);
   }
 
   const headers = {Authorization: `Bearer ${token}`};
@@ -255,36 +252,29 @@ export default function BattleDetailScreen({route, navigation}) {
               <View style={styles.reminderRow}>
                 <View>
                   <Text style={styles.reminderTitle}>Reminder time</Text>
-                  <Text style={styles.reminderHint}>
-                    {isCreator ? 'Tap to change' : 'Set by group creator'}
+                  <Text style={[styles.reminderHint, reminderSaved && {color: C.green}]}>
+                    {reminderSaved ? '✅ Saved!' : 'Tap the time to change'}
                   </Text>
                 </View>
-                {isCreator ? (
-                  <TouchableOpacity style={styles.timePill} onPress={() => setShowPicker(true)}>
-                    <Text style={styles.timeText}>{formatTime(reminderDate)}</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <View style={styles.timePillReadOnly}>
-                    <Text style={styles.timeTextReadOnly}>{formatTime(reminderDate)}</Text>
-                  </View>
-                )}
+                <TouchableOpacity style={styles.timePill} onPress={() => setShowPicker(true)}>
+                  <Text style={styles.timeText}>{formatTime(reminderDate)}  ✎</Text>
+                </TouchableOpacity>
               </View>
             </>
           )}
         </View>
 
-        {/* Native time picker — creator only */}
         <Modal
           visible={showPicker}
           transparent
           animationType="slide"
-          onRequestClose={() => setShowPicker(false)}>
+          onRequestClose={saveReminderTime}>
           <View style={styles.pickerOverlay}>
             <View style={styles.pickerSheet}>
               <View style={styles.pickerHeader}>
                 <Text style={styles.pickerTitle}>Set reminder time</Text>
-                <TouchableOpacity onPress={() => setShowPicker(false)}>
-                  <Text style={styles.pickerDone}>Done</Text>
+                <TouchableOpacity onPress={saveReminderTime}>
+                  <Text style={styles.pickerDone}>Save</Text>
                 </TouchableOpacity>
               </View>
               <DateTimePicker
@@ -432,11 +422,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1, borderColor: C.cyan,
   },
   timeText: {color: C.cyan, fontWeight: '700', fontSize: 15},
-  timePillReadOnly: {
-    backgroundColor: C.white08, borderRadius: 20,
-    paddingHorizontal: 16, paddingVertical: 8,
-  },
-  timeTextReadOnly: {color: C.white40, fontWeight: '600', fontSize: 15},
+  timeEdit: {color: C.white40, fontWeight: '400', fontSize: 13},
   pickerOverlay: {
     flex: 1, justifyContent: 'flex-end',
     backgroundColor: 'rgba(0,0,0,0.6)',
