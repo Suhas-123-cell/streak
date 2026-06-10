@@ -1,6 +1,6 @@
 import Config from 'react-native-config';
 
-export const API_URL = Config.API_URL || 'http://localhost:8000/api';
+export const API_URL = Config.API_URL || 'http://192.168.0.177:8000/api';
 
 export const endpoints = {
   signup: `${API_URL}/auth/signup`,
@@ -23,4 +23,5 @@ export const endpoints = {
   globalLeaderboard: `${API_URL}/leaderboard/global`,
   battleLeaderboard: (id) => `${API_URL}/leaderboard/${id}`,
   pushToken: `${API_URL}/push-token`,
+  reminderPrefs: `${API_URL}/reminder`,
 };
