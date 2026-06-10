@@ -12,7 +12,8 @@ import ProofSubmitter from '../components/ProofSubmitter';
 import PenaltyAssigner from '../components/PenaltyAssigner';
 import {endpoints} from '../constants/api';
 
-const PURPLE = '#7C3AED';
+import {C} from '../constants/theme';
+const PURPLE = C.cyan;
 
 function parseTimeToDate(timeStr) {
   const [h, m] = (timeStr || '21:00').split(':').map(Number);
@@ -42,7 +43,7 @@ export default function BattleDetailScreen({route, navigation}) {
   const [reminderCreatorId, setReminderCreatorId] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
 
-  const isCreator = reminderCreatorId === user.id;
+  const isCreator = user?.id && reminderCreatorId === user.id;
 
   useEffect(() => {
     Promise.all([
@@ -59,12 +60,25 @@ export default function BattleDetailScreen({route, navigation}) {
     }).catch(() => {});
   }, [battle.id]);
 
-  function toggleReminder(val) {
+  async function toggleReminder(val) {
     setReminderEnabled(val);
     AsyncStorage.setItem(
       `reminder_enabled_${battle.id}`,
       JSON.stringify({enabled: val}),
     ).catch(() => {});
+
+    // Sync to backend (non-blocking)
+    const fcmToken = await AsyncStorage.getItem('fcm_token').catch(() => null);
+    fetchWithAuth(endpoints.reminderPrefs, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        enabled: val,
+        reminder_time: formatTime(reminderDate),
+        fcm_token: fcmToken || undefined,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      }),
+    }).catch(() => {});
   }
 
   async function handleDelete() {
@@ -91,6 +105,22 @@ export default function BattleDetailScreen({route, navigation}) {
     const selected = val instanceof Date ? val : new Date(val);
     setReminderDate(selected);
     AsyncStorage.setItem(`reminder_time_${battle.id}`, formatTime(selected)).catch(() => {});
+
+    // Sync updated time to backend if reminder is enabled (non-blocking)
+    if (reminderEnabled) {
+      AsyncStorage.getItem('fcm_token').then(fcmToken => {
+        fetchWithAuth(endpoints.reminderPrefs, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            enabled: true,
+            reminder_time: formatTime(selected),
+            fcm_token: fcmToken || undefined,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          }),
+        }).catch(() => {});
+      }).catch(() => {});
+    }
   }
 
   const headers = {Authorization: `Bearer ${token}`};
@@ -126,7 +156,7 @@ export default function BattleDetailScreen({route, navigation}) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="light-content" backgroundColor={C.bgDeep} />
       <ScrollView
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={PURPLE} />
@@ -314,110 +344,113 @@ export default function BattleDetailScreen({route, navigation}) {
 }
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: '#F9FAFB'},
+  safe: {flex: 1, backgroundColor: C.bg},
   hero: {
-    backgroundColor: '#fff', padding: 20,
-    borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
+    backgroundColor: C.bgDeep, padding: 20,
+    borderBottomWidth: 1, borderBottomColor: C.white15,
   },
   heroTop: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'},
-  heroTitle: {fontSize: 22, fontWeight: '800', color: '#111827', flex: 1},
-  deleteBtn: {fontSize: 14, fontWeight: '600', color: '#DC2626'},
-  heroSub: {fontSize: 13, color: '#9CA3AF', marginTop: 4},
+  heroTitle: {fontSize: 22, fontWeight: '900', color: C.yellow, flex: 1, letterSpacing: 0.5},
+  deleteBtn: {fontSize: 14, fontWeight: '700', color: C.pink},
+  heroSub: {fontSize: 13, color: C.white40, marginTop: 4},
   heroDesc: {
-    fontSize: 13, color: '#6B7280', marginTop: 10,
-    backgroundColor: '#F9FAFB', borderRadius: 8, padding: 10,
-    lineHeight: 18,
+    fontSize: 13, color: C.white70, marginTop: 10,
+    backgroundColor: C.white08, borderRadius: 8, padding: 10,
+    lineHeight: 18, borderWidth: 1, borderColor: C.white15,
   },
   progressCard: {
-    backgroundColor: '#fff', marginHorizontal: 16, marginTop: 12,
-    borderRadius: 14, padding: 16,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8,
-    shadowOffset: {width: 0, height: 2}, elevation: 2,
+    backgroundColor: C.card, marginHorizontal: 16, marginTop: 12,
+    borderRadius: 14, padding: 16, borderWidth: 1, borderColor: C.cardBorder,
+    shadowColor: C.cyan, shadowOpacity: 0.1, shadowRadius: 10,
+    shadowOffset: {width: 0, height: 2}, elevation: 3,
   },
   progressHeader: {flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8},
-  progressLabel: {fontSize: 13, color: '#6B7280'},
-  progressCount: {fontSize: 13, fontWeight: '700', color: '#111827'},
-  progressTrack: {height: 8, backgroundColor: '#F3F4F6', borderRadius: 4, overflow: 'hidden'},
+  progressLabel: {fontSize: 13, color: C.white40},
+  progressCount: {fontSize: 13, fontWeight: '800', color: C.yellow},
+  progressTrack: {height: 8, backgroundColor: C.white15, borderRadius: 4, overflow: 'hidden'},
   progressFill: {height: 8, backgroundColor: PURPLE, borderRadius: 4},
   section: {
-    fontSize: 11, fontWeight: '700', color: '#9CA3AF',
-    textTransform: 'uppercase', letterSpacing: 1,
+    fontSize: 10, fontWeight: '800', color: C.white40,
+    textTransform: 'uppercase', letterSpacing: 1.5,
     marginTop: 20, marginBottom: 6, marginHorizontal: 20,
   },
   listCard: {
-    backgroundColor: '#fff', marginHorizontal: 16, borderRadius: 14, overflow: 'hidden',
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8,
-    shadowOffset: {width: 0, height: 2}, elevation: 2,
+    backgroundColor: C.card, marginHorizontal: 16, borderRadius: 14, overflow: 'hidden',
+    borderWidth: 1, borderColor: C.cardBorder,
   },
   verifiedCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: '#F0FDF4', marginHorizontal: 16, borderRadius: 14,
-    padding: 16, borderWidth: 1, borderColor: '#BBF7D0',
+    backgroundColor: 'rgba(57,255,20,0.08)', marginHorizontal: 16, borderRadius: 14,
+    padding: 16, borderWidth: 1, borderColor: 'rgba(57,255,20,0.35)',
   },
   verifiedEmoji: {fontSize: 28},
-  verifiedTitle: {fontWeight: '700', color: '#15803D', fontSize: 15},
-  verifiedReason: {color: '#6B7280', fontSize: 13, marginTop: 2},
+  verifiedTitle: {fontWeight: '800', color: C.green, fontSize: 15},
+  verifiedReason: {color: C.white70, fontSize: 13, marginTop: 2},
   penaltyWrap: {marginHorizontal: 16, gap: 6},
   penaltyRow: {
-    padding: 14, borderBottomWidth: 1, borderBottomColor: '#F9FAFB',
+    padding: 14, borderBottomWidth: 1, borderBottomColor: C.white08,
   },
-  penaltyName: {fontWeight: '700', color: '#111827', fontSize: 14},
-  penaltyText: {color: '#6B7280', fontSize: 13, marginTop: 2},
+  penaltyName: {fontWeight: '700', color: C.white, fontSize: 14},
+  penaltyText: {color: C.white70, fontSize: 13, marginTop: 2},
   penaltyStatus: {
     alignSelf: 'flex-start', marginTop: 6, borderRadius: 8,
-    backgroundColor: '#FEF3C7', paddingHorizontal: 8, paddingVertical: 3,
+    backgroundColor: 'rgba(255,140,66,0.12)', paddingHorizontal: 8, paddingVertical: 3,
+    borderWidth: 1, borderColor: 'rgba(255,140,66,0.35)',
   },
-  penaltyDone: {backgroundColor: '#F0FDF4'},
-  penaltyStatusText: {fontSize: 11, fontWeight: '600', color: '#92400E'},
+  penaltyDone: {
+    backgroundColor: 'rgba(57,255,20,0.1)',
+    borderColor: 'rgba(57,255,20,0.3)',
+  },
+  penaltyStatusText: {fontSize: 11, fontWeight: '700', color: C.orange},
   feedRow: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 10,
-    padding: 14, borderBottomWidth: 1, borderBottomColor: '#F9FAFB',
+    padding: 14, borderBottomWidth: 1, borderBottomColor: C.white08,
   },
   feedAvatar: {
     width: 34, height: 34, borderRadius: 17,
-    backgroundColor: '#EDE9FE', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(78,201,232,0.15)', alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: C.cyan,
   },
   feedInitial: {fontSize: 13, fontWeight: '700', color: PURPLE},
   feedContent: {flex: 1},
-  feedName: {fontWeight: '700', color: '#111827', fontSize: 14},
-  feedScore: {color: '#6B7280', fontSize: 12, marginTop: 2},
-  empty: {padding: 20, color: '#9CA3AF', textAlign: 'center'},
+  feedName: {fontWeight: '700', color: C.white, fontSize: 14},
+  feedScore: {color: C.white40, fontSize: 12, marginTop: 2},
+  empty: {padding: 20, color: C.white40, textAlign: 'center'},
   reminderCard: {
-    backgroundColor: '#fff', marginHorizontal: 16, borderRadius: 14, overflow: 'hidden',
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8,
-    shadowOffset: {width: 0, height: 2}, elevation: 2,
+    backgroundColor: C.card, marginHorizontal: 16, borderRadius: 14, overflow: 'hidden',
+    borderWidth: 1, borderColor: C.cardBorder,
   },
   reminderRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     padding: 16,
   },
-  reminderTitle: {fontSize: 15, fontWeight: '600', color: '#111827'},
-  reminderHint: {fontSize: 12, color: '#9CA3AF', marginTop: 2},
-  reminderDivider: {height: 1, backgroundColor: '#F3F4F6'},
+  reminderTitle: {fontSize: 15, fontWeight: '600', color: C.white},
+  reminderHint: {fontSize: 12, color: C.white40, marginTop: 2},
+  reminderDivider: {height: 1, backgroundColor: C.white15},
   timePill: {
-    backgroundColor: '#EDE9FE', borderRadius: 20,
-    paddingHorizontal: 16, paddingVertical: 8,
+    backgroundColor: 'rgba(78,201,232,0.15)', borderRadius: 20,
+    paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1, borderColor: C.cyan,
   },
-  timeText: {color: PURPLE, fontWeight: '700', fontSize: 15},
+  timeText: {color: C.cyan, fontWeight: '700', fontSize: 15},
   timePillReadOnly: {
-    backgroundColor: '#F3F4F6', borderRadius: 20,
+    backgroundColor: C.white08, borderRadius: 20,
     paddingHorizontal: 16, paddingVertical: 8,
   },
-  timeTextReadOnly: {color: '#9CA3AF', fontWeight: '600', fontSize: 15},
+  timeTextReadOnly: {color: C.white40, fontWeight: '600', fontSize: 15},
   pickerOverlay: {
     flex: 1, justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
   },
   pickerSheet: {
-    backgroundColor: '#fff',
+    backgroundColor: C.bgDeep,
     borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    paddingBottom: 32,
+    paddingBottom: 32, borderTopWidth: 1, borderTopColor: C.white15,
   },
   pickerHeader: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16,
-    borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
+    borderBottomWidth: 1, borderBottomColor: C.white15,
   },
-  pickerTitle: {fontSize: 16, fontWeight: '700', color: '#111827'},
-  pickerDone: {fontSize: 16, fontWeight: '700', color: PURPLE},
+  pickerTitle: {fontSize: 16, fontWeight: '700', color: C.white},
+  pickerDone: {fontSize: 16, fontWeight: '700', color: C.yellow},
 });
