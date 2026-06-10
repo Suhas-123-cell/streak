@@ -65,7 +65,45 @@ async def update_push_token(body: dict, user=Depends(get_current_user)):
     token = body.get("fcm_token")
     if not token:
         raise HTTPException(400, "fcm_token required")
-    supabase.table("reminder_preferences").update({"fcm_token": token}).eq(
-        "user_id", user.id
+    supabase.table("reminder_preferences").upsert(
+        {"user_id": user.id, "fcm_token": token}
     ).execute()
+    return {"ok": True}
+
+
+class ReminderPrefsRequest(BaseModel):
+    enabled: bool
+    reminder_time: str = "21:00"
+    fcm_token: Optional[str] = None
+    timezone: str = "UTC"
+
+
+@router.get("/reminder")
+async def get_reminder_prefs(user=Depends(get_current_user)):
+    result = supabase.table("reminder_preferences").select("*").eq("user_id", user.id).single().execute()
+    return result.data or {}
+
+
+@router.put("/reminder")
+async def update_reminder_prefs(req: ReminderPrefsRequest, user=Depends(get_current_user)):
+    data = {
+        "user_id": user.id,
+        "enabled": req.enabled,
+        "reminder_time": req.reminder_time,
+        "timezone": req.timezone,
+    }
+    if req.fcm_token:
+        data["fcm_token"] = req.fcm_token
+
+    supabase.table("reminder_preferences").upsert(data).execute()
+    return {"ok": True}
+
+
+class FCMTokenRequest(BaseModel):
+    fcm_token: str
+
+
+@router.put("/fcm-token")
+async def update_fcm_token(req: FCMTokenRequest, user=Depends(get_current_user)):
+    supabase.table("reminder_preferences").update({"fcm_token": req.fcm_token}).eq("user_id", user.id).execute()
     return {"ok": True}
