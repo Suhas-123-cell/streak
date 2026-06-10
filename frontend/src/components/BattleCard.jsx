@@ -4,13 +4,15 @@ import {
   Animated, Easing,
 } from 'react-native';
 
-const ACCENT = '#7C3AED';
-const SUCCESS = '#16A34A';
-const PENDING = '#EA580C';
-const TEXT_1 = '#1C1917';
-const TEXT_2 = '#78716C';
-const TEXT_3 = '#A8A29E';
-const BORDER = '#E7E5E4';
+import {C} from '../constants/theme';
+
+const ACCENT  = C.cyan;
+const SUCCESS = C.green;
+const PENDING = C.orange;
+const TEXT_1  = C.white;
+const TEXT_2  = C.white70;
+const TEXT_3  = C.white40;
+const BORDER  = C.white15;
 
 function MemberDot({member, isCheckedIn, delay}) {
   const anim = useRef(new Animated.Value(0)).current;
@@ -49,8 +51,6 @@ function hoursLeft() {
 }
 
 export default function BattleCard({battle, members, myStreak, checkedIn, onPress, index = 0}) {
-  const sorted = [...members].sort((a, b) => b.current_streak - a.current_streak);
-  const top3 = sorted.slice(0, 3);
   const checkedInCount = members.filter(m => m.checked_in_today).length;
   const pct = members.length ? checkedInCount / members.length : 0;
   const hrs = hoursLeft();
@@ -145,17 +145,21 @@ export default function BattleCard({battle, members, myStreak, checkedIn, onPres
         {/* ── Header ── */}
         <View style={styles.header}>
           <View style={{flex: 1, marginRight: 10}}>
-            <Text style={styles.habitName}>{battle.habit_name}</Text>
+            <Text style={[styles.habitName, !checkedIn && hrs <= 3 && {color: C.pink}]}>{battle.habit_name}</Text>
             <Text style={styles.meta}>
               {members.length} members
               {!checkedIn && hrs <= 12 && (
-                <Text style={styles.urgency}> · {hrs}h left</Text>
+                <Text style={[styles.urgency, {color: hrs <= 3 ? C.pink : PENDING}]}> · {hrs}h left</Text>
               )}
             </Text>
           </View>
           {checkedIn
             ? <View style={styles.tagDone}><Text style={styles.tagDoneText}>done ✓</Text></View>
-            : <View style={styles.tagPending}><Text style={styles.tagPendingText}>pending</Text></View>
+            : <View style={[styles.tagPending, hrs <= 3 && styles.tagCritical]}>
+                <Text style={[styles.tagPendingText, hrs <= 3 && {color: C.pink}]}>
+                  {hrs <= 3 ? '⚠ urgent' : 'pending'}
+                </Text>
+              </View>
           }
         </View>
 
@@ -199,19 +203,6 @@ export default function BattleCard({battle, members, myStreak, checkedIn, onPres
             : `${checkedInCount} of ${members.length} checked in`}
         </Text>
 
-        {/* ── Mini leaderboard ── */}
-        {top3.length > 0 && (
-          <View style={styles.leaderboard}>
-            {top3.map((m, i) => (
-              <View key={m.user_id} style={styles.lbRow}>
-                <Text style={styles.medal}>{['🥇','🥈','🥉'][i]}</Text>
-                <Text style={styles.lbName} numberOfLines={1}>{m.profiles?.username}</Text>
-                <Text style={styles.lbStreak}>🔥 {m.current_streak}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-
         {/* ── Pulsing submit button ── */}
         {!checkedIn && (
           <Animated.View style={{transform: [{scale: btnScale}], marginTop: 14}}>
@@ -228,76 +219,77 @@ export default function BattleCard({battle, members, myStreak, checkedIn, onPres
 const styles = StyleSheet.create({
   wrap: {marginHorizontal: 16, marginVertical: 6},
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: C.card,
     borderRadius: 18,
     padding: 18,
-    shadowColor: '#1C1917',
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
+    borderWidth: 1,
+    borderColor: C.cardBorder,
+    shadowColor: C.cyan,
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
     shadowOffset: {width: 0, height: 3},
-    elevation: 3,
+    elevation: 4,
   },
 
   header: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start'},
-  habitName: {fontSize: 17, fontWeight: '700', color: TEXT_1, lineHeight: 22},
+  habitName: {fontSize: 21, fontWeight: '800', color: TEXT_1, lineHeight: 26, letterSpacing: 0.2},
   meta: {fontSize: 13, color: TEXT_2, marginTop: 2},
-  urgency: {color: PENDING, fontWeight: '600'},
+  urgency: {fontWeight: '700'},
 
   tagDone: {
-    backgroundColor: '#DCFCE7', borderRadius: 20,
+    backgroundColor: 'rgba(57,255,20,0.12)', borderRadius: 20,
     paddingHorizontal: 10, paddingVertical: 4,
+    borderWidth: 1, borderColor: 'rgba(57,255,20,0.4)',
   },
-  tagDoneText: {fontSize: 12, fontWeight: '600', color: SUCCESS},
+  tagDoneText: {fontSize: 12, fontWeight: '700', color: SUCCESS},
   tagPending: {
-    backgroundColor: '#FEF3C7', borderRadius: 20,
+    backgroundColor: 'rgba(255,140,66,0.12)', borderRadius: 20,
     paddingHorizontal: 10, paddingVertical: 4,
+    borderWidth: 1, borderColor: 'rgba(255,140,66,0.4)',
   },
-  tagPendingText: {fontSize: 12, fontWeight: '500', color: '#92400E'},
+  tagCritical: {
+    backgroundColor: 'rgba(255,56,100,0.12)',
+    borderColor: 'rgba(255,56,100,0.4)',
+  },
+  tagPendingText: {fontSize: 12, fontWeight: '700', color: PENDING},
 
   dotsRow: {flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 14},
   dot: {
     width: 32, height: 32, borderRadius: 16,
     alignItems: 'center', justifyContent: 'center',
   },
-  dotDone: {backgroundColor: '#EDE9FE', borderWidth: 2, borderColor: ACCENT},
-  dotPending: {backgroundColor: '#F5F5F4', borderWidth: 1, borderColor: BORDER},
+  dotDone: {backgroundColor: 'rgba(78,201,232,0.15)', borderWidth: 2, borderColor: ACCENT},
+  dotPending: {backgroundColor: C.white08, borderWidth: 1, borderColor: BORDER},
   dotText: {fontSize: 12, fontWeight: '700'},
   dotTextDone: {color: ACCENT},
   dotTextPending: {color: TEXT_3},
   dotCheck: {
     position: 'absolute', bottom: -2, right: -2,
     width: 10, height: 10, borderRadius: 5,
-    backgroundColor: SUCCESS, borderWidth: 1.5, borderColor: '#fff',
+    backgroundColor: SUCCESS, borderWidth: 1.5, borderColor: C.bgDeep,
   },
-  dotOverflow: {backgroundColor: '#F5F5F4'},
+  dotOverflow: {backgroundColor: C.white08},
   dotOverflowText: {fontSize: 10, fontWeight: '600', color: TEXT_3},
 
   statsRow: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', marginTop: 14,
   },
-  streakLine: {fontSize: 14, fontWeight: '600', flex: 1},
-  countText: {fontSize: 14, fontWeight: '700', color: TEXT_1, marginLeft: 8},
+  streakLine: {fontSize: 14, fontWeight: '700', flex: 1},
+  countText: {fontSize: 14, fontWeight: '800', color: C.yellow, marginLeft: 8},
 
   track: {
-    height: 5, backgroundColor: '#F3F4F6',
+    height: 5, backgroundColor: C.white15,
     borderRadius: 3, overflow: 'hidden', marginTop: 8,
   },
   fill: {height: 5, borderRadius: 3},
   trackLabel: {fontSize: 12, color: TEXT_2, marginTop: 5},
 
-  leaderboard: {
-    marginTop: 14, paddingTop: 14,
-    borderTopWidth: 1, borderTopColor: BORDER, gap: 8,
-  },
-  lbRow: {flexDirection: 'row', alignItems: 'center', gap: 8},
-  medal: {fontSize: 16, width: 24},
-  lbName: {flex: 1, fontSize: 13, color: '#374151', fontWeight: '500'},
-  lbStreak: {fontSize: 13, color: TEXT_2},
-
   submitBtn: {
-    backgroundColor: ACCENT, borderRadius: 12,
+    backgroundColor: C.yellow, borderRadius: 12,
     paddingVertical: 13, alignItems: 'center',
+    shadowColor: C.yellow, shadowOpacity: 0.35, shadowRadius: 10,
+    shadowOffset: {width: 0, height: 3}, elevation: 6,
   },
-  submitText: {color: '#fff', fontSize: 14, fontWeight: '700', letterSpacing: 0.2},
+  submitText: {color: C.bgDeep, fontSize: 14, fontWeight: '900', letterSpacing: 0.8},
 });

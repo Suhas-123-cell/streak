@@ -1,10 +1,6 @@
 import React from 'react';
 import {View, Text, Image, StyleSheet} from 'react-native';
-
-const PURPLE = '#7C3AED';
-const GREEN = '#22C55E';
-const RED = '#EF4444';
-const ORANGE = '#FF6B00';
+import {C} from '../constants/theme';
 
 export default function MemberRow({member, rank, isMe}) {
   const profile = member.profiles || {};
@@ -28,7 +24,7 @@ export default function MemberRow({member, rank, isMe}) {
       {profile.avatar_url ? (
         <Image source={{uri: profile.avatar_url}} style={styles.avatar} />
       ) : (
-        <View style={[styles.avatar, styles.avatarFallback, isMe && {backgroundColor: PURPLE}]}>
+        <View style={[styles.avatar, styles.avatarFallback, isMe && {backgroundColor: 'rgba(78,201,232,0.15)'}]}>
           <Text style={styles.avatarInitial}>
             {(profile.username || '?')[0].toUpperCase()}
           </Text>
@@ -43,7 +39,7 @@ export default function MemberRow({member, rank, isMe}) {
         <View style={styles.streakPill}>
           <Text style={styles.streakText}>🔥 {member.current_streak}</Text>
         </View>
-        <View style={[styles.statusDot, {backgroundColor: checkedIn ? GREEN : '#E5E7EB'}]}>
+        <View style={[styles.statusDot, {backgroundColor: checkedIn ? C.green : C.white15}]}>
           <Text style={styles.statusIcon}>{checkedIn ? '✓' : '·'}</Text>
         </View>
       </View>
@@ -55,28 +51,32 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row', alignItems: 'center',
     paddingVertical: 10, paddingHorizontal: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1, borderBottomColor: '#F9FAFB',
+    backgroundColor: 'transparent',
+    borderBottomWidth: 1, borderBottomColor: C.white08,
     position: 'relative', overflow: 'hidden',
   },
-  myRow: {backgroundColor: '#F5F3FF'},
+  myRow: {backgroundColor: 'rgba(78,201,232,0.08)'},
   myGlow: {
     position: 'absolute', left: 0, top: 0, bottom: 0,
-    width: 3, backgroundColor: PURPLE,
+    width: 3, backgroundColor: C.yellow,
   },
   rankWrap: {width: 36, alignItems: 'center'},
   medal: {fontSize: 18},
-  rankNum: {fontSize: 14, color: '#9CA3AF', fontWeight: '600'},
+  rankNum: {fontSize: 14, color: C.white40, fontWeight: '600'},
   avatar: {width: 38, height: 38, borderRadius: 19, marginRight: 12},
-  avatarFallback: {backgroundColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center'},
-  avatarInitial: {fontSize: 15, fontWeight: '700', color: '#fff'},
-  name: {flex: 1, fontSize: 14, fontWeight: '600', color: '#111827'},
+  avatarFallback: {
+    backgroundColor: 'rgba(78,201,232,0.15)',
+    borderWidth: 1, borderColor: C.cyan,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  avatarInitial: {fontSize: 15, fontWeight: '700', color: C.cyan},
+  name: {flex: 1, fontSize: 14, fontWeight: '600', color: C.white},
   right: {flexDirection: 'row', alignItems: 'center', gap: 8},
   streakPill: {
-    backgroundColor: '#FFF7ED', borderRadius: 12,
+    backgroundColor: 'rgba(255,140,66,0.12)', borderRadius: 12,
     paddingHorizontal: 10, paddingVertical: 4,
   },
-  streakText: {fontSize: 12, fontWeight: '700', color: '#92400E'},
+  streakText: {fontSize: 12, fontWeight: '700', color: C.orange},
   statusDot: {width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center'},
-  statusIcon: {color: '#fff', fontSize: 12, fontWeight: '800'},
+  statusIcon: {color: C.white, fontSize: 12, fontWeight: '800'},
 });

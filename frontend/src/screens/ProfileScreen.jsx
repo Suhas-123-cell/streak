@@ -6,11 +6,12 @@ import {
 import {useAuth} from '../context/AuthContext';
 import {endpoints} from '../constants/api';
 
-const BG = '#F8F7F4';
-const ACCENT = '#7C3AED';
-const TEXT_1 = '#1C1917';
-const TEXT_2 = '#78716C';
-const BORDER = '#E7E5E4';
+import {C} from '../constants/theme';
+const BG     = C.bg;
+const ACCENT = C.cyan;
+const TEXT_1 = C.white;
+const TEXT_2 = C.white70;
+const BORDER = C.white15;
 
 // Count-up number that animates from 0 to target
 function StatNum({value, style}) {
@@ -92,7 +93,7 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="dark-content" backgroundColor={BG} />
+      <StatusBar barStyle="light-content" backgroundColor={C.bgDeep} />
       <ScrollView contentContainerStyle={styles.content}>
 
         <Animated.View style={[
@@ -141,11 +142,18 @@ const styles = StyleSheet.create({
   topSection: {paddingTop: 32, paddingHorizontal: 20},
   avatar: {
     width: 72, height: 72, borderRadius: 36,
-    backgroundColor: ACCENT,
+    backgroundColor: 'rgba(78,201,232,0.15)',
     alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2, borderColor: C.cyan,
+    shadowColor: C.cyan, shadowOpacity: 0.4,
+    shadowRadius: 16, shadowOffset: {width: 0, height: 0},
+    elevation: 8,
   },
-  avatarText: {color: '#fff', fontSize: 28, fontWeight: '800'},
-  username: {fontSize: 22, fontWeight: '800', color: TEXT_1, marginTop: 12},
+  avatarText: {color: C.cyan, fontSize: 28, fontWeight: '900'},
+  username: {
+    fontSize: 22, fontWeight: '900', color: C.yellow, marginTop: 12,
+    letterSpacing: 0.5,
+  },
   email: {fontSize: 13, color: TEXT_2, marginTop: 2},
 
   divider: {height: 1, backgroundColor: BORDER, marginHorizontal: 20, marginVertical: 20},
@@ -155,22 +163,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   stat: {},
-  statNum: {fontSize: 24, fontWeight: '800', color: TEXT_1},
-  statLabel: {fontSize: 11, color: TEXT_2, marginTop: 2},
+  statNum: {
+    fontSize: 28, fontWeight: '900', color: C.yellow,
+    textShadowColor: C.cyan, textShadowRadius: 6,
+    textShadowOffset: {width: 1, height: 1},
+  },
+  statLabel: {fontSize: 11, color: TEXT_2, marginTop: 2, fontWeight: '600', letterSpacing: 0.5},
 
   quote: {
-    fontSize: 14, fontStyle: 'italic', color: TEXT_2,
+    fontSize: 14, fontStyle: 'italic', color: C.white40,
     lineHeight: 20, paddingHorizontal: 20, marginBottom: 8,
   },
 
   logoutWrap: {
     paddingHorizontal: 20, paddingVertical: 14,
-    backgroundColor: BG,
+    backgroundColor: C.bgDeep,
     borderTopWidth: 1, borderTopColor: BORDER,
   },
   logoutBtn: {
-    borderRadius: 10, paddingVertical: 14, alignItems: 'center',
-    borderWidth: 1, borderColor: '#FCA5A5',
+    borderRadius: 12, paddingVertical: 14, alignItems: 'center',
+    borderWidth: 1, borderColor: 'rgba(255,56,100,0.5)',
+    backgroundColor: 'rgba(255,56,100,0.08)',
   },
-  logoutText: {color: '#DC2626', fontWeight: '600', fontSize: 15},
+  logoutText: {color: C.pink, fontWeight: '700', fontSize: 15, letterSpacing: 0.5},
 });
