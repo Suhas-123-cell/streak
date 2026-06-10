@@ -84,8 +84,16 @@ async def get_members(battle_id: str, user=Depends(get_current_user)):
     )
 
     today = date.today().isoformat()
-    checkin_key = f"battle:{battle_id}:checkedin:{today}"
-    checked_in_ids = r.smembers(checkin_key)
+    # Use DB so any submission (verified or not) marks member as checked in
+    today_checkins = (
+        supabase.table("checkins")
+        .select("user_id")
+        .eq("battle_id", battle_id)
+        .eq("date", today)
+        .execute()
+        .data
+    )
+    checked_in_ids = {c["user_id"] for c in today_checkins}
 
     result = []
     for m in members:

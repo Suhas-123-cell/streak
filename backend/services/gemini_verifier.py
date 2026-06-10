@@ -1,12 +1,14 @@
 import os
 import json
-import google.generativeai as genai
+import io
+import PIL.Image
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 
 load_dotenv()
 
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-model = genai.GenerativeModel("gemini-2.0-flash-exp")
+client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
 PHOTO_PROMPT = """You are a strict habit accountability judge.
 
@@ -45,14 +47,25 @@ def _parse(text: str) -> dict:
 
 
 def verify_photo(image_path: str, habit: str, rules: str) -> dict:
-    import PIL.Image
     img = PIL.Image.open(image_path)
+    buf = io.BytesIO()
+    img.save(buf, format='JPEG')
+    image_bytes = buf.getvalue()
     prompt = PHOTO_PROMPT.format(habit=habit, rules=rules or "")
-    response = model.generate_content([prompt, img])
+    response = client.models.generate_content(
+        model='gemini-2.5-flash',
+        contents=[
+            prompt,
+            types.Part.from_bytes(data=image_bytes, mime_type='image/jpeg')
+        ]
+    )
     return _parse(response.text)
 
 
 def verify_voice(transcript: str, habit: str, rules: str) -> dict:
     prompt = VOICE_PROMPT.format(habit=habit, rules=rules or "", transcript=transcript)
-    response = model.generate_content(prompt)
+    response = client.models.generate_content(
+        model='gemini-2.5-flash',
+        contents=prompt
+    )
     return _parse(response.text)
