@@ -7,12 +7,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {useBattles} from '../hooks/useBattles';
 import {useAuth} from '../context/AuthContext';
+import {C} from '../constants/theme';
 
-const PURPLE = '#7C3AED';
-const TEXT_1 = '#111827';
-const TEXT_2 = '#6B7280';
-const TEXT_3 = '#9CA3AF';
-const BORDER = '#E5E7EB';
+const PURPLE = C.cyan;
+const TEXT_1 = C.white;
+const TEXT_2 = C.white70;
+const TEXT_3 = C.white40;
+const BORDER = C.cardBorder;
 
 function formatTime(date) {
   if (!date) return '21:00';
@@ -21,6 +22,15 @@ function formatTime(date) {
   const m = d.getMinutes();
   return (h < 10 ? '0' + h : '' + h) + ':' + (m < 10 ? '0' + m : '' + m);
 }
+
+const PENALTY_PRESETS = [
+  {emoji: '☕', label: 'Buy coffee', value: 'Buy coffee for everyone in the battle'},
+  {emoji: '💪', label: '100 pushups', value: 'Do 100 pushups on camera'},
+  {emoji: '💸', label: 'Venmo $5', value: 'Venmo $5 to whoever has the longest streak'},
+  {emoji: '😬', label: 'Public apology', value: 'Post a public apology story'},
+  {emoji: '🥶', label: 'Cold shower', value: 'Take a cold shower on camera'},
+  {emoji: '🍕', label: 'Buy pizza', value: 'Buy the group pizza'},
+];
 
 const TEMPLATES = [
   {emoji: '🏋️', name: 'Gym', desc: 'Show gym equipment or entrance selfie'},
@@ -40,6 +50,8 @@ export default function NewBattleScreen({navigation}) {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [defaultPenalty, setDefaultPenalty] = useState('');
+  const [selectedPenaltyPreset, setSelectedPenaltyPreset] = useState(null);
 
   // Reminder — creator sets this for the whole group
   const [reminderEnabled, setReminderEnabled] = useState(false);
@@ -73,14 +85,18 @@ export default function NewBattleScreen({navigation}) {
       const newBattle = await createBattle(habitName.trim(), habitDesc.trim(), members, null);
       // Persist reminder so BattleDetail knows the creator and their chosen time
       if (newBattle?.id) {
-        await Promise.all([
+        const saves = [
           AsyncStorage.setItem(`reminder_time_${newBattle.id}`, formatTime(reminderDate)),
           AsyncStorage.setItem(`reminder_creator_${newBattle.id}`, user.id),
           AsyncStorage.setItem(
             `reminder_enabled_${newBattle.id}`,
             JSON.stringify({enabled: reminderEnabled}),
           ),
-        ]);
+        ];
+        if (defaultPenalty.trim()) {
+          saves.push(AsyncStorage.setItem(`penalty_default_${newBattle.id}`, defaultPenalty.trim()));
+        }
+        await Promise.all(saves);
       }
       navigation.goBack();
     } catch (e) {
@@ -92,7 +108,7 @@ export default function NewBattleScreen({navigation}) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8F7F4" />
+      <StatusBar barStyle="light-content" backgroundColor={C.bg} />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.heading}>New Battle</Text>
         <Text style={styles.headingSub}>Set the habit and invite your crew</Text>
@@ -184,8 +200,8 @@ export default function NewBattleScreen({navigation}) {
             <Switch
               value={reminderEnabled}
               onValueChange={setReminderEnabled}
-              trackColor={{false: BORDER, true: '#A78BFA'}}
-              thumbColor={reminderEnabled ? PURPLE : TEXT_3}
+              trackColor={{false: C.white15, true: C.cyan}}
+              thumbColor={reminderEnabled ? C.yellow : C.white40}
             />
           </View>
           {reminderEnabled && (
@@ -223,11 +239,53 @@ export default function NewBattleScreen({navigation}) {
                 mode="time"
                 display="spinner"
                 onChange={(_, val) => {if (val) setReminderDate(val instanceof Date ? val : new Date(val));}}
-                textColor="#111827"
+                textColor={C.white}
               />
             </View>
           </View>
         </Modal>
+
+        {/* ── Default Penalty ── */}
+        <Text style={styles.label}>IF THEY SKIP 💀</Text>
+        <Text style={styles.penaltyHint}>Set a default punishment for missed days</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.templatesScroll}
+          contentContainerStyle={[styles.templatesRow, {marginBottom: 12}]}>
+          {PENALTY_PRESETS.map(p => (
+            <TouchableOpacity
+              key={p.label}
+              style={[
+                styles.penaltyChip,
+                selectedPenaltyPreset === p.label && styles.penaltyChipSelected,
+              ]}
+              onPress={() => {
+                if (selectedPenaltyPreset === p.label) {
+                  setSelectedPenaltyPreset(null);
+                  setDefaultPenalty('');
+                } else {
+                  setSelectedPenaltyPreset(p.label);
+                  setDefaultPenalty(p.value);
+                }
+              }}
+              activeOpacity={0.8}>
+              <Text style={styles.penaltyChipEmoji}>{p.emoji}</Text>
+              <Text style={[
+                styles.penaltyChipLabel,
+                selectedPenaltyPreset === p.label && styles.penaltyChipLabelSelected,
+              ]}>{p.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+        <TextInput
+          style={[styles.input, styles.multiline, {minHeight: 72}]}
+          placeholder="Or write a custom penalty..."
+          placeholderTextColor={TEXT_3}
+          value={defaultPenalty}
+          onChangeText={t => {setDefaultPenalty(t); setSelectedPenaltyPreset(null);}}
+          multiline
+        />
 
         <TouchableOpacity
           style={[styles.submitBtn, loading && {opacity: 0.7}]}
@@ -245,7 +303,7 @@ export default function NewBattleScreen({navigation}) {
 }
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: '#F8F7F4'},
+  safe: {flex: 1, backgroundColor: C.bg},
   content: {padding: 20, paddingBottom: 60},
   heading: {fontSize: 26, fontWeight: '800', color: TEXT_1},
   headingSub: {fontSize: 14, color: TEXT_3, marginTop: 4, marginBottom: 20},
@@ -258,42 +316,42 @@ const styles = StyleSheet.create({
   templatesRow: {paddingHorizontal: 20, gap: 10},
   templateCard: {
     width: 80, height: 80, borderRadius: 16,
-    backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5, borderColor: BORDER,
+    backgroundColor: C.card, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5, borderColor: C.cardBorder,
     shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6,
     shadowOffset: {width: 0, height: 2}, elevation: 2,
     gap: 6,
   },
-  templateCardSelected: {borderColor: PURPLE, borderWidth: 2, backgroundColor: '#EDE9FE'},
+  templateCardSelected: {borderColor: C.yellow, borderWidth: 2, backgroundColor: C.card},
   templateEmoji: {fontSize: 28},
   templateName: {fontSize: 10, fontWeight: '700', color: TEXT_2},
-  templateNameSelected: {color: PURPLE},
+  templateNameSelected: {color: C.yellow},
   input: {
-    backgroundColor: '#fff', borderRadius: 12,
-    color: TEXT_1, paddingHorizontal: 14, paddingVertical: 13,
-    fontSize: 15, borderWidth: 1, borderColor: BORDER,
+    backgroundColor: C.card, borderRadius: 12,
+    color: C.white, paddingHorizontal: 14, paddingVertical: 13,
+    fontSize: 15, borderWidth: 1, borderColor: C.cardBorder,
     shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 4,
     shadowOffset: {width: 0, height: 1},
   },
   multiline: {height: 96, textAlignVertical: 'top', paddingTop: 13},
   row: {flexDirection: 'row', gap: 10, alignItems: 'center'},
   addBtn: {
-    backgroundColor: PURPLE, borderRadius: 12,
+    backgroundColor: C.yellow, borderRadius: 12,
     paddingHorizontal: 18, paddingVertical: 13,
   },
-  addBtnText: {color: '#fff', fontWeight: '700', fontSize: 15},
+  addBtnText: {color: C.bgDeep, fontWeight: '700', fontSize: 15},
   chips: {flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14},
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#EDE9FE', borderRadius: 20,
+    backgroundColor: 'rgba(78,201,232,0.15)', borderRadius: 20,
     paddingHorizontal: 12, paddingVertical: 7,
   },
-  chipText: {color: PURPLE, fontSize: 13, fontWeight: '600'},
-  chipX: {color: '#A78BFA', fontSize: 11},
+  chipText: {color: C.cyan, fontSize: 13, fontWeight: '600'},
+  chipX: {color: C.cyan, fontSize: 11},
 
   reminderCard: {
-    backgroundColor: '#fff', borderRadius: 14, overflow: 'hidden',
-    borderWidth: 1, borderColor: BORDER,
+    backgroundColor: C.card, borderRadius: 14, overflow: 'hidden',
+    borderWidth: 1, borderColor: C.cardBorder,
   },
   reminderRow: {
     flexDirection: 'row', alignItems: 'center',
@@ -301,35 +359,50 @@ const styles = StyleSheet.create({
   },
   reminderTitle: {fontSize: 15, fontWeight: '600', color: TEXT_1},
   reminderHint: {fontSize: 12, color: TEXT_3, marginTop: 2},
-  reminderDivider: {height: 1, backgroundColor: '#F3F4F6'},
+  reminderDivider: {height: 1, backgroundColor: C.white08},
   timePill: {
-    backgroundColor: '#EDE9FE', borderRadius: 20,
+    backgroundColor: 'rgba(78,201,232,0.15)', borderRadius: 20,
     paddingHorizontal: 16, paddingVertical: 8,
   },
-  timeText: {color: PURPLE, fontWeight: '700', fontSize: 15},
+  timeText: {color: C.cyan, fontWeight: '700', fontSize: 15},
 
   submitBtn: {
-    backgroundColor: PURPLE, borderRadius: 16,
+    backgroundColor: C.yellow, borderRadius: 16,
     paddingVertical: 17, alignItems: 'center', marginTop: 36,
-    shadowColor: PURPLE, shadowOpacity: 0.3, shadowRadius: 10,
+    shadowColor: C.yellow, shadowOpacity: 0.3, shadowRadius: 10,
     shadowOffset: {width: 0, height: 4}, elevation: 6,
   },
-  submitText: {color: '#fff', fontWeight: '800', fontSize: 16},
+  submitText: {color: C.bgDeep, fontWeight: '800', fontSize: 16},
+
+  penaltyHint: {fontSize: 13, color: TEXT_3, marginTop: -6, marginBottom: 12},
+  penaltyChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: C.card, borderRadius: 20,
+    paddingHorizontal: 14, paddingVertical: 10,
+    borderWidth: 1.5, borderColor: 'rgba(255,56,100,0.25)',
+  },
+  penaltyChipSelected: {
+    backgroundColor: 'rgba(255,56,100,0.12)',
+    borderColor: C.pink,
+  },
+  penaltyChipEmoji: {fontSize: 16},
+  penaltyChipLabel: {fontSize: 13, fontWeight: '600', color: TEXT_2},
+  penaltyChipLabelSelected: {color: C.pink},
 
   pickerOverlay: {
     flex: 1, justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: 'rgba(0,0,0,0.55)',
   },
   pickerSheet: {
-    backgroundColor: '#fff',
+    backgroundColor: C.bgDeep,
     borderTopLeftRadius: 20, borderTopRightRadius: 20,
     paddingBottom: 32,
   },
   pickerHeader: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16,
-    borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
+    borderBottomWidth: 1, borderBottomColor: C.cardBorder,
   },
-  pickerTitle: {fontSize: 16, fontWeight: '700', color: '#111827'},
-  pickerDone: {fontSize: 16, fontWeight: '700', color: PURPLE},
+  pickerTitle: {fontSize: 16, fontWeight: '700', color: C.white},
+  pickerDone: {fontSize: 16, fontWeight: '700', color: C.yellow},
 });

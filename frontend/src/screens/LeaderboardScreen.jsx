@@ -6,7 +6,8 @@ import {
 import {useAuth} from '../context/AuthContext';
 import {endpoints} from '../constants/api';
 
-const PURPLE = '#7C3AED';
+import {C} from '../constants/theme';
+const PURPLE = C.cyan;
 
 function LeaderboardRow({item, rank, isMe}) {
   const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null;
@@ -60,7 +61,7 @@ export default function LeaderboardScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
+      <StatusBar barStyle="light-content" backgroundColor={C.bgDeep} />
       <FlatList
         data={data}
         keyExtractor={item => item.id}
@@ -84,26 +85,36 @@ export default function LeaderboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: '#F9FAFB'},
+  safe: {flex: 1, backgroundColor: C.bg},
   header: {paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12},
-  heading: {fontSize: 26, fontWeight: '800', color: '#111827'},
-  sub: {fontSize: 13, color: '#9CA3AF', marginTop: 2},
+  heading: {
+    fontSize: 26, fontWeight: '900', color: C.yellow,
+    letterSpacing: 1,
+    textShadowColor: C.cyan, textShadowRadius: 6,
+    textShadowOffset: {width: 1, height: 1},
+  },
+  sub: {fontSize: 13, color: C.white40, marginTop: 2},
   list: {paddingBottom: 40},
   row: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 16, paddingVertical: 14,
-    backgroundColor: '#fff', position: 'relative', overflow: 'hidden',
+    backgroundColor: C.card, position: 'relative', overflow: 'hidden',
+    borderBottomWidth: 1, borderBottomColor: C.white08,
   },
-  myRow: {backgroundColor: '#F5F3FF'},
-  myAccent: {position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, backgroundColor: PURPLE},
+  myRow: {backgroundColor: 'rgba(78,201,232,0.08)'},
+  myAccent: {position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, backgroundColor: C.yellow},
   rankWrap: {width: 36, alignItems: 'center'},
   medal: {fontSize: 20},
-  rankNum: {fontSize: 14, color: '#9CA3AF', fontWeight: '700'},
+  rankNum: {fontSize: 14, color: C.white40, fontWeight: '700'},
   avatar: {width: 42, height: 42, borderRadius: 21, marginRight: 12},
-  avatarFb: {backgroundColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center'},
-  avatarInitial: {fontSize: 16, fontWeight: '700', color: '#fff'},
+  avatarFb: {
+    backgroundColor: 'rgba(78,201,232,0.15)',
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: C.cyan,
+  },
+  avatarInitial: {fontSize: 16, fontWeight: '700', color: C.cyan},
   info: {flex: 1},
-  name: {fontSize: 15, fontWeight: '700', color: '#111827'},
-  stats: {fontSize: 12, color: '#9CA3AF', marginTop: 2},
-  sep: {height: 1, backgroundColor: '#F3F4F6'},
+  name: {fontSize: 15, fontWeight: '700', color: C.white},
+  stats: {fontSize: 12, color: C.white40, marginTop: 2},
+  sep: {height: 1, backgroundColor: C.white08},
 });

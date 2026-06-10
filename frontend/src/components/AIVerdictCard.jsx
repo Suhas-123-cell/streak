@@ -1,5 +1,6 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
+import {C} from '../constants/theme';
 
 export default function AIVerdictCard({checkin}) {
   if (!checkin) return null;
@@ -9,7 +10,7 @@ export default function AIVerdictCard({checkin}) {
     <View style={[styles.card, pass ? styles.pass : styles.fail]}>
       <Text style={styles.emoji}>{pass ? '✅' : '❌'}</Text>
       <View style={styles.content}>
-        <Text style={[styles.title, {color: pass ? '#15803D' : '#B91C1C'}]}>
+        <Text style={[styles.title, {color: pass ? C.green : C.pink}]}>
           {pass ? 'Verified' : 'Rejected'} — {checkin.ai_score}/100
         </Text>
         <Text style={styles.reason}>{checkin.ai_reasoning}</Text>
@@ -27,10 +28,10 @@ const styles = StyleSheet.create({
     shadowRadius: 8, shadowOffset: {width: 0, height: 2},
     elevation: 2,
   },
-  pass: {backgroundColor: '#F0FDF4', borderWidth: 1, borderColor: '#BBF7D0'},
-  fail: {backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FECACA'},
+  pass: {backgroundColor: 'rgba(57,255,20,0.08)', borderWidth: 1, borderColor: 'rgba(57,255,20,0.35)'},
+  fail: {backgroundColor: 'rgba(255,56,100,0.08)', borderWidth: 1, borderColor: 'rgba(255,56,100,0.35)'},
   emoji: {fontSize: 24},
   content: {flex: 1},
   title: {fontWeight: '700', fontSize: 14},
-  reason: {color: '#6B7280', fontSize: 13, marginTop: 2},
+  reason: {color: C.white70, fontSize: 13, marginTop: 2},
 });

@@ -5,6 +5,20 @@ import {endpoints} from '../constants/api';
 
 const AuthContext = createContext(null);
 
+function fetchWithTimeout(url, options = {}, ms = 10000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), ms);
+  return fetch(url, {...options, signal: controller.signal})
+    .then(res => { clearTimeout(id); return res; })
+    .catch(err => {
+      clearTimeout(id);
+      if (err.name === 'AbortError') {
+        throw new Error('Request timed out. Check your connection and try again.');
+      }
+      throw err;
+    });
+}
+
 export function AuthProvider({children}) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
@@ -23,7 +37,7 @@ export function AuthProvider({children}) {
   }, []);
 
   async function signup(email, password, username) {
-    const res = await fetch(endpoints.signup, {
+    const res = await fetchWithTimeout(endpoints.signup, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({email, password, username}),
@@ -38,7 +52,7 @@ export function AuthProvider({children}) {
   }
 
   async function login(email, password) {
-    const res = await fetch(endpoints.login, {
+    const res = await fetchWithTimeout(endpoints.login, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({email, password}),
@@ -72,7 +86,7 @@ export function AuthProvider({children}) {
 
   // Wraps fetch with the auth header. On 401 → clears session (sends user to login screen).
   const fetchWithAuth = useCallback(async (url, options = {}) => {
-    const res = await fetch(url, {
+    const res = await fetchWithTimeout(url, {
       ...options,
       headers: {
         ...(options.headers || {}),
