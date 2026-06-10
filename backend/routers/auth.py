@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, EmailStr, field_validator
-from database import supabase
+from database import supabase, auth_supabase
 from extensions import limiter
 
 router = APIRouter()
@@ -36,7 +36,7 @@ class LoginRequest(BaseModel):
 @limiter.limit("5/minute")
 async def signup(request: Request, req: SignupRequest):
     try:
-        resp = supabase.auth.sign_up({"email": req.email, "password": req.password})
+        resp = auth_supabase.auth.sign_up({"email": req.email, "password": req.password})
         user = resp.user
         supabase.table("profiles").insert(
             {"id": user.id, "username": req.username}
@@ -51,7 +51,7 @@ async def signup(request: Request, req: SignupRequest):
 @limiter.limit("5/minute")
 async def login(request: Request, req: LoginRequest):
     try:
-        resp = supabase.auth.sign_in_with_password(
+        resp = auth_supabase.auth.sign_in_with_password(
             {"email": req.email, "password": req.password}
         )
         return {

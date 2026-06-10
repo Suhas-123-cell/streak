@@ -17,7 +17,8 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-cors_origins = os.environ.get("CORS_ORIGINS", "http://localhost:8000").split(",")
+cors_origins_raw = os.environ.get("CORS_ORIGINS", "*")
+cors_origins = ["*"] if cors_origins_raw == "*" else cors_origins_raw.split(",")
 
 app.add_middleware(
     CORSMiddleware,
