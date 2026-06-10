@@ -62,26 +62,11 @@ def send_reminders():
         for row in members_rows:
             bid = row["battle_id"]
             checkin_key = f"battle:{bid}:checkedin:{today}"
-            if r.sismember(checkin_key, user_id):
+            # Check both Redis (verified) and DB (any submission)
+            db_checkin = supabase.table("checkins").select("id").eq("battle_id", bid).eq("user_id", user_id).eq("date", today).execute().data
+            if r.sismember(checkin_key, user_id) or db_checkin:
                 continue
 
-            checked_in = list(r.smembers(checkin_key))
-            if not checked_in:
-                continue
-
-            profiles = (
-                supabase.table("profiles")
-                .select("username")
-                .in_("id", checked_in[:3])
-                .execute()
-                .data
-            )
-            names = ", ".join(p["username"] for p in profiles)
-            streak_key = f"battle:{bid}:streak:{user_id}"
-            streak = int(r.get(streak_key) or 0)
-            msg = random.choice(REMINDER_MESSAGES).format(
-                names=names, count=len(checked_in), streak=streak
-            )
             battle = (
                 supabase.table("battles")
                 .select("habit_name")
@@ -90,11 +75,34 @@ def send_reminders():
                 .execute()
                 .data
             )
+            streak_key = f"battle:{bid}:streak:{user_id}"
+            streak = int(r.get(streak_key) or 0)
+
+            checked_in = list(r.smembers(checkin_key))
+            if checked_in:
+                profiles = (
+                    supabase.table("profiles")
+                    .select("username")
+                    .in_("id", checked_in[:3])
+                    .execute()
+                    .data
+                )
+                names = ", ".join(p["username"] for p in profiles)
+                msg = random.choice(REMINDER_MESSAGES).format(
+                    names=names, count=len(checked_in), streak=streak
+                )
+            else:
+                msg = f"⏰ Don't break your {streak}-day streak — check in before midnight!"
+
             _send_fcm(pref["fcm_token"], f"🔥 {battle['habit_name']}", msg)
 
 
 @app.task
 def reset_streaks():
+    now_utc = datetime.utcnow()
+    # Only run between midnight and 12:01 AM UTC
+    if now_utc.hour != 0:
+        return
     today = date.today().isoformat()
     battles = (
         supabase.table("battles").select("id").eq("status", "active").execute().data
