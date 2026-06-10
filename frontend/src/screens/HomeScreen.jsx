@@ -11,18 +11,25 @@ import {useMembers} from '../hooks/useMembers';
 import BattleCard from '../components/BattleCard';
 import {endpoints} from '../constants/api';
 
-const BG = '#F8F7F4';
-const ACCENT = '#7C3AED';
-const TEXT_1 = '#1C1917';
-const TEXT_2 = '#78716C';
-const BORDER = '#E7E5E4';
-const SUCCESS = '#16A34A';
-const PENDING = '#EA580C';
+import {C} from '../constants/theme';
 
-function BattleItem({battle, onPress, token, userId, onCheckinStatus, index}) {
-  const {members} = useMembers(battle.id);
+const BG     = C.bg;
+const ACCENT = C.cyan;
+const TEXT_1 = C.white;
+const TEXT_2 = C.white70;
+const BORDER = C.white15;
+const SUCCESS = C.green;
+const PENDING = C.orange;
+
+function BattleItem({battle, onPress, token, userId, onCheckinStatus, index, refreshKey}) {
+  const {members, fetchMembers} = useMembers(battle.id);
   const [checkedIn, setCheckedIn] = useState(false);
   const me = members.find(m => m.user_id === userId);
+
+  useEffect(() => {
+    if (refreshKey === 0) return; // initial fetch handled by useMembers internally
+    fetchMembers();
+  }, [refreshKey]);
 
   useEffect(() => {
     fetch(endpoints.todayCheckins(battle.id), {headers: {Authorization: `Bearer ${token}`}})
@@ -33,7 +40,7 @@ function BattleItem({battle, onPress, token, userId, onCheckinStatus, index}) {
         onCheckinStatus?.(battle.id, status);
       })
       .catch(() => {});
-  }, [battle.id, token, userId]);
+  }, [battle.id, token, userId, refreshKey]);
 
   return (
     <BattleCard
@@ -218,14 +225,21 @@ export default function HomeScreen({navigation}) {
   const {user, token} = useAuth();
   const {battles, loading, fetchBattles} = useBattles();
   const [checkinStatus, setCheckinStatus] = useState({});
+  const [focusKey, setFocusKey] = useState(0);
 
   useFocusEffect(useCallback(() => {
     fetchBattles();
+    setFocusKey(k => k + 1);
   }, [fetchBattles]));
 
   const handleCheckinStatus = useCallback((battleId, status) => {
     setCheckinStatus(prev => ({...prev, [battleId]: status}));
   }, []);
+
+  const handleRefresh = useCallback(() => {
+    fetchBattles();
+    setFocusKey(k => k + 1);
+  }, [fetchBattles]);
 
   const doneCount = battles.filter(b => checkinStatus[b.id] === true).length;
 
@@ -247,7 +261,7 @@ export default function HomeScreen({navigation}) {
   if (!loading && battles.length === 0) {
     return (
       <SafeAreaView style={styles.safe}>
-        <StatusBar barStyle="dark-content" backgroundColor={BG} />
+        <StatusBar barStyle="light-content" backgroundColor={C.bgDeep} />
         <AnimatedHeader />
         <OnboardingEmpty onPress={() => navigation.navigate('NewBattle')} />
         <TouchableOpacity
@@ -262,7 +276,7 @@ export default function HomeScreen({navigation}) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="dark-content" backgroundColor={BG} />
+      <StatusBar barStyle="light-content" backgroundColor={C.bgDeep} />
       <FlatList
         data={sortedBattles}
         keyExtractor={b => b.id}
@@ -274,10 +288,11 @@ export default function HomeScreen({navigation}) {
             onCheckinStatus={handleCheckinStatus}
             onPress={b => navigation.navigate('BattleDetail', {battle: b})}
             index={index}
+            refreshKey={focusKey}
           />
         )}
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={fetchBattles} tintColor={ACCENT} />
+          <RefreshControl refreshing={loading} onRefresh={handleRefresh} tintColor={ACCENT} />
         }
         ListHeaderComponent={ListHeader}
         contentContainerStyle={{paddingBottom: 110}}
@@ -296,61 +311,71 @@ const styles = StyleSheet.create({
   safe: {flex: 1, backgroundColor: BG},
 
   header: {paddingHorizontal: 20, paddingTop: 24, paddingBottom: 16},
-  title: {fontSize: 28, fontWeight: '800', color: TEXT_1},
-  dateText: {fontSize: 13, color: TEXT_2, marginTop: 2},
+  title: {
+    fontSize: 28, fontWeight: '900', color: C.yellow,
+    letterSpacing: 1,
+    textShadowColor: C.cyan, textShadowRadius: 6,
+    textShadowOffset: {width: 1, height: 1},
+  },
+  dateText: {fontSize: 13, color: TEXT_2, marginTop: 2, letterSpacing: 0.3},
 
   summaryCard: {
     marginHorizontal: 16, marginBottom: 8, borderRadius: 14, padding: 16,
+    borderWidth: 1,
   },
-  summaryCardDone: {backgroundColor: '#F0FDF4'},
-  summaryCardPending: {backgroundColor: '#FEF3E2'},
+  summaryCardDone: {
+    backgroundColor: 'rgba(57,255,20,0.08)',
+    borderColor: 'rgba(57,255,20,0.3)',
+  },
+  summaryCardPending: {
+    backgroundColor: 'rgba(255,140,66,0.08)',
+    borderColor: 'rgba(255,140,66,0.3)',
+  },
   summaryDoneTitle: {fontSize: 15, fontWeight: '700', color: SUCCESS},
-  summaryDoneSub: {fontSize: 13, color: '#166534', marginTop: 2},
+  summaryDoneSub: {fontSize: 13, color: C.white70, marginTop: 2},
   summaryRow: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start'},
-  summaryPendingTitle: {fontSize: 15, fontWeight: '700', color: '#92400E', flex: 1},
+  summaryPendingTitle: {fontSize: 15, fontWeight: '700', color: C.orange, flex: 1},
   summaryHours: {fontSize: 12, fontWeight: '600', color: PENDING},
   summaryTrack: {
-    height: 4, backgroundColor: 'rgba(0,0,0,0.08)',
+    height: 4, backgroundColor: C.white15,
     borderRadius: 2, overflow: 'hidden', marginTop: 10,
   },
   summaryFill: {height: 4, borderRadius: 2, backgroundColor: PENDING},
-  summaryCount: {fontSize: 12, color: '#B45309', marginTop: 6},
+  summaryCount: {fontSize: 12, color: C.white40, marginTop: 6},
 
-  // Onboarding
   onboarding: {flex: 1, paddingHorizontal: 24, paddingTop: 8},
   onboardingIcon: {fontSize: 48, marginBottom: 16},
-  onboardingTitle: {fontSize: 22, fontWeight: '700', color: TEXT_1},
+  onboardingTitle: {fontSize: 22, fontWeight: '800', color: C.yellow, letterSpacing: 0.5},
   onboardingDesc: {fontSize: 15, color: TEXT_2, lineHeight: 22, marginTop: 8, marginBottom: 28},
   steps: {
-    borderWidth: 1, borderColor: BORDER, borderRadius: 14,
-    overflow: 'hidden', marginBottom: 28, backgroundColor: '#fff',
+    borderWidth: 1, borderColor: C.white15, borderRadius: 14,
+    overflow: 'hidden', marginBottom: 28, backgroundColor: C.card,
   },
-  step: {
-    flexDirection: 'row', alignItems: 'flex-start',
-    padding: 16, gap: 14,
-  },
-  stepDivider: {height: 1, backgroundColor: BORDER},
+  step: {flexDirection: 'row', alignItems: 'flex-start', padding: 16, gap: 14},
+  stepDivider: {height: 1, backgroundColor: C.white15},
   stepNum: {
     width: 28, height: 28, borderRadius: 14,
-    backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: C.yellow, alignItems: 'center', justifyContent: 'center',
     marginTop: 1,
   },
-  stepNumText: {color: '#fff', fontWeight: '700', fontSize: 13},
-  stepTitle: {fontSize: 15, fontWeight: '600', color: TEXT_1},
+  stepNumText: {color: C.bgDeep, fontWeight: '900', fontSize: 13},
+  stepTitle: {fontSize: 15, fontWeight: '700', color: TEXT_1},
   stepDesc: {fontSize: 13, color: TEXT_2, marginTop: 2, lineHeight: 18},
   onboardingBtn: {
-    backgroundColor: ACCENT, borderRadius: 12,
+    backgroundColor: C.yellow, borderRadius: 12,
     paddingVertical: 16, alignItems: 'center',
+    shadowColor: C.yellow, shadowOpacity: 0.35, shadowRadius: 12,
+    shadowOffset: {width: 0, height: 4}, elevation: 6,
   },
-  onboardingBtnText: {color: '#fff', fontWeight: '700', fontSize: 15},
+  onboardingBtnText: {color: C.bgDeep, fontWeight: '900', fontSize: 15, letterSpacing: 0.8},
 
   fab: {
     position: 'absolute', bottom: 28, right: 24,
     width: 56, height: 56, borderRadius: 28,
-    backgroundColor: ACCENT,
+    backgroundColor: C.yellow,
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: ACCENT, shadowOpacity: 0.4, shadowRadius: 12,
-    shadowOffset: {width: 0, height: 4}, elevation: 8,
+    shadowColor: C.yellow, shadowOpacity: 0.5, shadowRadius: 16,
+    shadowOffset: {width: 0, height: 4}, elevation: 10,
   },
-  fabText: {color: '#fff', fontSize: 26, lineHeight: 30},
+  fabText: {color: C.bgDeep, fontSize: 26, fontWeight: '900', lineHeight: 30},
 });
