@@ -1,3 +1,4 @@
+import logging
 import os
 import tempfile
 from datetime import date
@@ -14,11 +15,11 @@ router = APIRouter()
 SCORE_THRESHOLD = 60
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB
 
-ALLOWED_PHOTO_TYPES = {"image/jpeg", "image/png", "image/webp"}
-ALLOWED_AUDIO_TYPES = {"audio/mpeg", "audio/mp4", "audio/wav", "audio/ogg", "audio/webm"}
+ALLOWED_PHOTO_TYPES = {"image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"}
+ALLOWED_AUDIO_TYPES = {"audio/mpeg", "audio/mp4", "audio/m4a", "audio/wav", "audio/ogg", "audio/webm"}
 ALLOWED_PROOF_TYPES = {"photo", "voice"}
 
-PHOTO_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
+PHOTO_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "heic", "heif"}
 AUDIO_EXTENSIONS = {"mp3", "mp4", "m4a", "wav", "ogg", "webm"}
 
 
@@ -35,8 +36,12 @@ async def submit_checkin(
         raise HTTPException(400, "proof_type must be 'photo' or 'voice'")
 
     content_type = proof_file.content_type or ""
-    if proof_type == "photo" and content_type not in ALLOWED_PHOTO_TYPES:
-        raise HTTPException(400, "Invalid file type for photo proof")
+    if proof_type == "photo":
+        if not content_type:
+            # iOS sometimes omits content-type; treat as JPEG so valid uploads aren't rejected
+            content_type = "image/jpeg"
+        if content_type not in ALLOWED_PHOTO_TYPES:
+            raise HTTPException(400, "Invalid file type for photo proof")
     if proof_type == "voice" and content_type not in ALLOWED_AUDIO_TYPES:
         raise HTTPException(400, "Invalid file type for voice proof")
 
@@ -85,14 +90,21 @@ async def submit_checkin(
         else:
             transcript = transcribe_audio(tmp_path)
             result = verify_voice(transcript, battle["habit_name"], battle["habit_description"])
+    except Exception as e:
+        logging.error(f"AI verification failed: {e}")
+        raise HTTPException(503, f"AI verification temporarily unavailable: {str(e)[:100]}")
     finally:
         os.unlink(tmp_path)
 
     verified = result["verified"] and result["score"] >= SCORE_THRESHOLD
 
-    storage_path = f"checkins/{battle_id}/{user.id}/{today}.{ext}"
-    supabase.storage.from_("proofs").upload(storage_path, content)
-    proof_url = supabase.storage.from_("proofs").get_public_url(storage_path)
+    try:
+        storage_path = f"checkins/{battle_id}/{user.id}/{today}.{ext}"
+        supabase.storage.from_("proofs").upload(storage_path, content, {"upsert": "true"})
+        proof_url = supabase.storage.from_("proofs").get_public_url(storage_path)
+    except Exception as e:
+        logging.error(f"Storage upload failed: {e}")
+        proof_url = ""  # proceed without URL
 
     checkin = (
         supabase.table("checkins")
@@ -111,6 +123,9 @@ async def submit_checkin(
         .execute()
         .data[0]
     )
+
+    # Always bust the member cache so checked_in_today refreshes immediately
+    r.delete(f"battle:{battle_id}:members")
 
     if verified:
         r.sadd(checkin_key, user.id)
@@ -133,7 +148,6 @@ async def submit_checkin(
             {"current_streak": int(new_streak), "longest_streak": longest}
         ).eq("battle_id", battle_id).eq("user_id", user.id).execute()
 
-        r.delete(f"battle:{battle_id}:members")
         r.delete(f"leaderboard:battle:{battle_id}")
 
     return checkin
