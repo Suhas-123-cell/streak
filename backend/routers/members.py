@@ -110,3 +110,44 @@ async def get_members(battle_id: str, user=Depends(get_current_user)):
     result.sort(key=lambda x: x["current_streak"], reverse=True)
     r.setex(cache_key, 300, json.dumps(result))
     return result
+
+
+@router.post("/{battle_id}/freeze")
+async def use_freeze(battle_id: str, user=Depends(get_current_user)):
+    member = (
+        supabase.table("battle_members")
+        .select("freeze_tokens, current_streak, longest_streak")
+        .eq("battle_id", battle_id)
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .single()
+        .execute()
+        .data
+    )
+    if not member:
+        raise HTTPException(403, "Not an active member of this battle")
+    if (member.get("freeze_tokens") or 0) < 1:
+        raise HTTPException(400, "No freeze tokens available")
+
+    today = date.today().isoformat()
+    checkin_key = f"battle:{battle_id}:checkedin:{today}"
+    if r.sismember(checkin_key, user.id):
+        raise HTTPException(400, "Already checked in today — no freeze needed")
+
+    # Use the token: protect streak for today
+    new_tokens = (member["freeze_tokens"] or 0) - 1
+    streak_key = f"battle:{battle_id}:streak:{user.id}"
+    new_streak = r.incr(streak_key)
+    longest = max(int(new_streak), member["longest_streak"])
+
+    supabase.table("battle_members").update({
+        "freeze_tokens": new_tokens,
+        "current_streak": int(new_streak),
+        "longest_streak": longest,
+    }).eq("battle_id", battle_id).eq("user_id", user.id).execute()
+
+    r.sadd(checkin_key, user.id)
+    r.expire(checkin_key, 172800)
+    _invalidate_member_cache(battle_id)
+
+    return {"ok": True, "freeze_tokens_remaining": new_tokens, "current_streak": int(new_streak)}

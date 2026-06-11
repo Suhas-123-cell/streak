@@ -31,7 +31,7 @@ export default function PenaltyAssigner({battleId, missedMember, onAssigned}) {
       });
       if (!res.ok) throw new Error((await res.json()).detail);
       onAssigned?.();
-      Alert.alert('Done!', `Penalty set for ${missedMember.profiles?.username}`);
+      Alert.alert('Done!', `Redemption challenge set for ${missedMember.profiles?.username}`);
     } catch (e) {
       Alert.alert('Error', e.message);
     } finally {
@@ -42,13 +42,13 @@ export default function PenaltyAssigner({battleId, missedMember, onAssigned}) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.skull}>💀</Text>
+        <Text style={styles.skull}>🎯</Text>
         <Text style={styles.name}>{missedMember.profiles?.username} missed today</Text>
       </View>
       <View style={styles.inputRow}>
         <TextInput
           style={styles.input}
-          placeholder="Set their punishment..."
+          placeholder="Set their redemption challenge..."
           placeholderTextColor={C.white40}
           value={text}
           onChangeText={setText}

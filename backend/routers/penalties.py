@@ -56,7 +56,7 @@ async def assign_penalty(req: CreatePenaltyRequest, user=Depends(get_current_use
 async def mark_done(penalty_id: str, user=Depends(get_current_user)):
     penalty = (
         supabase.table("penalties")
-        .select("assigned_to")
+        .select("assigned_to, battle_id")
         .eq("id", penalty_id)
         .single()
         .execute()
@@ -65,7 +65,28 @@ async def mark_done(penalty_id: str, user=Depends(get_current_user)):
     if penalty["assigned_to"] != user.id:
         raise HTTPException(403, "Only the penalised member can mark it done")
     supabase.table("penalties").update({"completed": True}).eq("id", penalty_id).execute()
-    return {"ok": True}
+
+    # Redemption: restore 1 streak day when challenge completed
+    battle_id = penalty["battle_id"]
+    streak_key = f"battle:{battle_id}:streak:{user.id}"
+    new_streak = r.incr(streak_key)
+    current = (
+        supabase.table("battle_members")
+        .select("longest_streak")
+        .eq("battle_id", battle_id)
+        .eq("user_id", user.id)
+        .single()
+        .execute()
+        .data
+    )
+    longest = max(int(new_streak), current["longest_streak"])
+    supabase.table("battle_members").update(
+        {"current_streak": int(new_streak), "longest_streak": longest}
+    ).eq("battle_id", battle_id).eq("user_id", user.id).execute()
+    r.delete(f"battle:{battle_id}:members")
+    r.delete(f"leaderboard:battle:{battle_id}")
+
+    return {"ok": True, "streak_repaired": True, "new_streak": int(new_streak)}
 
 
 @router.get("/{battle_id}")

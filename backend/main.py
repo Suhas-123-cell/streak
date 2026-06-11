@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from extensions import limiter
-from routers import auth, battles, members, checkins, penalties, leaderboard, profile
+from routers import auth, battles, members, checkins, penalties, leaderboard, profile, jury
 
 app = FastAPI(title="StreakFight API")
 
@@ -34,6 +34,7 @@ app.include_router(checkins.router, prefix="/api/checkins", tags=["checkins"])
 app.include_router(penalties.router, prefix="/api/penalties", tags=["penalties"])
 app.include_router(leaderboard.router, prefix="/api/leaderboard", tags=["leaderboard"])
 app.include_router(profile.router, prefix="/api", tags=["profile"])
+app.include_router(jury.router, prefix="/api/jury", tags=["jury"])
 
 
 @app.get("/")
