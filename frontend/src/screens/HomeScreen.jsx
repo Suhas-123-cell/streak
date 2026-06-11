@@ -13,14 +13,6 @@ import {endpoints} from '../constants/api';
 
 import {C} from '../constants/theme';
 
-const BG     = C.bg;
-const ACCENT = C.cyan;
-const TEXT_1 = C.white;
-const TEXT_2 = C.white70;
-const BORDER = C.white15;
-const SUCCESS = C.green;
-const PENDING = C.orange;
-
 function BattleItem({battle, onPress, token, userId, onCheckinStatus, index, refreshKey}) {
   const {members, fetchMembers} = useMembers(battle.id);
   const [checkedIn, setCheckedIn] = useState(false);
@@ -300,7 +292,7 @@ export default function HomeScreen({navigation}) {
           />
         )}
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={handleRefresh} tintColor={ACCENT} />
+          <RefreshControl refreshing={loading} onRefresh={handleRefresh} tintColor={C.cyan} />
         }
         ListHeaderComponent={ListHeader}
         contentContainerStyle={{paddingBottom: 110}}
@@ -319,7 +311,7 @@ export default function HomeScreen({navigation}) {
 }
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: BG},
+  safe: {flex: 1, backgroundColor: C.bg},
 
   header: {paddingHorizontal: 20, paddingTop: 24, paddingBottom: 16},
   title: {
@@ -328,7 +320,7 @@ const styles = StyleSheet.create({
     textShadowColor: C.cyan, textShadowRadius: 6,
     textShadowOffset: {width: 1, height: 1},
   },
-  dateText: {fontSize: 14, color: TEXT_2, marginTop: 2, letterSpacing: 0.3},
+  dateText: {fontSize: 14, color: C.white70, marginTop: 2, letterSpacing: 0.3},
 
   summaryCard: {
     marginHorizontal: 16, marginBottom: 8, borderRadius: 14, padding: 16,
@@ -342,22 +334,22 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,140,66,0.08)',
     borderColor: 'rgba(255,140,66,0.3)',
   },
-  summaryDoneTitle: {fontSize: 15, fontWeight: '700', color: SUCCESS},
+  summaryDoneTitle: {fontSize: 15, fontWeight: '700', color: C.green},
   summaryDoneSub: {fontSize: 13, color: C.white70, marginTop: 2},
   summaryRow: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start'},
   summaryPendingTitle: {fontSize: 15, fontWeight: '700', color: C.orange, flex: 1},
-  summaryHours: {fontSize: 14, fontWeight: '600', color: PENDING},
+  summaryHours: {fontSize: 14, fontWeight: '600', color: C.orange},
   summaryTrack: {
     height: 4, backgroundColor: C.white15,
     borderRadius: 2, overflow: 'hidden', marginTop: 10,
   },
-  summaryFill: {height: 4, borderRadius: 2, backgroundColor: PENDING},
+  summaryFill: {height: 4, borderRadius: 2, backgroundColor: C.orange},
   summaryCount: {fontSize: 14, color: C.white40, marginTop: 6},
 
   onboarding: {flex: 1, paddingHorizontal: 24, paddingTop: 8},
   onboardingIcon: {fontSize: 48, marginBottom: 16},
   onboardingTitle: {fontSize: 22, fontWeight: '800', color: C.yellow, letterSpacing: 0.5},
-  onboardingDesc: {fontSize: 15, color: TEXT_2, lineHeight: 22, marginTop: 8, marginBottom: 28},
+  onboardingDesc: {fontSize: 15, color: C.white70, lineHeight: 22, marginTop: 8, marginBottom: 28},
   steps: {
     borderWidth: 1, borderColor: C.white15, borderRadius: 14,
     overflow: 'hidden', marginBottom: 28, backgroundColor: C.card,
@@ -370,8 +362,8 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   stepNumText: {color: C.bgDeep, fontWeight: '900', fontSize: 13},
-  stepTitle: {fontSize: 15, fontWeight: '700', color: TEXT_1},
-  stepDesc: {fontSize: 14, color: TEXT_2, marginTop: 2, lineHeight: 18},
+  stepTitle: {fontSize: 15, fontWeight: '700', color: C.white},
+  stepDesc: {fontSize: 14, color: C.white70, marginTop: 2, lineHeight: 18},
   onboardingBtn: {
     backgroundColor: C.yellow, borderRadius: 12,
     paddingVertical: 16, alignItems: 'center',

@@ -7,7 +7,6 @@ import {useAuth} from '../context/AuthContext';
 import {endpoints} from '../constants/api';
 
 import {C} from '../constants/theme';
-const PURPLE = C.cyan;
 
 function LeaderboardRow({item, rank, isMe}) {
   const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null;
@@ -25,7 +24,7 @@ function LeaderboardRow({item, rank, isMe}) {
       {item.avatar_url ? (
         <Image source={{uri: item.avatar_url}} style={styles.avatar} />
       ) : (
-        <View style={[styles.avatar, styles.avatarFb, isMe && {backgroundColor: PURPLE}]}>
+        <View style={[styles.avatar, styles.avatarFb, isMe && {backgroundColor: C.cyan}]}>
           <Text style={styles.avatarInitial}>{(item.username || '?')[0].toUpperCase()}</Text>
         </View>
       )}
@@ -71,11 +70,11 @@ export default function LeaderboardScreen() {
         ListHeaderComponent={
           <View style={styles.header}>
             <Text style={styles.heading}>Global Leaderboard</Text>
-            <Text style={styles.sub}>Top streak fighters worldwide</Text>
+            <Text style={styles.sub}>Ranked by current streak</Text>
           </View>
         }
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={load} tintColor={PURPLE} />
+          <RefreshControl refreshing={loading} onRefresh={load} tintColor={C.cyan} />
         }
         ItemSeparatorComponent={() => <View style={styles.sep} />}
         contentContainerStyle={styles.list}

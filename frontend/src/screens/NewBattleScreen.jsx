@@ -9,12 +9,6 @@ import {useBattles} from '../hooks/useBattles';
 import {useAuth} from '../context/AuthContext';
 import {C} from '../constants/theme';
 
-const PURPLE = C.cyan;
-const TEXT_1 = C.white;
-const TEXT_2 = C.white70;
-const TEXT_3 = C.white40;
-const BORDER = C.cardBorder;
-
 function formatTime(date) {
   if (!date) return '21:00';
   const d = date instanceof Date ? date : new Date(date);
@@ -141,7 +135,7 @@ export default function NewBattleScreen({navigation}) {
         <TextInput
           style={styles.input}
           placeholder="e.g. Go to the gym"
-          placeholderTextColor={TEXT_3}
+          placeholderTextColor={C.white40}
           value={habitName}
           onChangeText={text => {setHabitName(text); setSelectedTemplate(null);}}
         />
@@ -150,7 +144,7 @@ export default function NewBattleScreen({navigation}) {
         <TextInput
           style={[styles.input, styles.multiline]}
           placeholder="e.g. Must show gym equipment or entrance selfie"
-          placeholderTextColor={TEXT_3}
+          placeholderTextColor={C.white40}
           value={habitDesc}
           onChangeText={setHabitDesc}
           multiline
@@ -161,7 +155,7 @@ export default function NewBattleScreen({navigation}) {
           <TextInput
             style={[styles.input, {flex: 1, marginBottom: 0}]}
             placeholder="Search by username"
-            placeholderTextColor={TEXT_3}
+            placeholderTextColor={C.white40}
             value={username}
             onChangeText={setUsername}
             onSubmitEditing={addMember}
@@ -281,7 +275,7 @@ export default function NewBattleScreen({navigation}) {
         <TextInput
           style={[styles.input, styles.multiline, {minHeight: 72}]}
           placeholder="Or write a custom penalty..."
-          placeholderTextColor={TEXT_3}
+          placeholderTextColor={C.white40}
           value={defaultPenalty}
           onChangeText={t => {setDefaultPenalty(t); setSelectedPenaltyPreset(null);}}
           multiline
@@ -305,10 +299,10 @@ export default function NewBattleScreen({navigation}) {
 const styles = StyleSheet.create({
   safe: {flex: 1, backgroundColor: C.bg},
   content: {padding: 20, paddingBottom: 60},
-  heading: {fontSize: 26, fontWeight: '800', color: TEXT_1},
-  headingSub: {fontSize: 14, color: TEXT_3, marginTop: 4, marginBottom: 20},
+  heading: {fontSize: 26, fontWeight: '800', color: C.white},
+  headingSub: {fontSize: 14, color: C.white40, marginTop: 4, marginBottom: 20},
   label: {
-    fontSize: 10, fontWeight: '800', color: TEXT_3,
+    fontSize: 10, fontWeight: '800', color: C.white40,
     textTransform: 'uppercase', letterSpacing: 1.2,
     marginBottom: 10, marginTop: 20,
   },
@@ -324,7 +318,7 @@ const styles = StyleSheet.create({
   },
   templateCardSelected: {borderColor: C.yellow, borderWidth: 2, backgroundColor: C.card},
   templateEmoji: {fontSize: 28},
-  templateName: {fontSize: 10, fontWeight: '700', color: TEXT_2},
+  templateName: {fontSize: 10, fontWeight: '700', color: C.white70},
   templateNameSelected: {color: C.yellow},
   input: {
     backgroundColor: C.card, borderRadius: 12,
@@ -357,8 +351,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between', padding: 16,
   },
-  reminderTitle: {fontSize: 15, fontWeight: '600', color: TEXT_1},
-  reminderHint: {fontSize: 12, color: TEXT_3, marginTop: 2},
+  reminderTitle: {fontSize: 15, fontWeight: '600', color: C.white},
+  reminderHint: {fontSize: 12, color: C.white40, marginTop: 2},
   reminderDivider: {height: 1, backgroundColor: C.white08},
   timePill: {
     backgroundColor: 'rgba(78,201,232,0.15)', borderRadius: 20,
@@ -374,7 +368,7 @@ const styles = StyleSheet.create({
   },
   submitText: {color: C.bgDeep, fontWeight: '800', fontSize: 16},
 
-  penaltyHint: {fontSize: 13, color: TEXT_3, marginTop: -6, marginBottom: 12},
+  penaltyHint: {fontSize: 13, color: C.white40, marginTop: -6, marginBottom: 12},
   penaltyChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: C.card, borderRadius: 20,
@@ -386,7 +380,7 @@ const styles = StyleSheet.create({
     borderColor: C.pink,
   },
   penaltyChipEmoji: {fontSize: 16},
-  penaltyChipLabel: {fontSize: 13, fontWeight: '600', color: TEXT_2},
+  penaltyChipLabel: {fontSize: 13, fontWeight: '600', color: C.white70},
   penaltyChipLabelSelected: {color: C.pink},
 
   pickerOverlay: {
