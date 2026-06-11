@@ -24,4 +24,7 @@ export const endpoints = {
   battleLeaderboard: (id) => `${API_URL}/leaderboard/${id}`,
   pushToken: `${API_URL}/push-token`,
   reminderPrefs: `${API_URL}/reminder`,
+  juryVote: (checkinId) => `${API_URL}/jury/${checkinId}/vote`,
+  juryVotes: (checkinId) => `${API_URL}/jury/${checkinId}/votes`,
+  useFreeze: (battleId) => `${API_URL}/battles/${battleId}/freeze`,
 };

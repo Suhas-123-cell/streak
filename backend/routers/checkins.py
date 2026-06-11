@@ -13,6 +13,7 @@ from extensions import limiter
 router = APIRouter()
 
 SCORE_THRESHOLD = 60
+JURY_THRESHOLD_LOW = 30  # below this = auto-fail; 30–59 = pending jury
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB
 
 ALLOWED_PHOTO_TYPES = {"image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"}
@@ -96,7 +97,16 @@ async def submit_checkin(
     finally:
         os.unlink(tmp_path)
 
-    verified = result["verified"] and result["score"] >= SCORE_THRESHOLD
+    score = result["score"]
+    if score >= SCORE_THRESHOLD:
+        verified = result["verified"]
+        ai_verified_value = verified
+    elif score >= JURY_THRESHOLD_LOW:
+        verified = False
+        ai_verified_value = None  # pending jury vote
+    else:
+        verified = False
+        ai_verified_value = False
 
     try:
         storage_path = f"checkins/{battle_id}/{user.id}/{today}.{ext}"
@@ -114,7 +124,7 @@ async def submit_checkin(
                 "user_id": user.id,
                 "proof_type": proof_type,
                 "proof_url": proof_url,
-                "ai_verified": verified,
+                "ai_verified": ai_verified_value,
                 "ai_score": result["score"],
                 "ai_reasoning": result["reasoning"],
                 "date": today,
@@ -136,7 +146,7 @@ async def submit_checkin(
 
         current = (
             supabase.table("battle_members")
-            .select("longest_streak")
+            .select("longest_streak, freeze_tokens")
             .eq("battle_id", battle_id)
             .eq("user_id", user.id)
             .single()
@@ -144,9 +154,12 @@ async def submit_checkin(
             .data
         )
         longest = max(int(new_streak), current["longest_streak"])
-        supabase.table("battle_members").update(
-            {"current_streak": int(new_streak), "longest_streak": longest}
-        ).eq("battle_id", battle_id).eq("user_id", user.id).execute()
+        update_data = {"current_streak": int(new_streak), "longest_streak": longest}
+        if int(new_streak) % 7 == 0:
+            update_data["freeze_tokens"] = (current.get("freeze_tokens") or 0) + 1
+        supabase.table("battle_members").update(update_data).eq(
+            "battle_id", battle_id
+        ).eq("user_id", user.id).execute()
 
         r.delete(f"leaderboard:battle:{battle_id}")
 

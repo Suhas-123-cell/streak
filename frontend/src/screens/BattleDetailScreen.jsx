@@ -10,6 +10,8 @@ import {useMembers} from '../hooks/useMembers';
 import MemberRow from '../components/MemberRow';
 import ProofSubmitter from '../components/ProofSubmitter';
 import PenaltyAssigner from '../components/PenaltyAssigner';
+import FreezeButton from '../components/FreezeButton';
+import JuryVoteCard from '../components/JuryVoteCard';
 import {endpoints} from '../constants/api';
 
 import {C} from '../constants/theme';
@@ -150,6 +152,10 @@ export default function BattleDetailScreen({route, navigation}) {
   const missedMembers = members.filter(
     m => m.status === 'active' && !checkedInIds.has(m.user_id) && m.user_id !== user.id,
   );
+  const myMember = members.find(m => m.user_id === user.id);
+  const pendingJuryCheckins = todayCheckins.filter(
+    c => c.ai_verified === null && c.user_id !== user.id,
+  );
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -202,23 +208,50 @@ export default function BattleDetailScreen({route, navigation}) {
         </View>
 
         <Text style={styles.section}>Today's Check-in</Text>
-        {iCheckedIn ? (
-          <View style={styles.verifiedCard}>
-            <Text style={styles.verifiedEmoji}>✅</Text>
-            <View>
-              <Text style={styles.verifiedTitle}>Verified — {myCheckin?.ai_score}/100</Text>
-              {myCheckin?.ai_reasoning ? (
-                <Text style={styles.verifiedReason}>{myCheckin.ai_reasoning}</Text>
-              ) : null}
+        {myCheckin ? (
+          myCheckin.ai_verified === true ? (
+            <View style={styles.verifiedCard}>
+              <Text style={styles.verifiedEmoji}>✅</Text>
+              <View>
+                <Text style={styles.verifiedTitle}>Verified — {myCheckin.ai_score}/100</Text>
+                {myCheckin.ai_reasoning ? (
+                  <Text style={styles.verifiedReason}>{myCheckin.ai_reasoning}</Text>
+                ) : null}
+              </View>
             </View>
-          </View>
+          ) : myCheckin.ai_verified === null ? (
+            <View style={styles.juryCard}>
+              <Text style={styles.verifiedEmoji}>⚖️</Text>
+              <View style={{flex: 1}}>
+                <Text style={styles.juryTitle}>Pending Group Vote</Text>
+                <Text style={styles.verifiedReason}>AI score {myCheckin.ai_score}/100 — your group decides</Text>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.failedCard}>
+              <Text style={styles.verifiedEmoji}>❌</Text>
+              <View>
+                <Text style={styles.failedTitle}>Proof Rejected</Text>
+                {myCheckin.ai_reasoning ? (
+                  <Text style={styles.verifiedReason}>{myCheckin.ai_reasoning}</Text>
+                ) : null}
+              </View>
+            </View>
+          )
         ) : (
-          <ProofSubmitter battleId={battle.id} onSuccess={loadData} />
+          <>
+            <FreezeButton
+              battleId={battle.id}
+              freezeTokens={myMember?.freeze_tokens}
+              onUsed={loadData}
+            />
+            <ProofSubmitter battleId={battle.id} onSuccess={loadData} />
+          </>
         )}
 
         {iCheckedIn && missedMembers.length > 0 && (
           <>
-            <Text style={styles.section}>Set Penalties</Text>
+            <Text style={styles.section}>Assign Redemption</Text>
             <View style={styles.penaltyWrap}>
               {missedMembers.map(m => (
                 <PenaltyAssigner
@@ -288,9 +321,20 @@ export default function BattleDetailScreen({route, navigation}) {
           </View>
         </Modal>
 
+        {pendingJuryCheckins.length > 0 && (
+          <>
+            <Text style={styles.section}>Group Jury</Text>
+            <View style={{marginHorizontal: 16}}>
+              {pendingJuryCheckins.map(c => (
+                <JuryVoteCard key={c.id} checkin={c} onResolved={loadData} />
+              ))}
+            </View>
+          </>
+        )}
+
         {penalties.length > 0 && (
           <>
-            <Text style={styles.section}>Penalties</Text>
+            <Text style={styles.section}>Redemption Challenges</Text>
             <View style={styles.listCard}>
               {penalties.map(p => (
                 <View key={p.id} style={styles.penaltyRow}>
@@ -322,7 +366,7 @@ export default function BattleDetailScreen({route, navigation}) {
               <View style={styles.feedContent}>
                 <Text style={styles.feedName}>{c.profiles?.username}</Text>
                 <Text style={styles.feedScore}>
-                  {c.ai_verified ? '✅' : '❌'} {c.ai_score}/100 · {c.ai_reasoning}
+                  {c.ai_verified === true ? '✅' : c.ai_verified === null ? '⚖️' : '❌'} {c.ai_score}/100 · {c.ai_reasoning}
                 </Text>
               </View>
             </View>
@@ -373,6 +417,18 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(57,255,20,0.08)', marginHorizontal: 16, borderRadius: 14,
     padding: 16, borderWidth: 1, borderColor: 'rgba(57,255,20,0.35)',
   },
+  juryCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: 'rgba(232,245,49,0.06)', marginHorizontal: 16, borderRadius: 14,
+    padding: 16, borderWidth: 1, borderColor: 'rgba(232,245,49,0.3)',
+  },
+  juryTitle: {fontWeight: '800', color: C.yellow, fontSize: 15},
+  failedCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: 'rgba(255,56,100,0.08)', marginHorizontal: 16, borderRadius: 14,
+    padding: 16, borderWidth: 1, borderColor: 'rgba(255,56,100,0.3)',
+  },
+  failedTitle: {fontWeight: '800', color: C.pink, fontSize: 15},
   verifiedEmoji: {fontSize: 28},
   verifiedTitle: {fontWeight: '800', color: C.green, fontSize: 15},
   verifiedReason: {color: C.white70, fontSize: 14, marginTop: 2},
