@@ -7,11 +7,6 @@ import {useAuth} from '../context/AuthContext';
 import {endpoints} from '../constants/api';
 
 import {C} from '../constants/theme';
-const BG     = C.bg;
-const ACCENT = C.cyan;
-const TEXT_1 = C.white;
-const TEXT_2 = C.white70;
-const BORDER = C.white15;
 
 // Count-up number that animates from 0 to target
 function StatNum({value, style}) {
@@ -113,7 +108,7 @@ export default function ProfileScreen() {
         <View style={styles.divider} />
 
         <Animated.Text style={[styles.statsHeading, {opacity: contentAnim}]}>
-          YOUR RECORD
+          {profile?.active_streak > 0 ? `${profile.active_streak} days running` : 'Your stats'}
         </Animated.Text>
         <Animated.View style={[styles.statsRow, {opacity: contentAnim}]}>
           {stats.map((s, i) => (
@@ -124,7 +119,9 @@ export default function ProfileScreen() {
         <View style={styles.divider} />
 
         <Animated.Text style={[styles.quote, {opacity: contentAnim}]}>
-          Every check-in is a vote for who you want to be.
+          {profile?.active_streak > 0
+            ? `${profile.active_streak} days in a row. Don't stop now.`
+            : 'Start a battle to build your first streak.'}
         </Animated.Text>
 
       </ScrollView>
@@ -139,7 +136,7 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: {flex: 1, backgroundColor: BG},
+  safe: {flex: 1, backgroundColor: C.bg},
   content: {paddingBottom: 20},
 
   topSection: {paddingTop: 32, paddingHorizontal: 20},
@@ -157,9 +154,9 @@ const styles = StyleSheet.create({
     fontSize: 22, fontWeight: '900', color: C.yellow, marginTop: 12,
     letterSpacing: 0.5,
   },
-  email: {fontSize: 14, color: TEXT_2, marginTop: 2},
+  email: {fontSize: 14, color: C.white70, marginTop: 2},
 
-  divider: {height: 1, backgroundColor: BORDER, marginHorizontal: 20, marginVertical: 20},
+  divider: {height: 1, backgroundColor: C.white15, marginHorizontal: 20, marginVertical: 20},
 
   statsRow: {
     flexDirection: 'row', justifyContent: 'space-between',
@@ -171,7 +168,7 @@ const styles = StyleSheet.create({
     textShadowColor: C.cyan, textShadowRadius: 6,
     textShadowOffset: {width: 1, height: 1},
   },
-  statLabel: {fontSize: 13, color: TEXT_2, marginTop: 2, fontWeight: '600', letterSpacing: 0.5},
+  statLabel: {fontSize: 13, color: C.white70, marginTop: 2, fontWeight: '600', letterSpacing: 0.5},
 
   quote: {
     fontSize: 14, fontStyle: 'italic', color: C.white40,

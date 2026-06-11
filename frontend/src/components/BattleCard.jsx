@@ -6,14 +6,6 @@ import {
 
 import {C} from '../constants/theme';
 
-const ACCENT  = C.cyan;
-const SUCCESS = C.green;
-const PENDING = C.orange;
-const TEXT_1  = C.white;
-const TEXT_2  = C.white70;
-const TEXT_3  = C.white40;
-const BORDER  = C.white15;
-
 function MemberDot({member, isCheckedIn, delay}) {
   const anim = useRef(new Animated.Value(0)).current;
 
@@ -124,7 +116,7 @@ export default function BattleCard({battle, members, myStreak, checkedIn, onPres
   const progressWidth = progressAnim.interpolate({
     inputRange: [0, 1], outputRange: ['0%', '100%'],
   });
-  const fillColor = pct === 1 ? SUCCESS : checkedIn ? SUCCESS : ACCENT;
+  const fillColor = pct === 1 ? C.green : checkedIn ? C.green : C.cyan;
 
   return (
     <Animated.View style={[
@@ -145,7 +137,7 @@ export default function BattleCard({battle, members, myStreak, checkedIn, onPres
             <Text style={styles.meta}>
               {members.length} members
               {!checkedIn && hrs <= 12 && (
-                <Text style={[styles.urgency, {color: hrs <= 3 ? C.pink : PENDING}]}> · {hrs}h left</Text>
+                <Text style={[styles.urgency, {color: hrs <= 3 ? C.pink : C.orange}]}> · {hrs}h left</Text>
               )}
             </Text>
           </View>
@@ -182,7 +174,7 @@ export default function BattleCard({battle, members, myStreak, checkedIn, onPres
         <View style={styles.statsRow}>
           <Text style={[
             styles.streakLine,
-            {color: checkedIn ? TEXT_1 : myStreak > 0 ? PENDING : TEXT_2},
+            {color: checkedIn ? C.white : myStreak > 0 ? C.orange : C.white70},
           ]}>
             {streakLine()}
           </Text>
@@ -228,8 +220,8 @@ const styles = StyleSheet.create({
   },
 
   header: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start'},
-  habitName: {fontSize: 22, fontWeight: '800', color: TEXT_1, lineHeight: 26, letterSpacing: 0.2},
-  meta: {fontSize: 14, color: TEXT_2, marginTop: 2},
+  habitName: {fontSize: 22, fontWeight: '800', color: C.white, lineHeight: 26, letterSpacing: 0.2},
+  meta: {fontSize: 14, color: C.white70, marginTop: 2},
   urgency: {fontWeight: '700'},
 
   tagDone: {
@@ -237,7 +229,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10, paddingVertical: 4,
     borderWidth: 1, borderColor: 'rgba(57,255,20,0.4)',
   },
-  tagDoneText: {fontSize: 12, fontWeight: '700', color: SUCCESS},
+  tagDoneText: {fontSize: 12, fontWeight: '700', color: C.green},
   tagPending: {
     backgroundColor: 'rgba(255,140,66,0.12)', borderRadius: 20,
     paddingHorizontal: 10, paddingVertical: 4,
@@ -247,25 +239,25 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,56,100,0.12)',
     borderColor: 'rgba(255,56,100,0.4)',
   },
-  tagPendingText: {fontSize: 12, fontWeight: '700', color: PENDING},
+  tagPendingText: {fontSize: 12, fontWeight: '700', color: C.orange},
 
   dotsRow: {flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 14},
   dot: {
     width: 32, height: 32, borderRadius: 16,
     alignItems: 'center', justifyContent: 'center',
   },
-  dotDone: {backgroundColor: 'rgba(78,201,232,0.15)', borderWidth: 2, borderColor: ACCENT},
-  dotPending: {backgroundColor: C.white08, borderWidth: 1, borderColor: BORDER},
+  dotDone: {backgroundColor: 'rgba(78,201,232,0.15)', borderWidth: 2, borderColor: C.cyan},
+  dotPending: {backgroundColor: C.white08, borderWidth: 1, borderColor: C.white15},
   dotText: {fontSize: 12, fontWeight: '700'},
-  dotTextDone: {color: ACCENT},
-  dotTextPending: {color: TEXT_3},
+  dotTextDone: {color: C.cyan},
+  dotTextPending: {color: C.white40},
   dotCheck: {
     position: 'absolute', bottom: -2, right: -2,
     width: 10, height: 10, borderRadius: 5,
-    backgroundColor: SUCCESS, borderWidth: 1.5, borderColor: C.bgDeep,
+    backgroundColor: C.green, borderWidth: 1.5, borderColor: C.bgDeep,
   },
   dotOverflow: {backgroundColor: C.white08},
-  dotOverflowText: {fontSize: 10, fontWeight: '600', color: TEXT_3},
+  dotOverflowText: {fontSize: 10, fontWeight: '600', color: C.white40},
 
   statsRow: {
     flexDirection: 'row', justifyContent: 'space-between',
@@ -279,7 +271,7 @@ const styles = StyleSheet.create({
     borderRadius: 3, overflow: 'hidden', marginTop: 8,
   },
   fill: {height: 5, borderRadius: 3},
-  trackLabel: {fontSize: 14, color: TEXT_2, marginTop: 5},
+  trackLabel: {fontSize: 14, color: C.white70, marginTop: 5},
 
   submitBtn: {
     backgroundColor: C.yellow, borderRadius: 12,

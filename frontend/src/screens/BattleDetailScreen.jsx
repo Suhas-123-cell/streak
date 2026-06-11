@@ -15,7 +15,6 @@ import JuryVoteCard from '../components/JuryVoteCard';
 import {endpoints} from '../constants/api';
 
 import {C} from '../constants/theme';
-const PURPLE = C.cyan;
 
 function parseTimeToDate(timeStr) {
   const [h, m] = (timeStr || '21:00').split(':').map(Number);
@@ -182,7 +181,7 @@ export default function BattleDetailScreen({route, navigation}) {
       <StatusBar barStyle="light-content" backgroundColor={C.bgDeep} />
       <ScrollView
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={PURPLE} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.cyan} />
         }
         contentContainerStyle={{paddingBottom: 48}}>
 
@@ -324,8 +323,8 @@ export default function BattleDetailScreen({route, navigation}) {
             <Switch
               value={reminderEnabled}
               onValueChange={toggleReminder}
-              trackColor={{false: '#E5E7EB', true: '#A78BFA'}}
-              thumbColor={reminderEnabled ? PURPLE : '#9CA3AF'}
+              trackColor={{false: C.white15, true: C.cyan}}
+              thumbColor={reminderEnabled ? C.cyan : '#9CA3AF'}
             />
           </View>
           {reminderEnabled && (
@@ -403,7 +402,7 @@ export default function BattleDetailScreen({route, navigation}) {
         <Text style={styles.section}>Activity Feed</Text>
         <View style={styles.listCard}>
           {todayCheckins.length === 0 && (
-            <Text style={styles.empty}>No check-ins yet today</Text>
+            <Text style={styles.empty}>First one to check in sets the pace.</Text>
           )}
           {todayCheckins.map(c => (
             <View key={c.id} style={styles.feedRow}>
@@ -451,7 +450,7 @@ const styles = StyleSheet.create({
   progressLabel: {fontSize: 14, color: C.white40},
   progressCount: {fontSize: 14, fontWeight: '800', color: C.yellow},
   progressTrack: {height: 10, backgroundColor: C.white15, borderRadius: 4, overflow: 'hidden'},
-  progressFill: {height: 10, backgroundColor: PURPLE, borderRadius: 4},
+  progressFill: {height: 10, backgroundColor: C.cyan, borderRadius: 4},
   section: {
     fontSize: 12, fontWeight: '800', color: C.white40,
     textTransform: 'uppercase', letterSpacing: 1.2,
@@ -524,7 +523,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(78,201,232,0.15)', alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: C.cyan,
   },
-  feedInitial: {fontSize: 14, fontWeight: '700', color: PURPLE},
+  feedInitial: {fontSize: 14, fontWeight: '700', color: C.cyan},
   feedContent: {flex: 1},
   feedName: {fontWeight: '700', color: C.white, fontSize: 14},
   feedScore: {color: C.white40, fontSize: 13, marginTop: 2},

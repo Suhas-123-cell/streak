@@ -26,7 +26,7 @@ export default function ProofSubmitter({battleId, onSuccess}) {
         battleId, 'photo', asset.uri,
         asset.fileName || 'photo.jpg', asset.type || 'image/jpeg',
       );
-      if (data?.ai_verified) onSuccess?.();
+      if (data?.ai_verified !== undefined) onSuccess?.();
     } catch (e) {
       Alert.alert('Error', e.message);
     }
@@ -45,7 +45,7 @@ export default function ProofSubmitter({battleId, onSuccess}) {
       const data = await submitCheckin(
         battleId, 'voice', `file://${path}`, 'voice.m4a', 'audio/mp4',
       );
-      if (data?.ai_verified) onSuccess?.();
+      if (data?.ai_verified !== undefined) onSuccess?.();
     } catch (e) {
       Alert.alert('Error', e.message);
     }
@@ -56,8 +56,8 @@ export default function ProofSubmitter({battleId, onSuccess}) {
       opacity: enterAnim,
       transform: [{translateY: enterAnim.interpolate({inputRange: [0, 1], outputRange: [16, 0]})}],
     }]}>
-      <Text style={styles.title}>Submit Proof</Text>
-      <Text style={styles.sub}>Show you completed the habit today</Text>
+      <Text style={styles.title}>Prove it.</Text>
+      <Text style={styles.sub}>Drop your proof — AI checks it in seconds</Text>
       <View style={styles.btnRow}>
         <TouchableOpacity style={styles.btn} onPress={handlePhoto} disabled={loading}>
           <Text style={styles.btnIcon}>📸</Text>
