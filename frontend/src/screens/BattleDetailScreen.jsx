@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useCallback} from 'react';
 import {
   View, Text, StyleSheet, SafeAreaView, ScrollView,
-  RefreshControl, StatusBar, Switch, TouchableOpacity, Modal, Alert,
+  RefreshControl, StatusBar, Switch, TouchableOpacity, Modal, Alert, Share,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -157,6 +157,26 @@ export default function BattleDetailScreen({route, navigation}) {
     c => c.ai_verified === null && c.user_id !== user.id,
   );
 
+  const daysUntilEnd = battle.ends_at
+    ? Math.max(0, Math.ceil((new Date(battle.ends_at) - new Date()) / 86400000))
+    : null;
+
+  const weeklyRate = members.length
+    ? Math.round((members.reduce((s, m) => s + Math.min(m.current_streak || 0, 7), 0) / (members.length * 7)) * 100)
+    : 0;
+
+  async function shareStats() {
+    const topMember = members[0];
+    const msg = [
+      `🔥 StreakFight — ${battle.habit_name}`,
+      `${members.length} fighters · ${checkedInIds.size}/${members.length} checked in today`,
+      topMember ? `👑 Leader: ${topMember.profiles?.username} (${topMember.current_streak} days)` : '',
+      myMember ? `My streak: ${myMember.current_streak} days` : '',
+      daysUntilEnd != null ? `${daysUntilEnd} days left in this season` : '',
+    ].filter(Boolean).join('\n');
+    Share.share({message: msg}).catch(() => {});
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor={C.bgDeep} />
@@ -177,9 +197,17 @@ export default function BattleDetailScreen({route, navigation}) {
             )}
           </View>
           <Text style={styles.heroSub}>{members.length} members · {checkedInIds.size} checked in today</Text>
+          {daysUntilEnd != null && (
+            <Text style={styles.heroCountdown}>
+              {daysUntilEnd === 0 ? '🏁 Season ends today!' : `⏳ ${daysUntilEnd} days left`}
+            </Text>
+          )}
           {battle.habit_description ? (
             <Text style={styles.heroDesc}>{battle.habit_description}</Text>
           ) : null}
+          <TouchableOpacity style={styles.shareBtn} onPress={shareStats}>
+            <Text style={styles.shareBtnText}>↗ Share</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Progress bar */}
@@ -230,11 +258,12 @@ export default function BattleDetailScreen({route, navigation}) {
           ) : (
             <View style={styles.failedCard}>
               <Text style={styles.verifiedEmoji}>❌</Text>
-              <View>
-                <Text style={styles.failedTitle}>Proof Rejected</Text>
+              <View style={{flex: 1}}>
+                <Text style={styles.failedTitle}>Proof Rejected — Comeback Time</Text>
                 {myCheckin.ai_reasoning ? (
                   <Text style={styles.verifiedReason}>{myCheckin.ai_reasoning}</Text>
                 ) : null}
+                <Text style={styles.recoveryHint}>Complete your redemption challenge below to repair your streak 🔥</Text>
               </View>
             </View>
           )
@@ -264,6 +293,26 @@ export default function BattleDetailScreen({route, navigation}) {
             </View>
           </>
         )}
+
+        <Text style={styles.section}>This Week</Text>
+        <View style={styles.weekCard}>
+          <View style={styles.weekRow}>
+            <View style={styles.weekStat}>
+              <Text style={styles.weekNum}>{weeklyRate}%</Text>
+              <Text style={styles.weekLabel}>Group rate</Text>
+            </View>
+            <View style={styles.weekDivider} />
+            <View style={styles.weekStat}>
+              <Text style={styles.weekNum}>{checkedInIds.size}/{members.length}</Text>
+              <Text style={styles.weekLabel}>Today</Text>
+            </View>
+            <View style={styles.weekDivider} />
+            <View style={styles.weekStat}>
+              <Text style={styles.weekNum}>{myMember?.current_streak ?? 0}</Text>
+              <Text style={styles.weekLabel}>My streak</Text>
+            </View>
+          </View>
+        </View>
 
         <Text style={styles.section}>Reminders</Text>
         <View style={styles.reminderCard}>
@@ -429,6 +478,24 @@ const styles = StyleSheet.create({
     padding: 16, borderWidth: 1, borderColor: 'rgba(255,56,100,0.3)',
   },
   failedTitle: {fontWeight: '800', color: C.pink, fontSize: 15},
+  recoveryHint: {color: C.orange, fontSize: 13, marginTop: 6, fontWeight: '600'},
+  heroCountdown: {fontSize: 13, color: C.yellow, marginTop: 4, fontWeight: '700'},
+  shareBtn: {
+    alignSelf: 'flex-start', marginTop: 10,
+    backgroundColor: 'rgba(78,201,232,0.15)', borderRadius: 20,
+    paddingHorizontal: 14, paddingVertical: 6,
+    borderWidth: 1, borderColor: 'rgba(78,201,232,0.4)',
+  },
+  shareBtnText: {color: C.cyan, fontWeight: '700', fontSize: 13},
+  weekCard: {
+    backgroundColor: C.card, marginHorizontal: 16, borderRadius: 14,
+    borderWidth: 1, borderColor: C.cardBorder, padding: 16,
+  },
+  weekRow: {flexDirection: 'row', alignItems: 'center'},
+  weekStat: {flex: 1, alignItems: 'center'},
+  weekNum: {fontSize: 22, fontWeight: '900', color: C.yellow},
+  weekLabel: {fontSize: 12, color: C.white40, marginTop: 2},
+  weekDivider: {width: 1, height: 36, backgroundColor: C.white15},
   verifiedEmoji: {fontSize: 28},
   verifiedTitle: {fontWeight: '800', color: C.green, fontSize: 15},
   verifiedReason: {color: C.white70, fontSize: 14, marginTop: 2},
