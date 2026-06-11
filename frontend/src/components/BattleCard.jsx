@@ -100,14 +100,10 @@ export default function BattleCard({battle, members, myStreak, checkedIn, onPres
   const btnScale = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     if (checkedIn) return;
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(btnScale, {toValue: 1.028, duration: 850, useNativeDriver: true, easing: Easing.inOut(Easing.sin)}),
-        Animated.timing(btnScale, {toValue: 1, duration: 850, useNativeDriver: true, easing: Easing.inOut(Easing.sin)}),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
+    Animated.sequence([
+      Animated.timing(btnScale, {toValue: 1.04, duration: 700, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
+      Animated.timing(btnScale, {toValue: 1, duration: 700, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
+    ]).start();
   }, [checkedIn]);
 
   // ─── Press feedback ─────────────────────────────────────────────
@@ -232,8 +228,8 @@ const styles = StyleSheet.create({
   },
 
   header: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start'},
-  habitName: {fontSize: 21, fontWeight: '800', color: TEXT_1, lineHeight: 26, letterSpacing: 0.2},
-  meta: {fontSize: 13, color: TEXT_2, marginTop: 2},
+  habitName: {fontSize: 22, fontWeight: '800', color: TEXT_1, lineHeight: 26, letterSpacing: 0.2},
+  meta: {fontSize: 14, color: TEXT_2, marginTop: 2},
   urgency: {fontWeight: '700'},
 
   tagDone: {
@@ -283,7 +279,7 @@ const styles = StyleSheet.create({
     borderRadius: 3, overflow: 'hidden', marginTop: 8,
   },
   fill: {height: 5, borderRadius: 3},
-  trackLabel: {fontSize: 12, color: TEXT_2, marginTop: 5},
+  trackLabel: {fontSize: 14, color: TEXT_2, marginTop: 5},
 
   submitBtn: {
     backgroundColor: C.yellow, borderRadius: 12,

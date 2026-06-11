@@ -1,5 +1,5 @@
-import React, {useState} from 'react';
-import {View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator} from 'react-native';
+import React, {useState, useRef, useEffect} from 'react';
+import {View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Animated, Easing} from 'react-native';
 import {launchCamera} from 'react-native-image-picker';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import {useCheckin} from '../hooks/useCheckin';
@@ -11,6 +11,10 @@ const recorder = new AudioRecorderPlayer();
 export default function ProofSubmitter({battleId, onSuccess}) {
   const {submitCheckin, loading, result} = useCheckin();
   const [recording, setRecording] = useState(false);
+  const enterAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.spring(enterAnim, {toValue: 1, tension: 60, friction: 8, useNativeDriver: true}).start();
+  }, []);
 
   async function handlePhoto() {
     const response = await launchCamera({mediaType: 'photo', quality: 0.8, saveToPhotos: false});
@@ -48,7 +52,10 @@ export default function ProofSubmitter({battleId, onSuccess}) {
   }
 
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, {
+      opacity: enterAnim,
+      transform: [{translateY: enterAnim.interpolate({inputRange: [0, 1], outputRange: [16, 0]})}],
+    }]}>
       <Text style={styles.title}>Submit Proof</Text>
       <Text style={styles.sub}>Show you completed the habit today</Text>
       <View style={styles.btnRow}>
@@ -73,7 +80,7 @@ export default function ProofSubmitter({battleId, onSuccess}) {
         </View>
       )}
       {result && <AIVerdictCard checkin={result} />}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -85,16 +92,16 @@ const styles = StyleSheet.create({
     shadowOffset: {width: 0, height: 3}, elevation: 3,
   },
   title: {fontSize: 17, fontWeight: '700', color: C.white},
-  sub: {fontSize: 13, color: C.white40, marginTop: 2, marginBottom: 16},
+  sub: {fontSize: 14, color: C.white40, marginTop: 2, marginBottom: 16},
   btnRow: {flexDirection: 'row', gap: 12},
   btn: {
     flex: 1, backgroundColor: 'rgba(78,201,232,0.1)', borderRadius: 14,
-    paddingVertical: 18, alignItems: 'center', gap: 6,
+    paddingVertical: 20, alignItems: 'center', gap: 6,
     borderWidth: 1, borderColor: C.cardBorder,
   },
   btnActive: {backgroundColor: C.yellow, borderColor: C.yellow},
-  btnIcon: {fontSize: 24},
-  btnLabel: {fontSize: 13, fontWeight: '600', color: C.cyan},
+  btnIcon: {fontSize: 28},
+  btnLabel: {fontSize: 14, fontWeight: '600', color: C.cyan},
   loadingRow: {flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14},
-  loadingText: {color: C.white40, fontSize: 13},
+  loadingText: {color: C.white40, fontSize: 14},
 });

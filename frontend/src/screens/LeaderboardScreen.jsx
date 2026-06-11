@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
     textShadowColor: C.cyan, textShadowRadius: 6,
     textShadowOffset: {width: 1, height: 1},
   },
-  sub: {fontSize: 13, color: C.white40, marginTop: 2},
+  sub: {fontSize: 14, color: C.white40, marginTop: 2},
   list: {paddingBottom: 40},
   row: {
     flexDirection: 'row', alignItems: 'center',
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   rankWrap: {width: 36, alignItems: 'center'},
   medal: {fontSize: 20},
   rankNum: {fontSize: 14, color: C.white40, fontWeight: '700'},
-  avatar: {width: 42, height: 42, borderRadius: 21, marginRight: 12},
+  avatar: {width: 44, height: 44, borderRadius: 22, marginRight: 12},
   avatarFb: {
     backgroundColor: 'rgba(78,201,232,0.15)',
     alignItems: 'center', justifyContent: 'center',
@@ -115,6 +115,6 @@ const styles = StyleSheet.create({
   avatarInitial: {fontSize: 16, fontWeight: '700', color: C.cyan},
   info: {flex: 1},
   name: {fontSize: 15, fontWeight: '700', color: C.white},
-  stats: {fontSize: 12, color: C.white40, marginTop: 2},
+  stats: {fontSize: 13, color: C.white40, marginTop: 2},
   sep: {height: 1, backgroundColor: C.white08},
 });

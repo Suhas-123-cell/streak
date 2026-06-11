@@ -41,7 +41,7 @@ export default function AuthScreen() {
 
   function switchMode(newMode) {
     Animated.sequence([
-      Animated.timing(formOp, {toValue: 0.3, duration: 80, useNativeDriver: true}),
+      Animated.timing(formOp, {toValue: 0, duration: 100, useNativeDriver: true}),
       Animated.timing(formOp, {toValue: 1, duration: 200, useNativeDriver: true}),
     ]).start();
     setMode(newMode);
@@ -114,6 +114,7 @@ export default function AuthScreen() {
                   <Text style={[styles.fieldLabel, focusedField === 'username' && styles.fieldLabelFocused]}>
                     FIGHTER NAME
                   </Text>
+                  <Text style={styles.fieldSubLabel}>Your display name in battles</Text>
                   <TextInput
                     style={[styles.input, focusedField === 'username' && styles.inputFocused]}
                     placeholder="your alias"
@@ -170,7 +171,7 @@ export default function AuthScreen() {
                     <ActivityIndicator color={C.bgDeep} />
                   ) : (
                     <Text style={styles.btnText}>
-                      {mode === 'login' ? "LET'S GO →" : 'JOIN THE FIGHT →'}
+                      {mode === 'login' ? "Let's Go →" : "Join the Fight →"}
                     </Text>
                   )}
                 </TouchableOpacity>
@@ -237,9 +238,10 @@ const styles = StyleSheet.create({
 
   form: {gap: 18},
   fieldLabel: {
-    fontSize: 10, fontWeight: '700', color: C.white40,
+    fontSize: 12, fontWeight: '700', color: C.white40,
     letterSpacing: 1.5, marginBottom: 8,
   },
+  fieldSubLabel: {fontSize: 12, color: C.white40, marginBottom: 6, marginTop: -4},
   fieldLabelFocused: {color: C.cyan},
   input: {
     backgroundColor: C.white08,
@@ -263,5 +265,5 @@ const styles = StyleSheet.create({
   btnText: {color: C.bgDeep, fontWeight: '900', fontSize: 15, letterSpacing: 1.5},
 
   switchWrap: {marginTop: 22, alignItems: 'center'},
-  switchText: {color: C.cyan, fontSize: 13, fontWeight: '600'},
+  switchText: {color: C.cyan, fontSize: 14, fontWeight: '600'},
 });

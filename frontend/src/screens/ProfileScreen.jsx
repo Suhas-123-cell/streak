@@ -112,6 +112,9 @@ export default function ProfileScreen() {
 
         <View style={styles.divider} />
 
+        <Animated.Text style={[styles.statsHeading, {opacity: contentAnim}]}>
+          YOUR RECORD
+        </Animated.Text>
         <Animated.View style={[styles.statsRow, {opacity: contentAnim}]}>
           {stats.map((s, i) => (
             <StatCol key={s.label} label={s.label} value={s.value} delay={180 + i * 60} />
@@ -146,7 +149,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 2, borderColor: C.cyan,
     shadowColor: C.cyan, shadowOpacity: 0.4,
-    shadowRadius: 16, shadowOffset: {width: 0, height: 0},
+    shadowRadius: 20, shadowOffset: {width: 0, height: 0},
     elevation: 8,
   },
   avatarText: {color: C.cyan, fontSize: 28, fontWeight: '900'},
@@ -154,7 +157,7 @@ const styles = StyleSheet.create({
     fontSize: 22, fontWeight: '900', color: C.yellow, marginTop: 12,
     letterSpacing: 0.5,
   },
-  email: {fontSize: 13, color: TEXT_2, marginTop: 2},
+  email: {fontSize: 14, color: TEXT_2, marginTop: 2},
 
   divider: {height: 1, backgroundColor: BORDER, marginHorizontal: 20, marginVertical: 20},
 
@@ -168,22 +171,19 @@ const styles = StyleSheet.create({
     textShadowColor: C.cyan, textShadowRadius: 6,
     textShadowOffset: {width: 1, height: 1},
   },
-  statLabel: {fontSize: 11, color: TEXT_2, marginTop: 2, fontWeight: '600', letterSpacing: 0.5},
+  statLabel: {fontSize: 13, color: TEXT_2, marginTop: 2, fontWeight: '600', letterSpacing: 0.5},
 
   quote: {
     fontSize: 14, fontStyle: 'italic', color: C.white40,
     lineHeight: 20, paddingHorizontal: 20, marginBottom: 8,
   },
 
-  logoutWrap: {
-    paddingHorizontal: 20, paddingVertical: 14,
-    backgroundColor: C.bgDeep,
-    borderTopWidth: 1, borderTopColor: BORDER,
+  logoutWrap: {paddingHorizontal: 20, paddingVertical: 8},
+  logoutBtn: {paddingVertical: 14, alignItems: 'center'},
+  logoutText: {color: C.white40, fontWeight: '700', fontSize: 15, letterSpacing: 0.5, textDecorationLine: 'underline'},
+  statsHeading: {
+    fontSize: 12, fontWeight: '800', color: C.white40,
+    textTransform: 'uppercase', letterSpacing: 1.5,
+    paddingHorizontal: 20, marginBottom: 8,
   },
-  logoutBtn: {
-    borderRadius: 12, paddingVertical: 14, alignItems: 'center',
-    borderWidth: 1, borderColor: 'rgba(255,56,100,0.5)',
-    backgroundColor: 'rgba(255,56,100,0.08)',
-  },
-  logoutText: {color: C.pink, fontWeight: '700', fontSize: 15, letterSpacing: 0.5},
 });

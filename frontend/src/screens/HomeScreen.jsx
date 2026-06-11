@@ -227,6 +227,11 @@ export default function HomeScreen({navigation}) {
   const [checkinStatus, setCheckinStatus] = useState({});
   const [focusKey, setFocusKey] = useState(0);
 
+  const fabAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.spring(fabAnim, {toValue: 1, delay: 400, tension: 200, friction: 12, useNativeDriver: true}).start();
+  }, []);
+
   useFocusEffect(useCallback(() => {
     fetchBattles();
     setFocusKey(k => k + 1);
@@ -264,12 +269,15 @@ export default function HomeScreen({navigation}) {
         <StatusBar barStyle="light-content" backgroundColor={C.bgDeep} />
         <AnimatedHeader />
         <OnboardingEmpty onPress={() => navigation.navigate('NewBattle')} />
-        <TouchableOpacity
-          style={styles.fab}
-          onPress={() => navigation.navigate('NewBattle')}
-          activeOpacity={0.85}>
-          <Text style={styles.fabText}>+</Text>
-        </TouchableOpacity>
+        <Animated.View style={{
+          position: 'absolute', bottom: 28, right: 24,
+          opacity: fabAnim,
+          transform: [{scale: fabAnim}, {translateY: fabAnim.interpolate({inputRange: [0,1], outputRange: [20, 0]})}],
+        }}>
+          <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('NewBattle')} activeOpacity={0.85}>
+            <Text style={styles.fabText}>+</Text>
+          </TouchableOpacity>
+        </Animated.View>
       </SafeAreaView>
     );
   }
@@ -297,12 +305,15 @@ export default function HomeScreen({navigation}) {
         ListHeaderComponent={ListHeader}
         contentContainerStyle={{paddingBottom: 110}}
       />
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => navigation.navigate('NewBattle')}
-        activeOpacity={0.85}>
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
+      <Animated.View style={{
+        position: 'absolute', bottom: 28, right: 24,
+        opacity: fabAnim,
+        transform: [{scale: fabAnim}, {translateY: fabAnim.interpolate({inputRange: [0,1], outputRange: [20, 0]})}],
+      }}>
+        <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('NewBattle')} activeOpacity={0.85}>
+          <Text style={styles.fabText}>+</Text>
+        </TouchableOpacity>
+      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -317,7 +328,7 @@ const styles = StyleSheet.create({
     textShadowColor: C.cyan, textShadowRadius: 6,
     textShadowOffset: {width: 1, height: 1},
   },
-  dateText: {fontSize: 13, color: TEXT_2, marginTop: 2, letterSpacing: 0.3},
+  dateText: {fontSize: 14, color: TEXT_2, marginTop: 2, letterSpacing: 0.3},
 
   summaryCard: {
     marginHorizontal: 16, marginBottom: 8, borderRadius: 14, padding: 16,
@@ -335,13 +346,13 @@ const styles = StyleSheet.create({
   summaryDoneSub: {fontSize: 13, color: C.white70, marginTop: 2},
   summaryRow: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start'},
   summaryPendingTitle: {fontSize: 15, fontWeight: '700', color: C.orange, flex: 1},
-  summaryHours: {fontSize: 12, fontWeight: '600', color: PENDING},
+  summaryHours: {fontSize: 14, fontWeight: '600', color: PENDING},
   summaryTrack: {
     height: 4, backgroundColor: C.white15,
     borderRadius: 2, overflow: 'hidden', marginTop: 10,
   },
   summaryFill: {height: 4, borderRadius: 2, backgroundColor: PENDING},
-  summaryCount: {fontSize: 12, color: C.white40, marginTop: 6},
+  summaryCount: {fontSize: 14, color: C.white40, marginTop: 6},
 
   onboarding: {flex: 1, paddingHorizontal: 24, paddingTop: 8},
   onboardingIcon: {fontSize: 48, marginBottom: 16},
@@ -360,7 +371,7 @@ const styles = StyleSheet.create({
   },
   stepNumText: {color: C.bgDeep, fontWeight: '900', fontSize: 13},
   stepTitle: {fontSize: 15, fontWeight: '700', color: TEXT_1},
-  stepDesc: {fontSize: 13, color: TEXT_2, marginTop: 2, lineHeight: 18},
+  stepDesc: {fontSize: 14, color: TEXT_2, marginTop: 2, lineHeight: 18},
   onboardingBtn: {
     backgroundColor: C.yellow, borderRadius: 12,
     paddingVertical: 16, alignItems: 'center',
@@ -370,7 +381,6 @@ const styles = StyleSheet.create({
   onboardingBtnText: {color: C.bgDeep, fontWeight: '900', fontSize: 15, letterSpacing: 0.8},
 
   fab: {
-    position: 'absolute', bottom: 28, right: 24,
     width: 56, height: 56, borderRadius: 28,
     backgroundColor: C.yellow,
     alignItems: 'center', justifyContent: 'center',
