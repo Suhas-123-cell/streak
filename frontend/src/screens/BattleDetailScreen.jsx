@@ -363,7 +363,7 @@ export default function BattleDetailScreen({route, navigation}) {
                 value={reminderDate}
                 mode="time"
                 display="spinner"
-                onChange={(_, val) => onPickerChange(val)}
+                onChange={onPickerChange}
                 textColor="#111827"
               />
             </View>

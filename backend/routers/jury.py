@@ -41,14 +41,22 @@ async def cast_vote(checkin_id: str, req: VoteRequest, user=Depends(get_current_
     if not membership.data:
         raise HTTPException(403, "Only active members can vote")
 
-    try:
-        supabase.table("jury_votes").insert({
-            "checkin_id": checkin_id,
-            "voter_id": user.id,
-            "vote": req.vote,
-        }).execute()
-    except Exception:
+    existing_vote = (
+        supabase.table("jury_votes")
+        .select("id")
+        .eq("checkin_id", checkin_id)
+        .eq("voter_id", user.id)
+        .execute()
+        .data
+    )
+    if existing_vote:
         raise HTTPException(409, "You already voted on this checkin")
+
+    supabase.table("jury_votes").insert({
+        "checkin_id": checkin_id,
+        "voter_id": user.id,
+        "vote": req.vote,
+    }).execute()
 
     votes = (
         supabase.table("jury_votes")

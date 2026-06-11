@@ -56,7 +56,7 @@ async def assign_penalty(req: CreatePenaltyRequest, user=Depends(get_current_use
 async def mark_done(penalty_id: str, user=Depends(get_current_user)):
     penalty = (
         supabase.table("penalties")
-        .select("assigned_to, battle_id")
+        .select("assigned_to, battle_id, completed")
         .eq("id", penalty_id)
         .single()
         .execute()
@@ -64,11 +64,18 @@ async def mark_done(penalty_id: str, user=Depends(get_current_user)):
     )
     if penalty["assigned_to"] != user.id:
         raise HTTPException(403, "Only the penalised member can mark it done")
+    if penalty["completed"]:
+        return {"ok": True, "streak_repaired": False}
     supabase.table("penalties").update({"completed": True}).eq("id", penalty_id).execute()
 
     # Redemption: restore 1 streak day when challenge completed
     battle_id = penalty["battle_id"]
     streak_key = f"battle:{battle_id}:streak:{user.id}"
+    if not r.exists(streak_key):
+        seed = (supabase.table("battle_members").select("current_streak")
+                .eq("battle_id", battle_id).eq("user_id", user.id)
+                .single().execute().data or {}).get("current_streak", 0)
+        r.set(streak_key, seed)
     new_streak = r.incr(streak_key)
     current = (
         supabase.table("battle_members")

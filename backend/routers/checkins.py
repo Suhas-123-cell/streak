@@ -137,11 +137,18 @@ async def submit_checkin(
     # Always bust the member cache so checked_in_today refreshes immediately
     r.delete(f"battle:{battle_id}:members")
 
-    if verified:
-        r.sadd(checkin_key, user.id)
-        r.expire(checkin_key, 172800)
+    # Block re-submission for any outcome (verified, pending jury, or failed)
+    r.sadd(checkin_key, user.id)
+    r.expire(checkin_key, 172800)
 
+    if verified:
         streak_key = f"battle:{battle_id}:streak:{user.id}"
+        # Seed from DB if Redis key expired to avoid resetting a real streak to 1
+        if not r.exists(streak_key):
+            seed = (supabase.table("battle_members").select("current_streak")
+                    .eq("battle_id", battle_id).eq("user_id", user.id)
+                    .single().execute().data or {}).get("current_streak", 0)
+            r.set(streak_key, seed)
         new_streak = r.incr(streak_key)
 
         current = (

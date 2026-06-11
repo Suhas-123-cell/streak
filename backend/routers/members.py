@@ -137,6 +137,8 @@ async def use_freeze(battle_id: str, user=Depends(get_current_user)):
     # Use the token: protect streak for today
     new_tokens = (member["freeze_tokens"] or 0) - 1
     streak_key = f"battle:{battle_id}:streak:{user.id}"
+    if not r.exists(streak_key):
+        r.set(streak_key, member["current_streak"] or 0)
     new_streak = r.incr(streak_key)
     longest = max(int(new_streak), member["longest_streak"])
 
