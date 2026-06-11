@@ -1,4 +1,6 @@
-# Python
+# ===========================
+# Python / Backend
+# ===========================
 __pycache__/
 *.pyc
 *.pyo
@@ -8,7 +10,14 @@ venv/
 dist/
 build/
 
-# Environment / secrets (never commit real credentials)
+# Celery Beat schedule DB (runtime artifacts)
+backend/celerybeat-schedule
+backend/celerybeat-schedule-shm
+backend/celerybeat-schedule-wal
+
+# ===========================
+# Environment / Secrets
+# ===========================
 .env
 .env.local
 .env.*.local
@@ -19,32 +28,56 @@ frontend/.env
 backend/firebase-service-account.json
 frontend/android/app/google-services.json
 frontend/ios/GoogleService-Info.plist
+frontend/ios/StreakFightNew/GoogleService-Info.plist
 
-# React Native
+# ===========================
+# React Native / Frontend
+# ===========================
 frontend/node_modules/
 frontend/.gradle/
 frontend/android/.gradle/
 frontend/android/local.properties
 frontend/android/app/debug/
 frontend/android/app/release/
-frontend/ios/build/
-frontend/ios/Pods/
+frontend/android/app/.cxx/
 frontend/**/*.jks
 frontend/**/*.p8
 frontend/**/*.p12
 frontend/**/*.mobileprovision
 frontend/**/*.orig.*
 
-# Claude Code agent worktrees
-.claude/worktrees/
+# Android build artifacts
+frontend/android/debug.keystore
+frontend/android/gradle/wrapper/gradle-wrapper.jar
 
+# iOS
+frontend/ios/build/
+frontend/ios/Pods/
+frontend/ios/.xcode.env.local
+
+# ===========================
 # Xcode
+# ===========================
 frontend/ios/*.xcworkspace/xcuserdata/
 frontend/ios/*.xcodeproj/xcuserdata/
 frontend/ios/DerivedData/
 frontend/ios/**/*.hmap
+xcuserdata/
+*.xcuserstate
 
-# General
+# ===========================
+# Claude / AI Agent
+# ===========================
+.claude/worktrees/
+
+# ===========================
+# Patches (auto-generated)
+# ===========================
+frontend/patches/
+
+# ===========================
+# General / OS
+# ===========================
 .DS_Store
 Thumbs.db
 *.log
