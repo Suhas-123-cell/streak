@@ -1,6 +1,6 @@
 # StreakFight
 
-A habit accountability app where you battle friends to maintain daily streaks. Miss a day and your streak resets — your group sees everything.
+A habit accountability app where you battle friends to maintain daily streaks. Miss a day and your streak resets — your group sees everything. 
 
 ## What it does
 
