@@ -139,24 +139,25 @@ const styles = StyleSheet.create({
   safe: {flex: 1, backgroundColor: C.bg},
   content: {paddingBottom: 20},
 
-  topSection: {paddingTop: 32, paddingHorizontal: 20},
+  topSection: {paddingTop: 36, paddingHorizontal: 20},
   avatar: {
-    width: 72, height: 72, borderRadius: 36,
-    backgroundColor: 'rgba(78,201,232,0.15)',
+    width: 80, height: 80, borderRadius: 40,
+    backgroundColor: 'rgba(255,0,112,0.12)',
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2, borderColor: C.cyan,
-    shadowColor: C.cyan, shadowOpacity: 0.4,
-    shadowRadius: 20, shadowOffset: {width: 0, height: 0},
-    elevation: 8,
+    borderWidth: 2.5, borderColor: C.pink,
+    shadowColor: C.pink, shadowOpacity: 0.55,
+    shadowRadius: 28, shadowOffset: {width: 0, height: 0},
+    elevation: 14,
   },
-  avatarText: {color: C.cyan, fontSize: 28, fontWeight: '900'},
+  avatarText: {color: C.pink, fontSize: 32, fontWeight: '900'},
   username: {
-    fontSize: 22, fontWeight: '900', color: C.yellow, marginTop: 12,
-    letterSpacing: 0.5,
+    fontSize: 26, fontWeight: '900', color: C.yellow, marginTop: 14,
+    letterSpacing: 0.6,
+    textShadowColor: C.orange, textShadowRadius: 8, textShadowOffset: {width: 0, height: 0},
   },
-  email: {fontSize: 14, color: C.white70, marginTop: 2},
+  email: {fontSize: 13, color: C.white40, marginTop: 3, fontWeight: '600'},
 
-  divider: {height: 1, backgroundColor: C.white15, marginHorizontal: 20, marginVertical: 20},
+  divider: {height: 1, backgroundColor: C.white15, marginHorizontal: 20, marginVertical: 22},
 
   statsRow: {
     flexDirection: 'row', justifyContent: 'space-between',
@@ -164,23 +165,23 @@ const styles = StyleSheet.create({
   },
   stat: {},
   statNum: {
-    fontSize: 28, fontWeight: '900', color: C.yellow,
-    textShadowColor: C.cyan, textShadowRadius: 6,
-    textShadowOffset: {width: 1, height: 1},
+    fontSize: 32, fontWeight: '900', color: C.yellow,
+    textShadowColor: C.pink, textShadowRadius: 8,
+    textShadowOffset: {width: 0, height: 0},
   },
-  statLabel: {fontSize: 13, color: C.white70, marginTop: 2, fontWeight: '600', letterSpacing: 0.5},
+  statLabel: {fontSize: 12, color: C.white70, marginTop: 3, fontWeight: '700', letterSpacing: 0.6},
 
   quote: {
     fontSize: 14, fontStyle: 'italic', color: C.white40,
-    lineHeight: 20, paddingHorizontal: 20, marginBottom: 8,
+    lineHeight: 21, paddingHorizontal: 20, marginBottom: 8,
   },
 
   logoutWrap: {paddingHorizontal: 20, paddingVertical: 8},
   logoutBtn: {paddingVertical: 14, alignItems: 'center'},
   logoutText: {color: C.white40, fontWeight: '700', fontSize: 15, letterSpacing: 0.5, textDecorationLine: 'underline'},
   statsHeading: {
-    fontSize: 12, fontWeight: '800', color: C.white40,
-    textTransform: 'uppercase', letterSpacing: 1.5,
-    paddingHorizontal: 20, marginBottom: 8,
+    fontSize: 11, fontWeight: '900', color: C.white40,
+    textTransform: 'uppercase', letterSpacing: 2,
+    paddingHorizontal: 20, marginBottom: 10,
   },
 });
