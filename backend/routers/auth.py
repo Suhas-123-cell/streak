@@ -63,6 +63,8 @@ async def signup(request: Request, req: SignupRequest):
     try:
         resp = auth_supabase.auth.sign_up({"email": req.email, "password": req.password})
         user = resp.user
+        if user is None:
+            raise HTTPException(status_code=409, detail="That email is already registered. Try logging in instead.")
         supabase.table("profiles").insert(
             {"id": user.id, "username": req.username}
         ).execute()
@@ -70,8 +72,11 @@ async def signup(request: Request, req: SignupRequest):
         return {"user_id": user.id, "access_token": resp.session.access_token if resp.session else None}
     except HTTPException:
         raise
-    except Exception:
-        raise HTTPException(status_code=400, detail="Signup failed. Email may already be in use.")
+    except Exception as e:
+        err = str(e).lower()
+        if "already registered" in err or "already exists" in err or "user_already_exists" in err:
+            raise HTTPException(status_code=409, detail="That email is already registered. Try logging in instead.")
+        raise HTTPException(status_code=400, detail="Signup failed. Please try again.")
 
 
 @router.post("/login")
@@ -96,14 +101,22 @@ async def login(request: Request, req: LoginRequest):
 @router.post("/set-username")
 @limiter.limit("10/minute")
 async def set_username(request: Request, req: UsernameRequest):
-    from middleware.auth import get_current_user
-    user = await get_current_user(request)
+    from database import auth_supabase
+    authorization = request.headers.get("authorization") or request.headers.get("Authorization", "")
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing bearer token")
+    token = authorization.split(" ", 1)[1]
+    try:
+        resp = auth_supabase.auth.get_user(token)
+        user_id = resp.user.id
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
     if _username_taken(req.username):
         raise HTTPException(status_code=409, detail="That username is already taken. Please choose a different one.")
-    existing = supabase.table("profiles").select("id").eq("id", user["id"]).limit(1).execute()
+    existing = supabase.table("profiles").select("id").eq("id", user_id).limit(1).execute()
     if existing.data:
-        supabase.table("profiles").update({"username": req.username}).eq("id", user["id"]).execute()
+        supabase.table("profiles").update({"username": req.username}).eq("id", user_id).execute()
     else:
-        supabase.table("profiles").insert({"id": user["id"], "username": req.username}).execute()
-        supabase.table("reminder_preferences").insert({"user_id": user["id"]}).execute()
+        supabase.table("profiles").insert({"id": user_id, "username": req.username}).execute()
+        supabase.table("reminder_preferences").insert({"user_id": user_id}).execute()
     return {"ok": True}
