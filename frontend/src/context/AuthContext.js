@@ -20,9 +20,10 @@ function fetchWithTimeout(url, options = {}, ms = 10000) {
 }
 
 export function AuthProvider({children}) {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser]                   = useState(null);
+  const [token, setToken]                 = useState(null);
+  const [loading, setLoading]             = useState(true);
+  const [needsUsername, setNeedsUsername] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -30,8 +31,10 @@ export function AuthProvider({children}) {
       AsyncStorage.getItem('user'),
     ]).then(([creds, u]) => {
       if (creds && u) {
+        const parsed = JSON.parse(u);
         setToken(creds.password);
-        setUser(JSON.parse(u));
+        setUser(parsed);
+        if (!parsed.username) setNeedsUsername(true);
       }
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
@@ -63,7 +66,26 @@ export function AuthProvider({children}) {
       throw new Error(msg);
     }
     const data = await res.json();
-    await _persist(data.access_token, {id: data.user_id, email});
+    const u = {id: data.user_id, email};
+    await _persist(data.access_token, u);
+    if (!data.has_username) setNeedsUsername(true);
+  }
+
+  async function saveUsername(username) {
+    const res = await fetchWithTimeout(endpoints.setUsername, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', Authorization: `Bearer ${token}`},
+      body: JSON.stringify({username}),
+    });
+    if (!res.ok) {
+      let msg = 'Could not save username';
+      try { msg = (await res.json()).detail || msg; } catch (_) {}
+      throw new Error(msg);
+    }
+    const updated = {...user, username};
+    setUser(updated);
+    await AsyncStorage.setItem('user', JSON.stringify(updated));
+    setNeedsUsername(false);
   }
 
   async function _persist(t, u) {
@@ -101,7 +123,7 @@ export function AuthProvider({children}) {
   }, [token, _clearSession]);
 
   return (
-    <AuthContext.Provider value={{user, token, loading, signup, login, logout, fetchWithAuth}}>
+    <AuthContext.Provider value={{user, token, loading, needsUsername, signup, login, logout, saveUsername, fetchWithAuth}}>
       {children}
     </AuthContext.Provider>
   );

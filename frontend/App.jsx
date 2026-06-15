@@ -15,6 +15,7 @@ import NewBattleScreen from './src/screens/NewBattleScreen';
 import LeaderboardScreen from './src/screens/LeaderboardScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import AuthScreen from './src/screens/AuthScreen';
+import UsernameSetupScreen from './src/screens/UsernameSetupScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -88,9 +89,9 @@ function HomeStack() {
 function TabIcon({emoji, focused}) {
   return (
     <Text style={{
-      fontSize: focused ? 22 : 19,
-      textShadowColor: focused ? C.cyan : 'transparent',
-      textShadowRadius: focused ? 10 : 0,
+      fontSize: focused ? 24 : 19,
+      textShadowColor: focused ? C.pink : 'transparent',
+      textShadowRadius: focused ? 14 : 0,
       textShadowOffset: {width: 0, height: 0},
     }}>
       {emoji}
@@ -105,15 +106,15 @@ function AppTabs() {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: C.bgDeep,
-          borderTopColor: 'rgba(78,201,232,0.2)',
-          borderTopWidth: 1,
-          height: 64,
+          borderTopColor: 'rgba(255,0,112,0.3)',
+          borderTopWidth: 1.5,
+          height: 68,
           paddingBottom: 10,
-          paddingTop: 6,
+          paddingTop: 7,
         },
-        tabBarActiveTintColor: C.yellow,
+        tabBarActiveTintColor: C.pink,
         tabBarInactiveTintColor: C.white40,
-        tabBarLabelStyle: {fontSize: 11, fontWeight: '700', letterSpacing: 0.4},
+        tabBarLabelStyle: {fontSize: 11, fontWeight: '800', letterSpacing: 0.5},
       }}>
       <Tab.Screen
         name="Battles"
@@ -144,7 +145,7 @@ function AppTabs() {
 }
 
 function Root() {
-  const {user, loading, fetchWithAuth} = useAuth();
+  const {user, loading, needsUsername, fetchWithAuth} = useAuth();
   const [splashDone, setSplashDone] = React.useState(false);
 
   useEffect(() => {
@@ -197,7 +198,9 @@ function Root() {
   if (!splashDone || loading) {
     return <SplashScreen onDone={() => setSplashDone(true)} />;
   }
-  return user ? <AppTabs /> : <AuthScreen />;
+  if (!user) return <AuthScreen />;
+  if (needsUsername) return <UsernameSetupScreen />;
+  return <AppTabs />;
 }
 
 export default function App() {
@@ -216,24 +219,25 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   blob: {
-    backgroundColor: '#EEEDF8',
+    backgroundColor: C.bgDeep,
     width: 300, height: 148,
     borderRadius: 80,
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: C.cyan, shadowOpacity: 0.55,
-    shadowRadius: 32, shadowOffset: {width: 0, height: 0},
-    elevation: 20, overflow: 'visible',
+    shadowColor: C.pink, shadowOpacity: 0.7,
+    shadowRadius: 40, shadowOffset: {width: 0, height: 0},
+    elevation: 24, overflow: 'visible',
+    borderWidth: 2, borderColor: 'rgba(255,0,112,0.55)',
   },
   splashLine: {
-    fontSize: 44, fontWeight: '900', color: C.yellow,
-    letterSpacing: 5,
-    textShadowColor: C.cyan, textShadowRadius: 8,
-    textShadowOffset: {width: 2, height: 2},
-    lineHeight: 50, textAlign: 'center',
+    fontSize: 46, fontWeight: '900', color: C.yellow,
+    letterSpacing: 6,
+    textShadowColor: C.pink, textShadowRadius: 12,
+    textShadowOffset: {width: 0, height: 0},
+    lineHeight: 52, textAlign: 'center',
   },
   drip: {
-    position: 'absolute', bottom: -6,
-    width: 11, height: 18, borderRadius: 6, backgroundColor: C.yellow,
+    position: 'absolute', bottom: -7,
+    width: 12, height: 20, borderRadius: 7, backgroundColor: C.pink,
   },
   d1: {left: '28%'},
   d2: {left: '48%'},
