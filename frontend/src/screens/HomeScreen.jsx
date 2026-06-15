@@ -10,8 +10,35 @@ import {useBattles} from '../hooks/useBattles';
 import {useMembers} from '../hooks/useMembers';
 import BattleCard from '../components/BattleCard';
 import {endpoints} from '../constants/api';
-
 import {C} from '../constants/theme';
+
+// Ambient background orbs — simulates gradient mesh depth
+function AmbientBg() {
+  const orb1 = useRef(new Animated.Value(0)).current;
+  const orb2 = useRef(new Animated.Value(0)).current;
+  const orb3 = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = (val, dur, delay) => Animated.loop(
+      Animated.sequence([
+        Animated.timing(val, {toValue: -18, duration: dur, delay, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
+        Animated.timing(val, {toValue: 0, duration: dur, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
+      ])
+    ).start();
+    loop(orb1, 4500, 0);
+    loop(orb2, 5800, 800);
+    loop(orb3, 3900, 400);
+  }, []);
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      <Animated.View style={{position: 'absolute', width: 280, height: 280, borderRadius: 140,
+        backgroundColor: 'rgba(170,0,255,0.1)', top: -100, left: -80, transform: [{translateY: orb1}]}} />
+      <Animated.View style={{position: 'absolute', width: 200, height: 200, borderRadius: 100,
+        backgroundColor: 'rgba(255,0,112,0.08)', top: 200, right: -60, transform: [{translateY: orb2}]}} />
+      <Animated.View style={{position: 'absolute', width: 160, height: 160, borderRadius: 80,
+        backgroundColor: 'rgba(0,229,255,0.06)', bottom: 120, left: -30, transform: [{translateY: orb3}]}} />
+    </View>
+  );
+}
 
 function BattleItem({battle, onPress, token, userId, onCheckinStatus, index, refreshKey}) {
   const {members, fetchMembers} = useMembers(battle.id);
@@ -259,6 +286,7 @@ export default function HomeScreen({navigation}) {
     return (
       <SafeAreaView style={styles.safe}>
         <StatusBar barStyle="light-content" backgroundColor={C.bgDeep} />
+        <AmbientBg />
         <AnimatedHeader />
         <OnboardingEmpty onPress={() => navigation.navigate('NewBattle')} />
         <Animated.View style={{
@@ -277,6 +305,7 @@ export default function HomeScreen({navigation}) {
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor={C.bgDeep} />
+      <AmbientBg />
       <FlatList
         data={sortedBattles}
         keyExtractor={b => b.id}
@@ -315,69 +344,80 @@ const styles = StyleSheet.create({
 
   header: {paddingHorizontal: 20, paddingTop: 24, paddingBottom: 16},
   title: {
-    fontSize: 28, fontWeight: '900', color: C.yellow,
-    letterSpacing: 1,
-    textShadowColor: C.cyan, textShadowRadius: 6,
-    textShadowOffset: {width: 1, height: 1},
+    fontSize: 38, fontWeight: '900', color: C.yellow,
+    letterSpacing: 2,
+    textShadowColor: C.pink, textShadowRadius: 14,
+    textShadowOffset: {width: 0, height: 0},
   },
-  dateText: {fontSize: 14, color: C.white70, marginTop: 2, letterSpacing: 0.3},
+  dateText: {fontSize: 13, color: C.white40, marginTop: 3, letterSpacing: 0.4, fontWeight: '600'},
 
   summaryCard: {
-    marginHorizontal: 16, marginBottom: 8, borderRadius: 14, padding: 16,
-    borderWidth: 1,
+    marginHorizontal: 16, marginBottom: 10, borderRadius: 18, padding: 17,
+    borderWidth: 1.5,
   },
   summaryCardDone: {
-    backgroundColor: 'rgba(57,255,20,0.08)',
-    borderColor: 'rgba(57,255,20,0.3)',
+    backgroundColor: 'rgba(0,255,138,0.07)',
+    borderColor: 'rgba(0,255,138,0.35)',
+    shadowColor: C.green, shadowOpacity: 0.2, shadowRadius: 16,
+    shadowOffset: {width: 0, height: 0},
   },
   summaryCardPending: {
-    backgroundColor: 'rgba(255,140,66,0.08)',
-    borderColor: 'rgba(255,140,66,0.3)',
+    backgroundColor: 'rgba(170,0,255,0.07)',
+    borderColor: 'rgba(170,0,255,0.3)',
+    shadowColor: C.purple, shadowOpacity: 0.2, shadowRadius: 16,
+    shadowOffset: {width: 0, height: 0},
   },
-  summaryDoneTitle: {fontSize: 15, fontWeight: '700', color: C.green},
-  summaryDoneSub: {fontSize: 13, color: C.white70, marginTop: 2},
+  summaryDoneTitle: {fontSize: 15, fontWeight: '800', color: C.lime},
+  summaryDoneSub: {fontSize: 13, color: C.white70, marginTop: 3},
   summaryRow: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start'},
-  summaryPendingTitle: {fontSize: 15, fontWeight: '700', color: C.orange, flex: 1},
-  summaryHours: {fontSize: 14, fontWeight: '600', color: C.orange},
+  summaryPendingTitle: {fontSize: 15, fontWeight: '800', color: C.yellow, flex: 1},
+  summaryHours: {fontSize: 14, fontWeight: '700', color: C.orange},
   summaryTrack: {
-    height: 4, backgroundColor: C.white15,
-    borderRadius: 2, overflow: 'hidden', marginTop: 10,
+    height: 9, backgroundColor: C.white15,
+    borderRadius: 5, overflow: 'hidden', marginTop: 11,
   },
-  summaryFill: {height: 4, borderRadius: 2, backgroundColor: C.orange},
-  summaryCount: {fontSize: 14, color: C.white40, marginTop: 6},
+  summaryFill: {
+    height: 9, borderRadius: 5, backgroundColor: C.purple,
+    shadowColor: C.purple, shadowOpacity: 0.8, shadowRadius: 8,
+    shadowOffset: {width: 0, height: 0},
+  },
+  summaryCount: {fontSize: 13, color: C.white40, marginTop: 7, fontWeight: '600'},
 
   onboarding: {flex: 1, paddingHorizontal: 24, paddingTop: 8},
-  onboardingIcon: {fontSize: 48, marginBottom: 16},
-  onboardingTitle: {fontSize: 22, fontWeight: '800', color: C.yellow, letterSpacing: 0.5},
-  onboardingDesc: {fontSize: 15, color: C.white70, lineHeight: 22, marginTop: 8, marginBottom: 28},
+  onboardingIcon: {fontSize: 56, marginBottom: 18},
+  onboardingTitle: {fontSize: 26, fontWeight: '900', color: C.yellow, letterSpacing: 0.8,
+    textShadowColor: C.pink, textShadowRadius: 12, textShadowOffset: {width: 0, height: 0}},
+  onboardingDesc: {fontSize: 15, color: C.white70, lineHeight: 23, marginTop: 10, marginBottom: 30},
   steps: {
-    borderWidth: 1, borderColor: C.white15, borderRadius: 14,
-    overflow: 'hidden', marginBottom: 28, backgroundColor: C.card,
+    borderWidth: 1.5, borderColor: 'rgba(170,0,255,0.25)', borderRadius: 20,
+    overflow: 'hidden', marginBottom: 30, backgroundColor: 'rgba(170,0,255,0.06)',
   },
-  step: {flexDirection: 'row', alignItems: 'flex-start', padding: 16, gap: 14},
+  step: {flexDirection: 'row', alignItems: 'flex-start', padding: 18, gap: 14},
   stepDivider: {height: 1, backgroundColor: C.white15},
   stepNum: {
-    width: 28, height: 28, borderRadius: 14,
-    backgroundColor: C.yellow, alignItems: 'center', justifyContent: 'center',
+    width: 30, height: 30, borderRadius: 15,
+    backgroundColor: C.pink, alignItems: 'center', justifyContent: 'center',
     marginTop: 1,
+    shadowColor: C.pink, shadowOpacity: 0.5, shadowRadius: 8, shadowOffset: {width: 0, height: 0},
   },
-  stepNumText: {color: C.bgDeep, fontWeight: '900', fontSize: 13},
-  stepTitle: {fontSize: 15, fontWeight: '700', color: C.white},
-  stepDesc: {fontSize: 14, color: C.white70, marginTop: 2, lineHeight: 18},
+  stepNumText: {color: C.white, fontWeight: '900', fontSize: 13},
+  stepTitle: {fontSize: 15, fontWeight: '800', color: C.white},
+  stepDesc: {fontSize: 14, color: C.white70, marginTop: 3, lineHeight: 19},
   onboardingBtn: {
-    backgroundColor: C.yellow, borderRadius: 12,
-    paddingVertical: 16, alignItems: 'center',
-    shadowColor: C.yellow, shadowOpacity: 0.35, shadowRadius: 12,
-    shadowOffset: {width: 0, height: 4}, elevation: 6,
+    backgroundColor: C.pink, borderRadius: 16,
+    paddingVertical: 17, alignItems: 'center',
+    shadowColor: C.pink, shadowOpacity: 0.6, shadowRadius: 22,
+    shadowOffset: {width: 0, height: 6}, elevation: 12,
   },
-  onboardingBtnText: {color: C.bgDeep, fontWeight: '900', fontSize: 15, letterSpacing: 0.8},
+  onboardingBtnText: {color: C.white, fontWeight: '900', fontSize: 16, letterSpacing: 1.2},
 
   fab: {
-    width: 56, height: 56, borderRadius: 28,
-    backgroundColor: C.yellow,
+    width: 64, height: 64, borderRadius: 32,
+    backgroundColor: C.pink,
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: C.yellow, shadowOpacity: 0.5, shadowRadius: 16,
-    shadowOffset: {width: 0, height: 4}, elevation: 10,
+    shadowColor: C.pink, shadowOpacity: 0.75, shadowRadius: 28,
+    shadowOffset: {width: 0, height: 6}, elevation: 18,
+    borderWidth: 2, borderColor: 'rgba(255,0,112,0.4)',
   },
-  fabText: {color: C.bgDeep, fontSize: 26, fontWeight: '900', lineHeight: 30},
+  fabText: {color: C.white, fontSize: 30, fontWeight: '900', lineHeight: 34},
 });

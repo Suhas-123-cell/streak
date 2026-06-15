@@ -1,25 +1,34 @@
 export const C = {
-  bg:           '#12106A',
-  bgDeep:       '#0C0A52',
-  bgSurface:    '#16161D',
-  bgAlt:        '#16213E',
-  card:         'rgba(255,255,255,0.07)',
-  cardBorder:   'rgba(78,201,232,0.2)',
-  cardBorderHot:'rgba(232,245,49,0.65)',
+  // Backgrounds — deep purple-void (Gen Z aesthetic)
+  bg:           '#0B0015',
+  bgDeep:       '#060009',
+  bgSurface:    '#130020',
+  bgAlt:        '#1C003A',
+  card:         'rgba(160,0,255,0.065)',
+  cardBorder:   'rgba(0,229,255,0.3)',
+  cardBorderHot:'rgba(255,0,112,0.85)',
   bgCard:       'rgba(255,255,255,0.04)',
 
-  yellow:       '#E8F531',
-  cyan:         '#4EC9E8',
-  green:        '#6EE78A',
-  pink:         '#FF3864',
-  orange:       '#FF8C42',
+  // NEON palette — electric, vibrant, Gen Z-coded
+  yellow:       '#FFE000',   // electric gold (CTA primary)
+  lime:         '#B8FF00',   // neon lime (win / celebration)
+  cyan:         '#00E5FF',   // electric cyan
+  green:        '#00FF8A',   // mint neon green
+  pink:         '#FF0070',   // hot magenta-pink (urgency / fire)
+  orange:       '#FF6600',   // pure neon orange
+  purple:       '#AA00FF',   // electric violet
+  magenta:      '#FF00EE',   // pure magenta
+  red:          '#FF3B3B',   // neon red
+  coral:        '#FF4D6D',   // coral accent
 
-  badgeBg:      'rgba(232,245,49,0.12)',
-  badgeBorder:  'rgba(232,245,49,0.35)',
+  // Badge
+  badgeBg:      'rgba(184,255,0,0.12)',
+  badgeBorder:  'rgba(184,255,0,0.55)',
 
+  // Neutrals
   white:        '#FFFFFF',
-  white70:      'rgba(255,255,255,0.7)',
-  white40:      'rgba(255,255,255,0.55)',
-  white15:      'rgba(255,255,255,0.15)',
-  white08:      'rgba(255,255,255,0.08)',
+  white70:      'rgba(255,255,255,0.72)',
+  white40:      'rgba(255,255,255,0.50)',
+  white15:      'rgba(255,255,255,0.12)',
+  white08:      'rgba(255,255,255,0.07)',
 };
