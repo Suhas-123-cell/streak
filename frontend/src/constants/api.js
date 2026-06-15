@@ -3,8 +3,10 @@ import Config from 'react-native-config';
 export const API_URL = Config.API_URL || 'http://192.168.0.177:8000/api';
 
 export const endpoints = {
-  signup: `${API_URL}/auth/signup`,
-  login: `${API_URL}/auth/login`,
+  signup:        `${API_URL}/auth/signup`,
+  login:         `${API_URL}/auth/login`,
+  checkUsername: (u) => `${API_URL}/auth/check-username?username=${encodeURIComponent(u)}`,
+  setUsername:   `${API_URL}/auth/set-username`,
   profile: (id) => `${API_URL}/profile/${id}`,
   battles: `${API_URL}/battles`,
   userBattles: (id) => `${API_URL}/battles/user/${id}`,
