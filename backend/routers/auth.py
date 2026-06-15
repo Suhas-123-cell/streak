@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, EmailStr, field_validator
 from database import supabase, auth_supabase
 from extensions import limiter
@@ -32,9 +32,34 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class UsernameRequest(BaseModel):
+    username: str
+
+    @field_validator("username")
+    @classmethod
+    def username_format(cls, v: str) -> str:
+        v = v.strip()
+        if not v or len(v) > 30:
+            raise ValueError("Username must be 1-30 characters")
+        return v
+
+
+def _username_taken(username: str) -> bool:
+    res = supabase.table("profiles").select("id").eq("username", username).limit(1).execute()
+    return len(res.data) > 0
+
+
+@router.get("/check-username")
+@limiter.limit("30/minute")
+async def check_username(request: Request, username: str = Query(..., min_length=1, max_length=30)):
+    return {"available": not _username_taken(username.strip())}
+
+
 @router.post("/signup")
 @limiter.limit("5/minute")
 async def signup(request: Request, req: SignupRequest):
+    if _username_taken(req.username):
+        raise HTTPException(status_code=409, detail="That username is already taken. Please choose a different one.")
     try:
         resp = auth_supabase.auth.sign_up({"email": req.email, "password": req.password})
         user = resp.user
@@ -43,6 +68,8 @@ async def signup(request: Request, req: SignupRequest):
         ).execute()
         supabase.table("reminder_preferences").insert({"user_id": user.id}).execute()
         return {"user_id": user.id, "access_token": resp.session.access_token if resp.session else None}
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(status_code=400, detail="Signup failed. Email may already be in use.")
 
@@ -54,9 +81,29 @@ async def login(request: Request, req: LoginRequest):
         resp = auth_supabase.auth.sign_in_with_password(
             {"email": req.email, "password": req.password}
         )
+        user_id = resp.user.id
+        profile = supabase.table("profiles").select("username").eq("id", user_id).limit(1).execute()
+        has_username = bool(profile.data and profile.data[0].get("username"))
         return {
-            "user_id": resp.user.id,
+            "user_id": user_id,
             "access_token": resp.session.access_token,
+            "has_username": has_username,
         }
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid email or password.")
+
+
+@router.post("/set-username")
+@limiter.limit("10/minute")
+async def set_username(request: Request, req: UsernameRequest):
+    from middleware.auth import get_current_user
+    user = await get_current_user(request)
+    if _username_taken(req.username):
+        raise HTTPException(status_code=409, detail="That username is already taken. Please choose a different one.")
+    existing = supabase.table("profiles").select("id").eq("id", user["id"]).limit(1).execute()
+    if existing.data:
+        supabase.table("profiles").update({"username": req.username}).eq("id", user["id"]).execute()
+    else:
+        supabase.table("profiles").insert({"id": user["id"], "username": req.username}).execute()
+        supabase.table("reminder_preferences").insert({"user_id": user["id"]}).execute()
+    return {"ok": True}
