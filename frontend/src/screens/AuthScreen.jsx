@@ -9,6 +9,24 @@ import {useAuth} from '../context/AuthContext';
 import {endpoints} from '../constants/api';
 import {C} from '../constants/theme';
 
+const MONO = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
+
+function CornerBrackets({color, size = 16, inset = -6}) {
+  const corners = [
+    {top: inset, left: inset, borderTopWidth: 2, borderLeftWidth: 2},
+    {top: inset, right: inset, borderTopWidth: 2, borderRightWidth: 2},
+    {bottom: inset, left: inset, borderBottomWidth: 2, borderLeftWidth: 2},
+    {bottom: inset, right: inset, borderBottomWidth: 2, borderRightWidth: 2},
+  ];
+  return (
+    <>
+      {corners.map((c, i) => (
+        <View key={i} style={[st.bracket, c, {width: size, height: size, borderColor: color}]} />
+      ))}
+    </>
+  );
+}
+
 function FloatingOrbs() {
   const o1 = useRef(new Animated.Value(0)).current;
   const o2 = useRef(new Animated.Value(0)).current;
@@ -43,6 +61,17 @@ export default function AuthScreen() {
   const [focusedField, setFocusedField] = useState(null);
   const [usernameStatus, setUsernameStatus] = useState(null); // null | 'checking' | 'available' | 'taken'
   const checkTimer = useRef(null);
+  const traceAnim = useRef(new Animated.Value(0)).current;
+
+  function focusField(field) {
+    setFocusedField(field);
+    traceAnim.setValue(0);
+    Animated.timing(traceAnim, {toValue: 1, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true}).start();
+  }
+  function blurField() {
+    setFocusedField(null);
+    Animated.timing(traceAnim, {toValue: 0, duration: 150, easing: Easing.in(Easing.cubic), useNativeDriver: true}).start();
+  }
 
   const checkUsername = useCallback((val) => {
     if (checkTimer.current) clearTimeout(checkTimer.current);
@@ -155,6 +184,7 @@ export default function AuthScreen() {
   const Logo = () => (
     <Animated.View style={[st.top, {opacity: topOp, transform: [{translateY: topSlide}]}]}>
       <Animated.View style={[st.blobWrap, {transform: [{scale: blobScale}]}]}>
+        <CornerBrackets color={C.cyan} />
         <Animated.View style={[st.drip, st.drip1, {transform: [{translateY: dripTY(drip1, 22)}]}]} />
         <Animated.View style={[st.drip, st.drip2, {transform: [{translateY: dripTY(drip2, 28)}]}]} />
         <Animated.View style={[st.drip, st.drip3, {transform: [{translateY: dripTY(drip3, 20)}]}]} />
@@ -165,31 +195,50 @@ export default function AuthScreen() {
     </Animated.View>
   );
 
+  const traceColor = (field) => {
+    if (field === 'username') {
+      if (usernameStatus === 'available') return C.lime;
+      if (usernameStatus === 'taken') return C.red;
+    }
+    return C.cyan;
+  };
+
   const Field = ({label, hint, value, onChangeText, placeholder, secure, keyboard, statusNode, field}) => (
     <View style={{marginBottom: 18}}>
       <View style={st.fieldLabelRow}>
-        <Text style={[st.fieldLabel, focusedField === field && st.fieldLabelFocused]}>{label}</Text>
+        <Text style={[st.fieldLabel, focusedField === field && st.fieldLabelFocused]}>{label}::</Text>
         {statusNode}
       </View>
-      {hint ? <Text style={st.fieldHint}>{hint}</Text> : null}
-      <TextInput
-        style={[
-          st.input,
-          focusedField === field && st.inputFocused,
-          field === 'username' && usernameStatus === 'available' && st.inputAvailable,
-          field === 'username' && usernameStatus === 'taken'     && st.inputTaken,
-        ]}
-        placeholder={placeholder}
-        placeholderTextColor={C.white40}
-        value={value}
-        onChangeText={onChangeText}
-        secureTextEntry={!!secure}
-        keyboardType={keyboard || 'default'}
-        autoCapitalize={keyboard === 'email-address' || field === 'username' ? 'none' : 'sentences'}
-        autoCorrect={false}
-        onFocus={() => setFocusedField(field)}
-        onBlur={() => setFocusedField(null)}
-      />
+      {hint ? <Text style={st.fieldHint}>&gt; {hint}</Text> : null}
+      <View style={{position: 'relative'}}>
+        <TextInput
+          style={[
+            st.input,
+            focusedField === field && st.inputFocused,
+            field === 'username' && usernameStatus === 'available' && st.inputAvailable,
+            field === 'username' && usernameStatus === 'taken'     && st.inputTaken,
+          ]}
+          placeholder={placeholder}
+          placeholderTextColor={C.white40}
+          value={value}
+          onChangeText={onChangeText}
+          secureTextEntry={!!secure}
+          keyboardType={keyboard || 'default'}
+          autoCapitalize={keyboard === 'email-address' || field === 'username' ? 'none' : 'sentences'}
+          autoCorrect={false}
+          onFocus={() => focusField(field)}
+          onBlur={blurField}
+        />
+        {focusedField === field && (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              st.traceBar,
+              {backgroundColor: traceColor(field), transform: [{scaleX: traceAnim}]},
+            ]}
+          />
+        )}
+      </View>
     </View>
   );
 
@@ -261,8 +310,8 @@ export default function AuthScreen() {
 
                 <Field
                   field="username" label="FIGHTER NAME"
-                  hint="Your unique display name in battles"
-                  placeholder="pick something unique"
+                  hint="your unique display name in battles"
+                  placeholder="ENTER_CALLSIGN_"
                   value={username}
                   onChangeText={(val) => { setUsername(val); checkUsername(val); }}
                   statusNode={
@@ -303,6 +352,12 @@ const st = StyleSheet.create({
     borderWidth: 2, borderColor: 'rgba(255,0,112,0.6)',
     shadowColor: C.pink, shadowOpacity: 0.65, shadowRadius: 38,
     shadowOffset: {width: 0, height: 0}, elevation: 24,
+    position: 'relative',
+  },
+  bracket: {position: 'absolute'},
+  traceBar: {
+    position: 'absolute', bottom: -1, left: 0, right: 0,
+    height: 2, borderRadius: 1,
   },
   logoLine: {
     fontSize: 50, fontWeight: '900', color: C.yellow,
@@ -332,11 +387,11 @@ const st = StyleSheet.create({
   backBtn: {fontSize: 14, color: C.white40, fontWeight: '700', marginBottom: 4},
 
   fieldLabelRow: {flexDirection: 'row', alignItems: 'center', marginBottom: 8},
-  fieldLabel:    {fontSize: 11, fontWeight: '700', color: C.white40, letterSpacing: 2},
+  fieldLabel:    {fontSize: 11, fontWeight: '700', color: C.white40, letterSpacing: 2, fontFamily: MONO},
   fieldLabelFocused: {color: C.pink},
-  fieldHint:     {fontSize: 12, color: C.white40, marginBottom: 6, marginTop: -4},
-  usernameAvailable: {fontSize: 11, fontWeight: '800', color: C.lime},
-  usernameTaken:     {fontSize: 11, fontWeight: '800', color: C.red},
+  fieldHint:     {fontSize: 12, color: C.white40, marginBottom: 6, marginTop: -4, fontFamily: MONO},
+  usernameAvailable: {fontSize: 11, fontWeight: '800', color: C.lime, fontFamily: MONO},
+  usernameTaken:     {fontSize: 11, fontWeight: '800', color: C.red, fontFamily: MONO},
 
   input: {
     backgroundColor: C.white08, borderWidth: 1.5, borderColor: C.white15,
