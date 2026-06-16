@@ -49,8 +49,58 @@ function FloatingOrbs() {
   );
 }
 
+function BootScreen({onDone}) {
+  const progress    = useRef(new Animated.Value(0)).current;
+  const flash        = useRef(new Animated.Value(0)).current;
+  const [percent, setPercent] = useState(0);
+  const doneRef = useRef(false);
+
+  useEffect(() => {
+    const id = progress.addListener(({value}) => setPercent(Math.min(100, Math.round(value * 100))));
+    Animated.timing(progress, {
+      toValue: 1, duration: 1100, easing: Easing.out(Easing.quad), useNativeDriver: false,
+    }).start(({finished}) => {
+      if (finished) finish();
+    });
+    return () => progress.removeListener(id);
+  }, []);
+
+  function finish() {
+    if (doneRef.current) return;
+    doneRef.current = true;
+    Animated.sequence([
+      Animated.timing(flash, {toValue: 1, duration: 70, useNativeDriver: true}),
+      Animated.timing(flash, {toValue: 0, duration: 220, useNativeDriver: true}),
+    ]).start(() => onDone());
+  }
+
+  return (
+    <SafeAreaView style={st.bootSafe}>
+      <StatusBar barStyle="light-content" backgroundColor={C.bgDeep} />
+      <TouchableOpacity style={st.bootTouch} activeOpacity={1} onPress={finish}>
+        <View style={st.bootCenter}>
+          <Text style={st.bootEmblem}>SF</Text>
+          <Text style={st.bootLabel}>LOADING ARENA{'…'}</Text>
+          <View style={st.bootBarTrack}>
+            <Animated.View
+              style={[
+                st.bootBarFill,
+                {transform: [{scaleX: progress}]},
+              ]}
+            />
+          </View>
+          <Text style={st.bootPercent}>{percent}%</Text>
+        </View>
+        <Text style={st.bootSkip}>TAP TO SKIP</Text>
+      </TouchableOpacity>
+      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, {backgroundColor: C.white, opacity: flash}]} />
+    </SafeAreaView>
+  );
+}
+
 export default function AuthScreen() {
   const {login, signup} = useAuth();
+  const [booted, setBooted] = useState(false);
 
   // step: 'landing' | 'login' | 'signup'
   const [step, setStep]               = useState('landing');
@@ -102,6 +152,7 @@ export default function AuthScreen() {
   const formOp    = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    if (!booted) return;
     Animated.parallel([
       Animated.spring(blobScale, {toValue: 1, tension: 70, friction: 7, useNativeDriver: true}),
       Animated.spring(topSlide,  {toValue: 0, tension: 55, friction: 9, useNativeDriver: true}),
@@ -124,7 +175,7 @@ export default function AuthScreen() {
     ]));
     glowLoop.start();
     return () => glowLoop.stop();
-  }, []);
+  }, [booted]);
 
   function enterStep(newStep) {
     Animated.sequence([
@@ -264,6 +315,10 @@ export default function AuthScreen() {
     </TouchableOpacity>
   );
 
+  if (!booted) {
+    return <BootScreen onDone={() => setBooted(true)} />;
+  }
+
   return (
     <SafeAreaView style={st.safe}>
       <FloatingOrbs />
@@ -341,6 +396,36 @@ export default function AuthScreen() {
 }
 
 const st = StyleSheet.create({
+  bootSafe: {flex: 1, backgroundColor: C.bgDeep},
+  bootTouch: {flex: 1, alignItems: 'center', justifyContent: 'center'},
+  bootCenter: {alignItems: 'center', width: '70%'},
+  bootEmblem: {
+    fontSize: 40, fontWeight: '900', color: C.pink, letterSpacing: 4,
+    textShadowColor: C.purple, textShadowRadius: 18, textShadowOffset: {width: 0, height: 0},
+    marginBottom: 18,
+  },
+  bootLabel: {
+    fontSize: 13, fontWeight: '700', color: C.cyan, letterSpacing: 3,
+    fontFamily: MONO, marginBottom: 22,
+  },
+  bootBarTrack: {
+    width: '100%', height: 6, borderRadius: 3,
+    backgroundColor: C.white08, borderWidth: 1, borderColor: C.white15,
+    overflow: 'hidden',
+  },
+  bootBarFill: {
+    width: '100%', height: '100%', borderRadius: 3,
+    backgroundColor: C.lime, transform: [{scaleX: 0}],
+    shadowColor: C.lime, shadowOpacity: 0.8, shadowRadius: 10,
+  },
+  bootPercent: {
+    fontSize: 12, fontFamily: MONO, color: C.white40, letterSpacing: 2, marginTop: 10,
+  },
+  bootSkip: {
+    position: 'absolute', bottom: 40, fontSize: 11, fontFamily: MONO,
+    color: C.white40, letterSpacing: 2,
+  },
+
   safe:   {flex: 1, backgroundColor: C.bg},
   scroll: {flexGrow: 1, paddingHorizontal: 26, paddingBottom: 48},
 
