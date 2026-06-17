@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, EmailStr, field_validator
 from database import supabase, auth_supabase
@@ -5,11 +6,14 @@ from extensions import limiter
 
 router = APIRouter()
 
+_ALLOWED_COLORS = {"pink", "cyan", "yellow", "lime", "purple"}
+
 
 class SignupRequest(BaseModel):
     email: EmailStr
     password: str
     username: str
+    fighter_color: Optional[str] = "pink"
 
     @field_validator("password")
     @classmethod
@@ -65,8 +69,9 @@ async def signup(request: Request, req: SignupRequest):
         user = resp.user
         if user is None:
             raise HTTPException(status_code=409, detail="That email is already registered. Try logging in instead.")
+        color = req.fighter_color if req.fighter_color in _ALLOWED_COLORS else "pink"
         supabase.table("profiles").insert(
-            {"id": user.id, "username": req.username}
+            {"id": user.id, "username": req.username, "fighter_color": color}
         ).execute()
         supabase.table("reminder_preferences").insert({"user_id": user.id}).execute()
         return {"user_id": user.id, "access_token": resp.session.access_token if resp.session else None}
