@@ -13,7 +13,8 @@ import PenaltyAssigner from '../components/PenaltyAssigner';
 import FreezeButton from '../components/FreezeButton';
 import JuryVoteCard from '../components/JuryVoteCard';
 import {endpoints} from '../constants/api';
-
+import FlawlessVictoryModal from '../components/FlawlessVictoryModal';
+import {rankFromStreak} from '../utils/rank';
 import {C} from '../constants/theme';
 
 function parseTimeToDate(timeStr) {
@@ -43,6 +44,7 @@ export default function BattleDetailScreen({route, navigation}) {
   const [reminderDate, setReminderDate] = useState(() => parseTimeToDate('21:00'));
   const [showPicker, setShowPicker] = useState(false);
   const [reminderSaved, setReminderSaved] = useState(false);
+  const [reward, setReward] = useState(null);
 
   useEffect(() => {
     Promise.all([
@@ -273,7 +275,7 @@ export default function BattleDetailScreen({route, navigation}) {
               freezeTokens={myMember?.freeze_tokens}
               onUsed={loadData}
             />
-            <ProofSubmitter battleId={battle.id} onSuccess={loadData} />
+            <ProofSubmitter battleId={battle.id} onSuccess={(data) => { loadData(); if (data?.milestone_hit) setReward(data); }} />
           </>
         )}
 
@@ -421,6 +423,12 @@ export default function BattleDetailScreen({route, navigation}) {
           ))}
         </View>
       </ScrollView>
+      <FlawlessVictoryModal
+        visible={!!reward}
+        streak={reward?.milestone_hit}
+        rank={reward?.new_rank || rankFromStreak(reward?.milestone_hit || 0)}
+        onClose={() => setReward(null)}
+      />
     </SafeAreaView>
   );
 }

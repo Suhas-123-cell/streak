@@ -49,7 +49,7 @@ export default function ProofSubmitter({battleId, onSuccess}) {
         battleId, 'photo', asset.uri,
         asset.fileName || 'photo.jpg', asset.type || 'image/jpeg',
       );
-      if (data?.ai_verified !== undefined) onSuccess?.();
+      if (data?.ai_verified !== undefined) onSuccess?.(data);
     } catch (e) {
       Alert.alert('Error', e.message);
     }
@@ -68,7 +68,7 @@ export default function ProofSubmitter({battleId, onSuccess}) {
       const data = await submitCheckin(
         battleId, 'voice', `file://${path}`, 'voice.m4a', 'audio/mp4',
       );
-      if (data?.ai_verified !== undefined) onSuccess?.();
+      if (data?.ai_verified !== undefined) onSuccess?.(data);
     } catch (e) {
       Alert.alert('Error', e.message);
     }

@@ -2042,7 +2042,7 @@ PODS:
     - Yoga
   - RNKeychain (8.2.0):
     - React-Core
-  - RNScreens (3.37.0):
+  - RNScreens (4.25.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2064,9 +2064,9 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNScreens/common (= 3.37.0)
+    - RNScreens/common (= 4.25.2)
     - Yoga
-  - RNScreens/common (3.37.0):
+  - RNScreens/common (4.25.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2468,7 +2468,7 @@ SPEC CHECKSUMS:
   RNFBMessaging: 70b12c9f22c7c9d5011ac9b12ac2bafbfb081267
   RNGestureHandler: 2ff61eac036eaf89f6818bf4ed9c39771a17d134
   RNKeychain: bbe2f6d5cc008920324acb49ef86ccc03d3b38e4
-  RNScreens: 65ea9bbc20cffef20981e526200299731d7163d5
+  RNScreens: 991cc417cd396602a6cf59a42139e5a9d91462a9
   VisionCamera: 7187b3dac1ff3071234ead959ce311875748e14f
   Yoga: 77dfa8673de2874e1855002ae59c68b8be9b007b
 

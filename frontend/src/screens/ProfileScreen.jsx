@@ -7,6 +7,8 @@ import {useAuth} from '../context/AuthContext';
 import {endpoints} from '../constants/api';
 
 import {C} from '../constants/theme';
+import RankBadge from '../components/RankBadge';
+import {rankFromStreak} from '../utils/rank';
 
 // Count-up number that animates from 0 to target
 function StatNum({value, style}) {
@@ -103,6 +105,7 @@ export default function ProfileScreen() {
           </View>
           <Text style={styles.username}>{profile?.username || '—'}</Text>
           <Text style={styles.email}>{user?.email}</Text>
+          <RankBadge rank={rankFromStreak(profile?.longest_streak || 0)} size="lg" />
         </Animated.View>
 
         <View style={styles.divider} />
