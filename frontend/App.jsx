@@ -56,7 +56,7 @@ function SplashScreen({onDone}) {
 const stackOpts = {
   headerStyle: {backgroundColor: C.bgDeep, elevation: 0, shadowOpacity: 0},
   headerTintColor: C.cyan,
-  headerTitleStyle: {fontWeight: '800', fontSize: 17, color: C.white},
+  headerTitleStyle: {fontFamily: 'PressStart2P-Regular', fontSize: 10, color: C.white},
   cardStyle: {backgroundColor: C.bg},
 };
 
@@ -70,15 +70,18 @@ function HomeStack() {
   );
 }
 
-function TabIcon({emoji, focused}) {
+function TabIcon({label, focused}) {
   return (
     <Text style={{
-      fontSize: focused ? 24 : 19,
+      fontFamily: 'PressStart2P-Regular',
+      fontSize: focused ? 10 : 8,
+      color: focused ? C.yellow : C.white40,
       textShadowColor: focused ? C.pink : 'transparent',
-      textShadowRadius: focused ? 14 : 0,
-      textShadowOffset: {width: 0, height: 0},
+      textShadowRadius: 0,
+      textShadowOffset: {width: 2, height: 2},
+      lineHeight: 16,
     }}>
-      {emoji}
+      {label}
     </Text>
   );
 }
@@ -98,14 +101,14 @@ function AppTabs() {
         },
         tabBarActiveTintColor: C.pink,
         tabBarInactiveTintColor: C.white40,
-        tabBarLabelStyle: {fontSize: 11, fontWeight: '800', letterSpacing: 0.5},
+        tabBarLabelStyle: {fontFamily: 'Oswald-Bold', fontSize: 11, letterSpacing: 0.5},
       }}>
       <Tab.Screen
         name="Battles"
         component={HomeStack}
         options={{
           tabBarLabel: 'Battles',
-          tabBarIcon: ({focused}) => <TabIcon emoji="⚔️" focused={focused} />,
+          tabBarIcon: ({focused}) => <TabIcon label="1P" focused={focused} />,
         }}
       />
       <Tab.Screen
@@ -113,7 +116,7 @@ function AppTabs() {
         component={LeaderboardScreen}
         options={{
           tabBarLabel: 'Global',
-          tabBarIcon: ({focused}) => <TabIcon emoji="🏆" focused={focused} />,
+          tabBarIcon: ({focused}) => <TabIcon label="HI" focused={focused} />,
         }}
       />
       <Tab.Screen
@@ -121,7 +124,7 @@ function AppTabs() {
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Profile',
-          tabBarIcon: ({focused}) => <TabIcon emoji="👤" focused={focused} />,
+          tabBarIcon: ({focused}) => <TabIcon label="ID" focused={focused} />,
         }}
       />
     </Tab.Navigator>

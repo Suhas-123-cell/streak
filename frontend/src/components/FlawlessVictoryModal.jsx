@@ -42,32 +42,30 @@ export default function FlawlessVictoryModal({visible, streak, rank, onClose}) {
       <View style={st.backdrop}>
         <Animated.View style={[st.card, {opacity: op, transform: [{scale}]}]}>
 
+          {/* Diamond medallion */}
           <Animated.View style={[st.medallion, {
-            borderColor: rankColor, shadowColor: rankColor,
+            borderColor: rankColor,
             transform: [{rotate: rotation}],
           }]}>
             <Animated.Text style={[st.medalIcon, {color: rankColor, opacity: glow, transform: [{rotate: counterRotation}]}]}>
-              ◆
+              ★
             </Animated.Text>
           </Animated.View>
 
-          <Text style={[st.flawless, {color: rankColor}]}>FLAWLESS</Text>
+          <Text style={st.flawless}>FLAWLESS</Text>
           <Text style={st.victory}>VICTORY</Text>
 
           <View style={st.divider} />
 
-          <Text style={[st.streakNum, {color: rankColor}]}>{streak}</Text>
-          <Text style={st.streakLabel}>DAY STREAK</Text>
+          <Text style={[st.streakNum, {color: rankColor}]}>x{combo}</Text>
 
-          <View style={[st.comboBadge, {borderColor: rankColor}]}>
-            <Text style={[st.comboTxt, {color: rankColor}]}>x{combo} COMBO</Text>
-          </View>
-
-          <Text style={[st.rankTxt, {color: rankColor}]}>{rank}</Text>
-          <Text style={st.rankSub}>RANK UNLOCKED</Text>
+          <Text style={st.stat}>
+            STREAK COMBO  ·  RANK UP TO{' '}
+            <Text style={[st.statRank, {color: rankColor}]}>{rank}</Text>
+          </Text>
 
           <TouchableOpacity
-            style={[st.claimBtn, {backgroundColor: rankColor}]}
+            style={st.claimBtn}
             onPress={onClose}
             activeOpacity={0.85}
           >
@@ -85,25 +83,45 @@ const st = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', padding: 24,
   },
   card: {
-    width: '100%', backgroundColor: '#0d0019',
-    borderWidth: 2, borderColor: C.yellow,
+    width: '100%', backgroundColor: '#0a0710',
+    borderWidth: 2, borderColor: '#FFD400',
     padding: 32, alignItems: 'center',
   },
   medallion: {
-    width: 80, height: 80, borderWidth: 3,
+    width: 118, height: 118, borderWidth: 4,
     alignItems: 'center', justifyContent: 'center', marginBottom: 24,
+    backgroundColor: 'rgba(255,212,0,0.14)',
     shadowOpacity: 0.8, shadowRadius: 24, shadowOffset: {width: 0, height: 0}, elevation: 12,
   },
-  medalIcon:   {fontSize: 32},
-  flawless:    {fontFamily: PIXEL, fontSize: 13, letterSpacing: 2, marginBottom: 2},
-  victory:     {fontFamily: PIXEL, fontSize: 22, color: '#fff', letterSpacing: 3, marginBottom: 20},
+  medalIcon: {fontFamily: 'PressStart2P-Regular', fontSize: 38, lineHeight: 46},
+  flawless: {
+    fontFamily: 'PressStart2P-Regular', fontSize: 18, color: '#FFD400', lineHeight: 30,
+    textShadowColor: '#FF2D6F', textShadowRadius: 0, textShadowOffset: {width: 3, height: 3},
+    marginBottom: 2,
+  },
+  victory: {
+    fontFamily: 'PressStart2P-Regular', fontSize: 18, color: '#FFD400', lineHeight: 30,
+    textShadowColor: '#FF2D6F', textShadowRadius: 0, textShadowOffset: {width: 3, height: 3},
+    marginBottom: 20,
+  },
   divider:     {width: '60%', height: 1, backgroundColor: 'rgba(255,255,255,0.15)', marginBottom: 20},
-  streakNum:   {fontFamily: PIXEL, fontSize: 40, lineHeight: 48},
-  streakLabel: {fontFamily: PIXEL, fontSize: 8, color: 'rgba(255,255,255,0.6)', letterSpacing: 2, marginBottom: 16},
-  comboBadge:  {borderWidth: 2, paddingHorizontal: 16, paddingVertical: 8, marginBottom: 16},
-  comboTxt:    {fontFamily: PIXEL, fontSize: 11, letterSpacing: 2},
-  rankTxt:     {fontFamily: PIXEL, fontSize: 13, letterSpacing: 2, marginBottom: 2},
-  rankSub:     {fontFamily: PIXEL, fontSize: 7, color: 'rgba(255,255,255,0.5)', letterSpacing: 2, marginBottom: 28},
-  claimBtn:    {paddingHorizontal: 28, paddingVertical: 16, borderWidth: 3, borderColor: '#fff', width: '100%', alignItems: 'center'},
-  claimTxt:    {fontFamily: PIXEL, fontSize: 12, color: '#000', letterSpacing: 1},
+  streakNum:   {
+    fontFamily: 'PressStart2P-Regular', fontSize: 32, color: '#fff', lineHeight: 48,
+    textShadowColor: '#FF2D6F', textShadowRadius: 0, textShadowOffset: {width: 2, height: 2},
+  },
+  stat: {
+    fontSize: 12, color: 'rgba(255,255,255,0.80)', fontFamily: 'Oswald-Bold',
+    letterSpacing: 1, lineHeight: 22, textAlign: 'center', marginTop: 8, marginBottom: 20,
+  },
+  statRank: {
+    fontFamily: 'PressStart2P-Regular', fontSize: 10, lineHeight: 16,
+  },
+  claimBtn: {
+    backgroundColor: '#9BE80C',
+    paddingHorizontal: 28, paddingVertical: 16,
+    borderWidth: 3, borderColor: '#fff', width: '100%', alignItems: 'center',
+    shadowColor: '#AA00FF', shadowOpacity: 1, shadowRadius: 0, shadowOffset: {width: 5, height: 5},
+    elevation: 8,
+  },
+  claimTxt: {fontFamily: 'PressStart2P-Regular', fontSize: 11, color: '#05030a', lineHeight: 18},
 });

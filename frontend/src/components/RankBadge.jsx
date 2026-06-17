@@ -32,5 +32,5 @@ const st = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.4)',
   },
   icon:  {transform: [{rotate: '-45deg'}]},
-  label: {fontFamily: PIXEL, letterSpacing: 1},
+  label: {fontFamily: 'PressStart2P-Regular', letterSpacing: 1, fontSize: 8, lineHeight: 13},
 });

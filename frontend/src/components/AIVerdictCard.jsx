@@ -8,10 +8,14 @@ export default function AIVerdictCard({checkin}) {
 
   return (
     <View style={[styles.card, pass ? styles.pass : styles.fail]}>
-      <Text style={styles.emoji}>{pass ? '✅' : '❌'}</Text>
+      <View style={[styles.statusBox, pass ? styles.statusPass : styles.statusFail]}>
+        <Text style={[styles.statusText, {color: pass ? C.lime : C.pink}]}>
+          {pass ? 'OK' : 'NO'}
+        </Text>
+      </View>
       <View style={styles.content}>
         <Text style={[styles.title, {color: pass ? C.green : C.pink}]}>
-          {pass ? 'Verified' : 'Rejected'} — {checkin.ai_score}/100
+          {pass ? 'VERIFIED' : 'REJECTED'} · {checkin.ai_score}/100
         </Text>
         <Text style={styles.reason}>{checkin.ai_reasoning}</Text>
       </View>
@@ -22,16 +26,35 @@ export default function AIVerdictCard({checkin}) {
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row', alignItems: 'center',
-    padding: 14, borderRadius: 14,
+    padding: 14,
     marginVertical: 8, gap: 10,
-    shadowColor: '#000', shadowOpacity: 0.05,
-    shadowRadius: 8, shadowOffset: {width: 0, height: 2},
-    elevation: 2,
+    borderWidth: 2,
   },
-  pass: {backgroundColor: 'rgba(57,255,20,0.08)', borderWidth: 1, borderColor: 'rgba(57,255,20,0.35)'},
-  fail: {backgroundColor: 'rgba(255,56,100,0.08)', borderWidth: 1, borderColor: 'rgba(255,56,100,0.35)'},
-  emoji: {fontSize: 24},
+  pass: {backgroundColor: 'rgba(155,232,12,0.08)', borderColor: 'rgba(155,232,12,0.40)'},
+  fail: {backgroundColor: 'rgba(255,45,111,0.08)', borderColor: 'rgba(255,45,111,0.35)'},
+  statusBox: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    transform: [{rotate: '45deg'}],
+  },
+  statusPass: {
+    backgroundColor: 'rgba(155,232,12,0.12)',
+    borderColor: 'rgba(155,232,12,0.55)',
+  },
+  statusFail: {
+    backgroundColor: 'rgba(255,45,111,0.12)',
+    borderColor: 'rgba(255,45,111,0.55)',
+  },
+  statusText: {
+    fontFamily: 'PressStart2P-Regular',
+    fontSize: 8,
+    lineHeight: 13,
+    transform: [{rotate: '-45deg'}],
+  },
   content: {flex: 1},
-  title: {fontWeight: '700', fontSize: 14},
-  reason: {color: C.white70, fontSize: 13, marginTop: 2},
+  title: {fontFamily: 'PressStart2P-Regular', fontSize: 9, lineHeight: 15},
+  reason: {color: 'rgba(255,255,255,0.80)', fontSize: 13, marginTop: 2, fontFamily: 'Oswald-SemiBold'},
 });

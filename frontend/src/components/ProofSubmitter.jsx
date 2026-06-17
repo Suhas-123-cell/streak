@@ -84,32 +84,33 @@ export default function ProofSubmitter({battleId, onSuccess}) {
     }]}>
       {/* Celebration flash overlay */}
       <Animated.View style={[StyleSheet.absoluteFill, {
-        borderRadius: 20,
         backgroundColor: result?.ai_verified === true ? C.lime : C.pink,
         opacity: celebFlash,
       }]} pointerEvents="none" />
 
-      <Text style={styles.title}>Prove it.</Text>
-      <Text style={styles.sub}>Drop your proof — AI checks it in seconds</Text>
+      <Text style={styles.title}>PROOF ROUND</Text>
+      <Text style={styles.sub}>Submit photo or voice proof. AI checks the run.</Text>
       <View style={styles.btnRow}>
         <TouchableOpacity style={styles.btn} onPress={handlePhoto} disabled={loading}>
-          <Text style={styles.btnIcon}>📸</Text>
-          <Text style={styles.btnLabel}>Photo</Text>
+          <Text style={styles.btnIcon}>CAM</Text>
+          <Text style={styles.btnLabel}>PHOTO</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.btn, recording && styles.btnActive]}
           onPress={recording ? stopRecording : startRecording}
           disabled={loading}>
-          <Text style={styles.btnIcon}>{recording ? '⏹' : '🎤'}</Text>
+          <Text style={[styles.btnIcon, recording && {color: C.ink}]}>
+            {recording ? 'STOP' : 'MIC'}
+          </Text>
           <Text style={[styles.btnLabel, recording && {color: C.bgDeep}]}>
-            {recording ? 'Stop' : 'Voice'}
+            {recording ? 'RECORDING' : 'VOICE'}
           </Text>
         </TouchableOpacity>
       </View>
       {loading && (
         <View style={styles.loadingRow}>
           <ActivityIndicator color={C.pink} />
-          <Text style={styles.loadingText}>AI is verifying... ⚡</Text>
+          <Text style={styles.loadingText}>AI VERIFYING...</Text>
         </View>
       )}
       {result && <AIVerdictCard checkin={result} />}
@@ -119,23 +120,25 @@ export default function ProofSubmitter({battleId, onSuccess}) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(170,0,255,0.06)', borderRadius: 20, padding: 20, margin: 16,
-    borderWidth: 1.5, borderColor: 'rgba(170,0,255,0.3)',
-    shadowColor: C.purple, shadowOpacity: 0.2, shadowRadius: 18,
-    shadowOffset: {width: 0, height: 0}, elevation: 6,
+    backgroundColor: C.bgSurface, padding: 20, margin: 16,
+    borderWidth: 2, borderColor: 'rgba(255,45,111,0.55)',
     overflow: 'hidden',
+    shadowColor: C.pink,
+    shadowOpacity: 0.9,
+    shadowRadius: 0,
+    shadowOffset: {width: 5, height: 5},
   },
-  title: {fontSize: 18, fontWeight: '900', color: C.white, letterSpacing: 0.3},
-  sub: {fontSize: 13, color: C.white40, marginTop: 3, marginBottom: 18, fontWeight: '600'},
+  title: {fontFamily: 'PressStart2P-Regular', fontSize: 12, color: '#FFFFFF', letterSpacing: 1, lineHeight: 20},
+  sub: {fontSize: 13, color: 'rgba(255,255,255,0.50)', marginTop: 4, marginBottom: 18, fontFamily: 'Oswald-SemiBold'},
   btnRow: {flexDirection: 'row', gap: 12},
   btn: {
-    flex: 1, backgroundColor: 'rgba(255,0,112,0.08)', borderRadius: 16,
+    flex: 1, backgroundColor: 'rgba(255,45,111,0.10)',
     paddingVertical: 22, alignItems: 'center', gap: 7,
-    borderWidth: 1.5, borderColor: 'rgba(255,0,112,0.3)',
+    borderWidth: 2, borderColor: 'rgba(255,45,111,0.35)',
   },
-  btnActive: {backgroundColor: C.pink, borderColor: C.pink},
-  btnIcon: {fontSize: 30},
-  btnLabel: {fontSize: 13, fontWeight: '800', color: C.pink},
+  btnActive: {backgroundColor: '#FF2D6F', borderColor: '#FF2D6F'},
+  btnIcon: {fontFamily: 'PressStart2P-Regular', fontSize: 12, color: C.pink, lineHeight: 18},
+  btnLabel: {fontFamily: 'PressStart2P-Regular', fontSize: 8, color: '#FF2D6F', lineHeight: 13},
   loadingRow: {flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16},
-  loadingText: {color: C.white70, fontSize: 14, fontWeight: '700'},
+  loadingText: {fontFamily: 'PressStart2P-Regular', fontSize: 8, color: 'rgba(255,255,255,0.80)', lineHeight: 13},
 });

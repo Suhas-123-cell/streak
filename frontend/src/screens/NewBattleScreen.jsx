@@ -1,13 +1,14 @@
 import React, {useState} from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, SafeAreaView, Alert, ActivityIndicator, StatusBar, Switch, Modal, Platform,
+  ScrollView, SafeAreaView, Alert, ActivityIndicator, StatusBar, Modal,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {useBattles} from '../hooks/useBattles';
 import {useAuth} from '../context/AuthContext';
 import {C} from '../constants/theme';
+import {ArcadeBackdrop, ArcadeTopBar, ScreenTitle} from '../components/ArcadeUI';
 
 function formatTime(date) {
   if (!date) return '21:00';
@@ -18,21 +19,21 @@ function formatTime(date) {
 }
 
 const PENALTY_PRESETS = [
-  {emoji: '☕', label: 'Buy coffee', value: 'Buy coffee for everyone in the battle'},
-  {emoji: '💪', label: '100 pushups', value: 'Do 100 pushups on camera'},
-  {emoji: '💸', label: 'Venmo $5', value: 'Venmo $5 to whoever has the longest streak'},
-  {emoji: '😬', label: 'Public apology', value: 'Post a public apology story'},
-  {emoji: '🥶', label: 'Cold shower', value: 'Take a cold shower on camera'},
-  {emoji: '🍕', label: 'Buy pizza', value: 'Buy the group pizza'},
+  {emoji: 'CF', label: 'Buy coffee', value: 'Buy coffee for everyone in the battle'},
+  {emoji: 'PU', label: '100 pushups', value: 'Do 100 pushups on camera'},
+  {emoji: '$5', label: 'Venmo $5', value: 'Venmo $5 to whoever has the longest streak'},
+  {emoji: 'AP', label: 'Public apology', value: 'Post a public apology story'},
+  {emoji: 'CS', label: 'Cold shower', value: 'Take a cold shower on camera'},
+  {emoji: 'PZ', label: 'Buy pizza', value: 'Buy the group pizza'},
 ];
 
 const TEMPLATES = [
-  {emoji: '🏋️', name: 'Gym', desc: 'Show gym equipment or entrance selfie'},
-  {emoji: '📚', name: 'Reading', desc: "Show the page you're on with timestamp"},
-  {emoji: '🧘', name: 'Meditation', desc: 'Show a meditation app timer or peaceful space'},
-  {emoji: '💧', name: 'Hydration', desc: 'Show your water bottle — must be at least half empty'},
-  {emoji: '🏃', name: 'Running', desc: "Show GPS tracking app with today's run"},
-  {emoji: '✏️', name: 'Study', desc: 'Show your notes or textbook with timestamp'},
+  {emoji: 'GYM', name: 'Gym', desc: 'Show gym equipment or entrance selfie'},
+  {emoji: 'RD', name: 'Reading', desc: "Show the page you're on with timestamp"},
+  {emoji: 'ZEN', name: 'Meditation', desc: 'Show a meditation app timer or peaceful space'},
+  {emoji: 'H2O', name: 'Hydration', desc: 'Show your water bottle — must be at least half empty'},
+  {emoji: 'RUN', name: 'Running', desc: "Show GPS tracking app with today's run"},
+  {emoji: 'STU', name: 'Study', desc: 'Show your notes or textbook with timestamp'},
 ];
 
 export default function NewBattleScreen({navigation}) {
@@ -103,9 +104,14 @@ export default function NewBattleScreen({navigation}) {
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor={C.bg} />
+      <ArcadeBackdrop />
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.heading}>New Battle</Text>
-        <Text style={styles.headingSub}>Set the habit and invite your crew</Text>
+        <View style={styles.headerBleed}>
+          <ArcadeTopBar center="NEW FIGHT" right="CPU" />
+          <ScreenTitle subtitle="Set the habit and invite your crew">
+            CREATE{'\n'}BATTLE
+          </ScreenTitle>
+        </View>
 
         <Text style={styles.label}>POPULAR HABITS</Text>
         <ScrollView
@@ -191,12 +197,14 @@ export default function NewBattleScreen({navigation}) {
                 Nudges everyone who has not checked in yet
               </Text>
             </View>
-            <Switch
-              value={reminderEnabled}
-              onValueChange={setReminderEnabled}
-              trackColor={{false: C.white15, true: C.cyan}}
-              thumbColor={reminderEnabled ? C.yellow : C.white40}
-            />
+            <TouchableOpacity
+              style={[styles.arcadeToggle, reminderEnabled && styles.arcadeToggleOn]}
+              onPress={() => setReminderEnabled(v => !v)}
+              activeOpacity={0.82}>
+              <Text style={[styles.arcadeToggleText, reminderEnabled && styles.arcadeToggleTextOn]}>
+                {reminderEnabled ? 'ON' : 'OFF'}
+              </Text>
+            </TouchableOpacity>
           </View>
           {reminderEnabled && (
             <>
@@ -240,7 +248,7 @@ export default function NewBattleScreen({navigation}) {
         </Modal>
 
         {/* ── Default Penalty ── */}
-        <Text style={styles.label}>IF THEY SKIP 💀</Text>
+        <Text style={styles.label}>IF THEY SKIP</Text>
         <Text style={styles.penaltyHint}>Set a default punishment for missed days</Text>
         <ScrollView
           horizontal
@@ -288,7 +296,7 @@ export default function NewBattleScreen({navigation}) {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.submitText}>⚔️  Send Challenge</Text>
+            <Text style={styles.submitText}>SEND CHALLENGE ▶</Text>
           )}
         </TouchableOpacity>
       </ScrollView>
@@ -299,88 +307,107 @@ export default function NewBattleScreen({navigation}) {
 const styles = StyleSheet.create({
   safe: {flex: 1, backgroundColor: C.bg},
   content: {padding: 20, paddingBottom: 60},
-  heading: {fontSize: 26, fontWeight: '800', color: C.white},
-  headingSub: {fontSize: 14, color: C.white40, marginTop: 4, marginBottom: 20},
+  headerBleed: {marginHorizontal: -20, marginBottom: 4},
+  heading: {fontFamily: 'PressStart2P-Regular', fontSize: 13, color: '#FFFFFF', lineHeight: 22},
+  headingSub: {fontSize: 13, color: 'rgba(255,255,255,0.50)', marginTop: 8, marginBottom: 20, fontFamily: 'Oswald-SemiBold'},
   label: {
-    fontSize: 10, fontWeight: '800', color: C.white40,
-    textTransform: 'uppercase', letterSpacing: 1.2,
+    fontFamily: 'PressStart2P-Regular', fontSize: 8, color: 'rgba(255,255,255,0.50)',
+    textTransform: 'uppercase', letterSpacing: 1.5, lineHeight: 14,
     marginBottom: 10, marginTop: 20,
   },
   templatesScroll: {marginHorizontal: -20, marginBottom: 4},
   templatesRow: {paddingHorizontal: 20, gap: 10},
   templateCard: {
-    width: 80, height: 80, borderRadius: 16,
-    backgroundColor: C.card, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5, borderColor: C.cardBorder,
-    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6,
-    shadowOffset: {width: 0, height: 2}, elevation: 2,
+    width: 80, height: 80, borderRadius: 0,
+    backgroundColor: '#160f1e', alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2, borderColor: 'rgba(255,255,255,0.13)',
     gap: 6,
   },
-  templateCardSelected: {borderColor: C.yellow, borderWidth: 2, backgroundColor: C.card},
-  templateEmoji: {fontSize: 28},
-  templateName: {fontSize: 10, fontWeight: '700', color: C.white70},
+  templateCardSelected: {borderColor: '#FFD400', borderWidth: 2, backgroundColor: '#160f1e'},
+  templateEmoji: {fontFamily: 'PressStart2P-Regular', fontSize: 10, color: C.cyan, lineHeight: 16},
+  templateName: {fontFamily: 'PressStart2P-Regular', fontSize: 7, color: 'rgba(255,255,255,0.70)', lineHeight: 12},
   templateNameSelected: {color: C.yellow},
   input: {
-    backgroundColor: C.card, borderRadius: 12,
-    color: C.white, paddingHorizontal: 14, paddingVertical: 13,
-    fontSize: 15, borderWidth: 1, borderColor: C.cardBorder,
-    shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 4,
-    shadowOffset: {width: 0, height: 1},
+    backgroundColor: '#160f1e',
+    color: '#FFFFFF', paddingHorizontal: 14, paddingVertical: 13,
+    fontSize: 15, fontFamily: 'Oswald-SemiBold', borderWidth: 2, borderColor: 'rgba(255,255,255,0.13)',
   },
   multiline: {height: 96, textAlignVertical: 'top', paddingTop: 13},
   row: {flexDirection: 'row', gap: 10, alignItems: 'center'},
   addBtn: {
-    backgroundColor: C.yellow, borderRadius: 12,
+    backgroundColor: '#FFD400',
     paddingHorizontal: 18, paddingVertical: 13,
   },
-  addBtnText: {color: C.bgDeep, fontWeight: '700', fontSize: 15},
+  addBtnText: {color: '#05030a', fontFamily: 'PressStart2P-Regular', fontSize: 9, lineHeight: 16},
   chips: {flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14},
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: 'rgba(78,201,232,0.15)', borderRadius: 20,
+    backgroundColor: 'rgba(25,224,255,0.15)',
     paddingHorizontal: 12, paddingVertical: 7,
+    borderWidth: 2, borderColor: 'rgba(25,224,255,0.4)',
   },
-  chipText: {color: C.cyan, fontSize: 13, fontWeight: '600'},
+  chipText: {color: C.cyan, fontSize: 13, fontFamily: 'Oswald-SemiBold'},
   chipX: {color: C.cyan, fontSize: 11},
 
   reminderCard: {
-    backgroundColor: C.card, borderRadius: 14, overflow: 'hidden',
-    borderWidth: 1, borderColor: C.cardBorder,
+    backgroundColor: '#160f1e', overflow: 'hidden',
+    borderWidth: 2, borderColor: 'rgba(255,255,255,0.13)',
   },
   reminderRow: {
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between', padding: 16,
   },
-  reminderTitle: {fontSize: 15, fontWeight: '600', color: C.white},
+  reminderTitle: {fontSize: 15, fontFamily: 'Oswald-Bold', color: '#FFFFFF'},
   reminderHint: {fontSize: 12, color: C.white40, marginTop: 2},
   reminderDivider: {height: 1, backgroundColor: C.white08},
-  timePill: {
-    backgroundColor: 'rgba(78,201,232,0.15)', borderRadius: 20,
-    paddingHorizontal: 16, paddingVertical: 8,
+  arcadeToggle: {
+    minWidth: 58,
+    alignItems: 'center',
+    backgroundColor: C.bgDeep,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 2,
+    borderColor: C.white15,
   },
-  timeText: {color: C.cyan, fontWeight: '700', fontSize: 15},
+  arcadeToggleOn: {
+    backgroundColor: 'rgba(25,224,255,0.16)',
+    borderColor: C.cyan,
+  },
+  arcadeToggleText: {
+    fontFamily: 'PressStart2P-Regular',
+    fontSize: 8,
+    color: C.white40,
+    lineHeight: 13,
+  },
+  arcadeToggleTextOn: {color: C.cyan},
+  timePill: {
+    backgroundColor: 'rgba(25,224,255,0.15)',
+    paddingHorizontal: 16, paddingVertical: 8,
+    borderWidth: 2, borderColor: '#19E0FF',
+  },
+  timeText: {fontFamily: 'PressStart2P-Regular', fontSize: 9, color: '#19E0FF', lineHeight: 15},
 
   submitBtn: {
-    backgroundColor: C.yellow, borderRadius: 16,
+    backgroundColor: '#FFD400', borderWidth: 3, borderColor: '#fff',
     paddingVertical: 17, alignItems: 'center', marginTop: 36,
-    shadowColor: C.yellow, shadowOpacity: 0.3, shadowRadius: 10,
-    shadowOffset: {width: 0, height: 4}, elevation: 6,
+    shadowColor: '#FF2D6F', shadowOpacity: 0.9, shadowRadius: 0,
+    shadowOffset: {width: 5, height: 5}, elevation: 0,
   },
-  submitText: {color: C.bgDeep, fontWeight: '800', fontSize: 16},
+  submitText: {color: '#05030a', fontFamily: 'PressStart2P-Regular', fontSize: 10, letterSpacing: 1, lineHeight: 18},
 
   penaltyHint: {fontSize: 13, color: C.white40, marginTop: -6, marginBottom: 12},
   penaltyChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: C.card, borderRadius: 20,
+    backgroundColor: '#160f1e',
     paddingHorizontal: 14, paddingVertical: 10,
-    borderWidth: 1.5, borderColor: 'rgba(255,56,100,0.25)',
+    borderWidth: 2, borderColor: 'rgba(255,56,100,0.25)',
   },
   penaltyChipSelected: {
     backgroundColor: 'rgba(255,56,100,0.12)',
     borderColor: C.pink,
   },
-  penaltyChipEmoji: {fontSize: 16},
-  penaltyChipLabel: {fontSize: 13, fontWeight: '600', color: C.white70},
+  penaltyChipEmoji: {fontFamily: 'PressStart2P-Regular', fontSize: 8, color: C.pink, lineHeight: 13},
+  penaltyChipLabel: {fontSize: 13, fontFamily: 'Oswald-SemiBold', color: 'rgba(255,255,255,0.70)'},
   penaltyChipLabelSelected: {color: C.pink},
 
   pickerOverlay: {
@@ -389,14 +416,15 @@ const styles = StyleSheet.create({
   },
   pickerSheet: {
     backgroundColor: C.bgDeep,
-    borderTopLeftRadius: 20, borderTopRightRadius: 20,
     paddingBottom: 32,
+    borderTopWidth: 2,
+    borderTopColor: C.cyan,
   },
   pickerHeader: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16,
     borderBottomWidth: 1, borderBottomColor: C.cardBorder,
   },
-  pickerTitle: {fontSize: 16, fontWeight: '700', color: C.white},
-  pickerDone: {fontSize: 16, fontWeight: '700', color: C.yellow},
+  pickerTitle: {fontSize: 16, fontFamily: 'Oswald-Bold', color: C.white},
+  pickerDone: {fontSize: 16, fontFamily: 'Oswald-Bold', color: C.yellow},
 });

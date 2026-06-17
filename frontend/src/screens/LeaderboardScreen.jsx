@@ -6,27 +6,7 @@ import {
 import {useAuth} from '../context/AuthContext';
 import {endpoints} from '../constants/api';
 import {C} from '../constants/theme';
-
-function AmbientBg() {
-  const o1 = useRef(new Animated.Value(0)).current;
-  const o2 = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    const loop = (v, dur, delay) => Animated.loop(Animated.sequence([
-      Animated.timing(v, {toValue: -20, duration: dur, delay, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
-      Animated.timing(v, {toValue: 0,   duration: dur, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
-    ])).start();
-    loop(o1, 5000, 0);
-    loop(o2, 6200, 700);
-  }, []);
-  return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      <Animated.View style={{position: 'absolute', width: 260, height: 260, borderRadius: 130,
-        backgroundColor: 'rgba(170,0,255,0.09)', top: -80, right: -80, transform: [{translateY: o1}]}} />
-      <Animated.View style={{position: 'absolute', width: 180, height: 180, borderRadius: 90,
-        backgroundColor: 'rgba(255,0,112,0.07)', bottom: 100, left: -60, transform: [{translateY: o2}]}} />
-    </View>
-  );
-}
+import {ArcadeBackdrop, ArcadeTopBar, ScreenTitle} from '../components/ArcadeUI';
 
 function Top3Shimmer() {
   const x = useRef(new Animated.Value(-100)).current;
@@ -55,7 +35,7 @@ const TOP3 = [
 ];
 
 function LeaderboardRow({item, rank, isMe, delay}) {
-  const medal = rank === 1 ? '👑' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null;
+  const medal = rank === 1 ? '01' : rank === 2 ? '02' : rank === 3 ? '03' : null;
   const top = rank <= 3 ? TOP3[rank - 1] : null;
   const anim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -94,10 +74,10 @@ function LeaderboardRow({item, rank, isMe, delay}) {
           </View>
         )}
         <View style={styles.info}>
-          <Text style={[styles.name, rank === 1 && {color: C.yellow, fontWeight: '900'}, isMe && {color: C.cyan}]}>
+          <Text style={[styles.name, rank === 1 && {color: '#FFD400'}, isMe && {color: C.cyan}]}>
             {item.username}{isMe ? ' (you)' : ''}
           </Text>
-          <Text style={styles.stats}>🏆 {item.total_wins} wins · 🔥 {item.active_streak} streak</Text>
+          <Text style={styles.stats}>{item.total_wins} WINS · {item.active_streak} STREAK</Text>
         </View>
         {top && (
           <View style={[styles.rankBadge, {borderColor: top.border, backgroundColor: top.bg}]}>
@@ -134,7 +114,7 @@ export default function LeaderboardScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor={C.bgDeep} />
-      <AmbientBg />
+      
       <FlatList
         data={data}
         keyExtractor={item => item.id}
@@ -143,8 +123,10 @@ export default function LeaderboardScreen() {
         )}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.heading}>Global Leaderboard</Text>
-            <Text style={styles.sub}>Ranked by current streak</Text>
+            <ArcadeTopBar center="GLOBAL SCORE" right="CPU" />
+            <ScreenTitle subtitle="Ranked by current streak">
+              GLOBAL{'\n'}LEADERBOARD
+            </ScreenTitle>
           </View>
         }
         refreshControl={
@@ -159,39 +141,39 @@ export default function LeaderboardScreen() {
 
 const styles = StyleSheet.create({
   safe: {flex: 1, backgroundColor: C.bg},
-  header: {paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12},
+  header: {paddingBottom: 4},
   heading: {
-    fontSize: 30, fontWeight: '900', color: C.yellow,
-    letterSpacing: 1.5,
-    textShadowColor: C.pink, textShadowRadius: 14,
-    textShadowOffset: {width: 0, height: 0},
+    fontFamily: 'PressStart2P-Regular', fontSize: 14, color: '#FFD400',
+    letterSpacing: 1.5, lineHeight: 26,
+    textShadowColor: '#FF2D6F', textShadowRadius: 0,
+    textShadowOffset: {width: 2, height: 2},
   },
-  sub: {fontSize: 13, color: C.white40, marginTop: 4, fontWeight: '600'},
+  sub: {fontSize: 13, color: 'rgba(255,255,255,0.50)', marginTop: 4, fontFamily: 'Oswald-SemiBold'},
   list: {paddingBottom: 40},
   row: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 16, paddingVertical: 15,
-    backgroundColor: C.card, position: 'relative', overflow: 'hidden',
-    marginHorizontal: 12, marginVertical: 4, borderRadius: 16,
+    backgroundColor: '#160f1e', position: 'relative', overflow: 'hidden',
+    marginHorizontal: 12, marginVertical: 4, borderWidth: 2, borderColor: 'rgba(255,255,255,0.13)',
   },
-  myRow: {backgroundColor: 'rgba(0,229,255,0.08)', borderColor: 'rgba(0,229,255,0.25)', borderWidth: 1},
+  myRow: {backgroundColor: 'rgba(25,224,255,0.08)', borderColor: 'rgba(25,224,255,0.25)', borderWidth: 2},
   myAccent: {position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, backgroundColor: C.cyan},
   rankWrap: {width: 38, alignItems: 'center'},
-  medal: {fontSize: 22},
-  rankNum: {fontSize: 14, color: C.white40, fontWeight: '800'},
-  avatar: {width: 46, height: 46, borderRadius: 23, marginRight: 12},
+  medal: {fontFamily: 'PressStart2P-Regular', fontSize: 9, color: C.yellow, lineHeight: 15},
+  rankNum: {fontFamily: 'PressStart2P-Regular', fontSize: 10, color: 'rgba(255,255,255,0.50)', lineHeight: 16},
+  avatar: {width: 46, height: 46, marginRight: 12},
   avatarFb: {
     backgroundColor: 'rgba(170,0,255,0.14)',
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5, borderColor: C.purple,
+    borderWidth: 2, borderColor: '#AA00FF',
   },
-  avatarInitial: {fontSize: 17, fontWeight: '800', color: C.purple},
+  avatarInitial: {fontSize: 17, fontFamily: 'Oswald-Bold', color: C.purple},
   info: {flex: 1},
-  name: {fontSize: 15, fontWeight: '700', color: C.white},
-  stats: {fontSize: 12, color: C.white40, marginTop: 3},
+  name: {fontFamily: 'PressStart2P-Regular', fontSize: 9, color: '#FFFFFF', lineHeight: 15},
+  stats: {fontSize: 12, color: 'rgba(255,255,255,0.50)', marginTop: 4, fontFamily: 'Oswald-SemiBold'},
   sep: {height: 4, backgroundColor: 'transparent'},
   rankBadge: {
-    borderWidth: 1.5, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3,
+    borderWidth: 2, paddingHorizontal: 6, paddingVertical: 3,
   },
-  rankBadgeText: {fontSize: 12, fontWeight: '900'},
+  rankBadgeText: {fontFamily: 'PressStart2P-Regular', fontSize: 8, lineHeight: 13},
 });

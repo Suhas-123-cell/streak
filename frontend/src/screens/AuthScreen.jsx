@@ -51,12 +51,7 @@ function Blink({text, style}) {
   return <Animated.Text style={[style, {opacity: op}]}>{text}</Animated.Text>;
 }
 
-// ── CRT vignette overlay ──────────────────────────────────────────────
-function Vignette() {
-  return (
-    <View pointerEvents="none" style={st.vignette} />
-  );
-}
+
 
 // ── Perspective stage floor ───────────────────────────────────────────
 // Horizontal lines at increasing gaps + vertical lines that converge at
@@ -173,7 +168,7 @@ function BootScreen({onDone}) {
       <Animated.View pointerEvents="none"
         style={[StyleSheet.absoluteFill, {backgroundColor: '#fff', opacity: flash}]} />
 
-      <Vignette />
+      
     </View>
   );
 }
@@ -200,7 +195,10 @@ function SelectScreen({onNew, onContinue}) {
         <Text style={st.tbYellow}>HI-SCORE 24</Text>
       </View>
 
-      <ScrollView style={{flex: 1}} contentContainerStyle={st.screenPad} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={{flex: 1}}
+        contentContainerStyle={[st.screenPad, st.selectPad]}
+        showsVerticalScrollIndicator={false}>
         <Text style={st.screenTitle}>SELECT YOUR{'\n'}FIGHTER</Text>
         <Text style={st.screenSub}>Your squad sees every skip.</Text>
 
@@ -238,7 +236,7 @@ function SelectScreen({onNew, onContinue}) {
         </TouchableOpacity>
 
         {/* RANK PANEL */}
-        <View style={st.rankPanel}>
+        <View style={[st.rankPanel, st.selectRankPanel]}>
           <Text style={st.rankHdr}>
             RANK {'▶'} <Text style={{color: C.yellow}}>PATH TO GRANDMASTER</Text>
           </Text>
@@ -272,7 +270,7 @@ function SelectScreen({onNew, onContinue}) {
         </View>
       </ScrollView>
 
-      <Vignette />
+      
     </Animated.View>
   );
 }
@@ -453,12 +451,12 @@ function CreateScreen({onBack, signup}) {
           </HardCard>
 
           <TouchableOpacity onPress={onBack} style={st.switchRow}>
-            <Text style={st.switchTxt}>Already fighting? <Text style={{color: C.cyan, fontWeight: '700'}}>CONTINUE</Text></Text>
+            <Text style={st.switchTxt}>Already fighting? <Text style={{color: '#19E0FF', fontFamily: 'Oswald-Bold'}}>CONTINUE</Text></Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <Vignette />
+      
     </Animated.View>
   );
 }
@@ -548,12 +546,12 @@ function ContinueScreen({onBack, login}) {
           </HardCard>
 
           <TouchableOpacity onPress={onBack} style={st.switchRow}>
-            <Text style={st.switchTxt}>New here? <Text style={{color: C.pink, fontWeight: '700'}}>NEW CHALLENGER</Text></Text>
+            <Text style={st.switchTxt}>New here? <Text style={{color: '#FF2D6F', fontFamily: 'Oswald-Bold'}}>NEW CHALLENGER</Text></Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <Vignette />
+      
     </Animated.View>
   );
 }
@@ -623,8 +621,8 @@ const st = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 20, paddingTop: 14, paddingBottom: 10,
   },
-  tbCyan:   {fontFamily: PIXEL, fontSize: 7, color: C.cyan,   letterSpacing: 1},
-  tbYellow: {fontFamily: PIXEL, fontSize: 7, color: C.yellow, letterSpacing: 1},
+  tbCyan:   {fontFamily: PIXEL, fontSize: 7, color: '#19E0FF', letterSpacing: 1},
+  tbYellow: {fontFamily: PIXEL, fontSize: 7, color: '#FFD400', letterSpacing: 1},
 
   // ── Boot logo ─────────────────────────────────────────────────────────
   bootCenter: {
@@ -632,7 +630,7 @@ const st = StyleSheet.create({
     paddingBottom: 60,
   },
   logoStreak: {
-    fontFamily: PIXEL, fontSize: 42, color: C.yellow,
+    fontFamily: PIXEL, fontSize: 42, color: '#FFD400',
     letterSpacing: 2,
     textShadowColor: '#05030a',
     textShadowOffset: {width: 4, height: 4},
@@ -652,29 +650,32 @@ const st = StyleSheet.create({
     alignItems: 'center',
   },
   insertCoin: {
-    fontSize: 11, fontWeight: '800', color: C.lime,
+    fontFamily: 'Oswald-Bold', fontSize: 11, color: '#9BE80C',
     letterSpacing: 2, textTransform: 'uppercase',
   },
   startShadow: {
     position: 'absolute', top: 6, left: 0, right: -6, bottom: -6,
-    backgroundColor: C.pink,
+    backgroundColor: '#FF2D6F',
   },
   startBtn: {
-    backgroundColor: C.yellow, borderWidth: 3, borderColor: '#fff',
+    backgroundColor: '#FFD400', borderWidth: 3, borderColor: '#fff',
     paddingHorizontal: 26, paddingVertical: 16,
+    shadowColor: '#FF2D6F', shadowOpacity: 0.9, shadowRadius: 0,
+    shadowOffset: {width: 6, height: 6}, elevation: 0,
   },
   startTxt: {fontFamily: PIXEL, fontSize: 14, color: C.bgDeep, letterSpacing: 1},
 
   // ── Shared screen ─────────────────────────────────────────────────────
   screenPad: {paddingHorizontal: 20, paddingTop: 4, paddingBottom: 24},
+  selectPad: {flexGrow: 1, paddingBottom: 34},
   screenTitle: {
     fontFamily: PIXEL, fontSize: 13, color: '#fff',
     lineHeight: 22, marginTop: 8, marginBottom: 6,
-    textShadowColor: C.pink, textShadowOffset: {width: 2, height: 2}, textShadowRadius: 0,
+    textShadowColor: '#FF2D6F', textShadowOffset: {width: 2, height: 2}, textShadowRadius: 0,
   },
   screenSub: {
-    fontSize: 13, fontWeight: '600',
-    color: 'rgba(255,255,255,0.8)', marginBottom: 14,
+    fontSize: 13, fontFamily: 'Oswald-SemiBold',
+    color: 'rgba(255,255,255,0.80)', marginBottom: 14,
   },
 
   // ── Online badge ──────────────────────────────────────────────────────
@@ -689,7 +690,7 @@ const st = StyleSheet.create({
     shadowColor: C.lime, shadowOpacity: 0.9, shadowRadius: 8,
     shadowOffset: {width: 0, height: 0},
   },
-  squadTxt: {fontSize: 12, fontWeight: '700', color: '#fff'},
+  squadTxt: {fontSize: 12, fontFamily: 'Oswald-Bold', color: '#fff'},
 
   // ── Selector card internals ───────────────────────────────────────────
   selectorRow: {
@@ -697,7 +698,7 @@ const st = StyleSheet.create({
     padding: 16, paddingRight: 12,
   },
   cardKey:   {fontFamily: PIXEL, fontSize: 11, marginBottom: 8},
-  cardDesc:  {fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.8)'},
+  cardDesc:  {fontSize: 13, fontFamily: 'Oswald-SemiBold', color: 'rgba(255,255,255,0.80)'},
   cardCount: {fontFamily: PIXEL, fontSize: 13, color: C.yellow, marginTop: 8, letterSpacing: 4},
   cardArrow: {fontFamily: PIXEL, fontSize: 13},
 
@@ -707,10 +708,14 @@ const st = StyleSheet.create({
     borderWidth: 2, borderColor: 'rgba(255,255,255,0.13)',
     backgroundColor: '#0e0916', padding: 16,
   },
+  selectRankPanel: {
+    marginTop: 'auto',
+    marginBottom: 10,
+  },
   rankHdr: {
-    fontSize: 11, fontWeight: '700',
-    color: 'rgba(255,255,255,0.8)',
-    textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 18,
+    fontSize: 11, fontFamily: 'Oswald-Bold',
+    color: 'rgba(255,255,255,0.80)',
+    textTransform: 'uppercase', letterSpacing: 2, marginBottom: 18,
   },
   rankRow: {
     flexDirection: 'row', justifyContent: 'space-between', position: 'relative',
@@ -727,7 +732,7 @@ const st = StyleSheet.create({
     marginBottom: 9,
   },
   rankLbl: {
-    fontSize: 10, fontWeight: '700', letterSpacing: 0.5,
+    fontSize: 10, fontFamily: 'Oswald-Bold', letterSpacing: 0.5,
     textAlign: 'center', textTransform: 'uppercase',
   },
 
@@ -756,7 +761,7 @@ const st = StyleSheet.create({
     borderBottomWidth: 2, borderBottomColor: C.pink,
     paddingBottom: 4, marginBottom: 6,
   },
-  nameStatus: {fontSize: 9, fontWeight: '700', letterSpacing: 1, marginBottom: 6},
+  nameStatus: {fontSize: 9, fontFamily: 'Oswald-Bold', letterSpacing: 1, marginBottom: 6},
   swatches:   {flexDirection: 'row', gap: 8, marginTop: 8},
   swatch:     {width: 19, height: 19, borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)'},
   swatchOn:   {borderColor: '#fff'},
@@ -764,32 +769,32 @@ const st = StyleSheet.create({
   divRow: {flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 18, marginBottom: 14},
   divLine: {flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.2)'},
   divTxt:  {
-    fontSize: 10, fontWeight: '700',
-    color: 'rgba(255,255,255,0.7)', letterSpacing: 2, textTransform: 'uppercase',
+    fontSize: 10, fontFamily: 'Oswald-Bold',
+    color: 'rgba(255,255,255,0.67)', letterSpacing: 2, textTransform: 'uppercase',
   },
 
   // ── Field labels + inputs ─────────────────────────────────────────────
   fldLabel: {
-    fontSize: 10, fontWeight: '700',
-    color: 'rgba(255,255,255,0.7)',
+    fontSize: 10, fontFamily: 'Oswald-Bold',
+    color: 'rgba(255,255,255,0.70)',
     letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6,
   },
   credField: {
     backgroundColor: '#0b0712',
     borderWidth: 2, borderColor: 'rgba(255,255,255,0.15)',
     paddingHorizontal: 11, paddingVertical: 11,
-    color: '#fff', fontSize: 14, fontWeight: '600',
+    color: '#fff', fontSize: 14, fontFamily: 'Oswald-SemiBold',
     letterSpacing: 0.5, marginBottom: 16,
   },
 
   fightBtn: {
-    backgroundColor: C.pink, borderWidth: 3, borderColor: '#fff',
+    backgroundColor: '#FF2D6F', borderWidth: 3, borderColor: '#fff',
     paddingVertical: 15, alignItems: 'center', marginTop: 16,
-    shadowColor: C.pink, shadowOpacity: 0.5, shadowRadius: 24,
+    shadowColor: '#FF2D6F', shadowOpacity: 0.5, shadowRadius: 24,
     shadowOffset: {width: 0, height: 0},
   },
   fightBtnTxt: {fontFamily: PIXEL, fontSize: 14, color: '#000', letterSpacing: 1},
 
   switchRow: {alignItems: 'center', marginTop: 14},
-  switchTxt: {fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.65)'},
+  switchTxt: {fontSize: 13, fontFamily: 'Oswald-SemiBold', color: 'rgba(255,255,255,0.67)'},
 });
