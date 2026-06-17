@@ -20,51 +20,35 @@ import UsernameSetupScreen from './src/screens/UsernameSetupScreen';
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
-// ── Animated splash ────────────────────────────────────────────────
+// ── Arcade boot splash ─────────────────────────────────────────────
 function SplashScreen({onDone}) {
-  const blobScale = useRef(new Animated.Value(0)).current;
-  const textY     = useRef(new Animated.Value(60)).current;
-  const textOp    = useRef(new Animated.Value(0)).current;
-  const drip1     = useRef(new Animated.Value(0)).current;
-  const drip2     = useRef(new Animated.Value(0)).current;
-  const drip3     = useRef(new Animated.Value(0)).current;
-  const screenOp  = useRef(new Animated.Value(1)).current;
+  const op       = useRef(new Animated.Value(0)).current;
+  const screenOp = useRef(new Animated.Value(1)).current;
+  const blink    = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.sequence([
-      Animated.spring(blobScale, {toValue: 1, tension: 100, friction: 6, useNativeDriver: true}),
-      Animated.parallel([
-        Animated.spring(textY, {toValue: 0, tension: 80, friction: 7, useNativeDriver: true}),
-        Animated.timing(textOp, {toValue: 1, duration: 220, useNativeDriver: true}),
-      ]),
-      Animated.parallel([
-        Animated.timing(drip1, {toValue: 1, duration: 320, easing: Easing.out(Easing.cubic), useNativeDriver: true}),
-        Animated.timing(drip2, {toValue: 1, duration: 380, delay: 60, easing: Easing.out(Easing.cubic), useNativeDriver: true}),
-        Animated.timing(drip3, {toValue: 1, duration: 300, delay: 120, easing: Easing.out(Easing.cubic), useNativeDriver: true}),
-      ]),
-      Animated.delay(750),
-      Animated.timing(screenOp, {toValue: 0, duration: 380, easing: Easing.in(Easing.cubic), useNativeDriver: true}),
+      Animated.timing(op, {toValue: 1, duration: 180, useNativeDriver: true}),
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(blink, {toValue: 0, duration: 120, useNativeDriver: true}),
+          Animated.timing(blink, {toValue: 1, duration: 120, useNativeDriver: true}),
+        ]),
+        {iterations: 3}
+      ),
+      Animated.delay(300),
+      Animated.timing(screenOp, {toValue: 0, duration: 260, useNativeDriver: true}),
     ]).start(() => onDone());
   }, []);
-
-  const dripTY = (a) => a.interpolate({inputRange: [0, 1], outputRange: [0, 24]});
 
   return (
     <Animated.View style={[s.splash, {opacity: screenOp}]}>
       <StatusBar barStyle="light-content" backgroundColor={C.bgDeep} />
-
-      <Animated.View style={[s.blob, {transform: [{scale: blobScale}]}]}>
-        <Animated.View style={[s.drip, s.d1, {transform: [{translateY: dripTY(drip1)}]}]} />
-        <Animated.View style={[s.drip, s.d2, {transform: [{translateY: dripTY(drip2)}]}]} />
-        <Animated.View style={[s.drip, s.d3, {transform: [{translateY: dripTY(drip3)}]}]} />
-
-        <Animated.View style={{opacity: textOp, transform: [{translateY: textY}]}}>
-          <Text style={s.splashLine}>STREAK</Text>
-          <Text style={s.splashLine}>FIGHT</Text>
-        </Animated.View>
+      <Animated.View style={{alignItems: 'center', opacity: op}}>
+        <Text style={s.splashLine1}>STREAK</Text>
+        <Text style={s.splashLine2}>FIGHT</Text>
+        <Animated.Text style={[s.splashSub, {opacity: blink}]}>· LOADING ·</Animated.Text>
       </Animated.View>
-
-      <Text style={s.tagline}>your group knows when you skip.</Text>
     </Animated.View>
   );
 }
@@ -218,33 +202,16 @@ const s = StyleSheet.create({
     flex: 1, backgroundColor: C.bgDeep,
     alignItems: 'center', justifyContent: 'center',
   },
-  blob: {
-    backgroundColor: C.bgDeep,
-    width: 300, height: 148,
-    borderRadius: 80,
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: C.pink, shadowOpacity: 0.7,
-    shadowRadius: 40, shadowOffset: {width: 0, height: 0},
-    elevation: 24, overflow: 'visible',
-    borderWidth: 2, borderColor: 'rgba(255,0,112,0.55)',
+  splashLine1: {
+    fontFamily: 'PressStart2P-Regular',
+    fontSize: 28, color: C.yellow, letterSpacing: 2, marginBottom: 6,
   },
-  splashLine: {
-    fontSize: 46, fontWeight: '900', color: C.yellow,
-    letterSpacing: 6,
-    textShadowColor: C.pink, textShadowRadius: 12,
-    textShadowOffset: {width: 0, height: 0},
-    lineHeight: 52, textAlign: 'center',
+  splashLine2: {
+    fontFamily: 'PressStart2P-Regular',
+    fontSize: 28, color: '#fff', letterSpacing: 2, marginBottom: 24,
   },
-  drip: {
-    position: 'absolute', bottom: -7,
-    width: 12, height: 20, borderRadius: 7, backgroundColor: C.pink,
-  },
-  d1: {left: '28%'},
-  d2: {left: '48%'},
-  d3: {left: '66%'},
-  tagline: {
-    marginTop: 36, color: C.white40,
-    fontSize: 12, fontWeight: '600',
-    letterSpacing: 2, textTransform: 'uppercase',
+  splashSub: {
+    fontFamily: 'PressStart2P-Regular',
+    fontSize: 8, color: C.cyan, letterSpacing: 3,
   },
 });
