@@ -17,25 +17,29 @@ const COLORS = [
   {key: 'purple', hex: C.purple},
 ];
 
-const RANK_LABELS = ['ROOKIE', 'FIGHTER', 'CHAMP', 'MASTER'];
+const RANK_DATA = [
+  {label: 'ROOKIE',  state: 'done'},
+  {label: 'FIGHTER', state: 'cur'},
+  {label: 'CHAMP',   state: 'lock'},
+  {label: 'MASTER',  state: 'lock'},
+];
 
-// ── Hard offset pixel-art drop-shadow card ───────────────────────────
+// ── Hard pixel-art drop-shadow card (absolutely-positioned shadow layer) ──
 function HardCard({borderColor, shadowColor, children, style}) {
   return (
-    <View style={{marginBottom: 6}}>
-      {/* offset shadow layer */}
+    <View style={{marginBottom: 8}}>
       <View style={[StyleSheet.absoluteFill, {
         top: 5, left: 0, right: -5, bottom: -5,
         backgroundColor: shadowColor,
       }]} />
-      <View style={[{borderWidth: 2, borderColor, backgroundColor: '#0e0818'}, style]}>
+      <View style={[{borderWidth: 2, borderColor, backgroundColor: '#160f1e'}, style]}>
         {children}
       </View>
     </View>
   );
 }
 
-// ── INSERT COIN blink ─────────────────────────────────────────────────
+// ── Blink animation ───────────────────────────────────────────────────
 function Blink({text, style}) {
   const op = useRef(new Animated.Value(1)).current;
   useEffect(() => {
@@ -47,32 +51,68 @@ function Blink({text, style}) {
   return <Animated.Text style={[style, {opacity: op}]}>{text}</Animated.Text>;
 }
 
+// ── CRT vignette overlay ──────────────────────────────────────────────
+function Vignette() {
+  return (
+    <View pointerEvents="none" style={st.vignette} />
+  );
+}
+
 // ── Perspective stage floor ───────────────────────────────────────────
+// Horizontal lines at increasing gaps + vertical lines that converge at
+// a vanishing point on the horizon (achieved by rotating long lines
+// around their centre, which sits exactly at the horizon).
 function Floor() {
-  const lines = [0, 6, 14, 25, 39, 57, 80, 108];
+  const H_LINES = [0, 6, 14, 25, 39, 57, 80, 108];
+  // Angles for vertical perspective lines (° from centre)
+  const V_ANGLES = [-55, -40, -28, -15, 0, 15, 28, 40, 55];
+  const V_TALL = 700;
+
   return (
     <View style={st.floorWrap} pointerEvents="none">
+      {/* Stage ambient glow above horizon */}
+      <View style={st.stageGlow} />
       <View style={st.horizon} />
-      {lines.map((top, i) => (
-        <View key={i} style={[st.floorLine, {top, opacity: 0.22 + i * 0.08}]} />
+
+      {/* Vertical lines converging at the vanishing point on the horizon.
+          Each line is V_TALL px tall, centred at the horizon (top: -V_TALL/2),
+          then rotated around its own centre — which sits on the horizon line.
+          overflow:'hidden' on floorWrap clips the above-horizon half. */}
+      {V_ANGLES.map((angle, i) => (
+        <View key={`v${i}`} style={{
+          position: 'absolute',
+          top: -V_TALL / 2,
+          left: '50%',
+          marginLeft: -0.75,
+          width: 1.5,
+          height: V_TALL,
+          backgroundColor: C.cyan,
+          opacity: angle === 0 ? 0.28 : 0.42,
+          transform: [{rotate: `${angle}deg`}],
+        }} />
+      ))}
+
+      {/* Horizontal scanlines */}
+      {H_LINES.map((top, i) => (
+        <View key={`h${i}`} style={[st.floorLine, {top, opacity: 0.22 + i * 0.09}]} />
       ))}
     </View>
   );
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// SCREEN 1 — BOOT (INSERT COIN / PRESS START)
+// SCREEN 1 — BOOT
 // ═══════════════════════════════════════════════════════════════════════
 function BootScreen({onDone}) {
   const btnScale = useRef(new Animated.Value(1)).current;
-  const glowOp   = useRef(new Animated.Value(0.7)).current;
+  const glowOp   = useRef(new Animated.Value(0.65)).current;
   const flash    = useRef(new Animated.Value(0)).current;
   const tapped   = useRef(false);
 
   useEffect(() => {
     Animated.loop(Animated.sequence([
-      Animated.timing(glowOp, {toValue: 1,    duration: 650, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
-      Animated.timing(glowOp, {toValue: 0.65, duration: 650, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
+      Animated.timing(glowOp, {toValue: 1,    duration: 700, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
+      Animated.timing(glowOp, {toValue: 0.65, duration: 700, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
     ])).start();
   }, []);
 
@@ -82,42 +122,40 @@ function BootScreen({onDone}) {
     Animated.sequence([
       Animated.spring(btnScale, {toValue: 0.93, tension: 400, friction: 5, useNativeDriver: true}),
       Animated.timing(flash, {toValue: 1, duration: 55, useNativeDriver: true}),
-      Animated.timing(flash, {toValue: 0, duration: 280, useNativeDriver: true}),
+      Animated.timing(flash, {toValue: 0, duration: 300, useNativeDriver: true}),
     ]).start(() => onDone());
   }
 
   return (
-    // Plain View — AuthScreen root already wraps in SafeAreaView
     <View style={st.fill}>
       <Floor />
 
-      {/* Step label */}
+      {/* Topbar: 1P · CREDIT 99 · CPU */}
       <View style={st.topBar}>
-        <Text style={st.stepLabel}>1 · BOOT</Text>
+        <Text style={st.tbCyan}>1P</Text>
+        <Text style={st.tbYellow}>CREDIT 99</Text>
+        <Text style={st.tbCyan}>CPU</Text>
       </View>
 
-      {/* Centred logo */}
+      {/* Logo */}
       <View style={st.bootCenter}>
         <Text style={st.logoStreak}>STREAK</Text>
 
-        {/*
-          Chromatic FIGHT: 3 layers all absolute + width:'100%' + textAlign:'center'
-          Shifting left/right via the `left` prop offsets the text block while
-          keeping the text itself centred — gives the chromatic aberration look.
-        */}
+        {/* Chromatic FIGHT — 3 layers all absolute+full-width so textAlign:'center'
+            centres the text; left offset shifts the block for the aberration effect */}
         <View style={st.fightBox}>
-          <Text style={[st.logoFight, st.abs, {color: C.cyan,  left: -6, opacity: 0.8}]}>FIGHT</Text>
-          <Text style={[st.logoFight, st.abs, {color: C.pink,  left:  6, opacity: 0.8}]}>FIGHT</Text>
-          <Text style={[st.logoFight, st.abs, {color: '#fff',  left:  0}]}>FIGHT</Text>
+          <Text style={[st.logoFight, st.absText, {color: C.cyan,  left: -4, opacity: 0.8}]}>FIGHT</Text>
+          <Text style={[st.logoFight, st.absText, {color: C.pink,  left:  4, opacity: 0.8}]}>FIGHT</Text>
+          <Text style={[st.logoFight, st.absText, {color: '#fff',  left:  0}]}>FIGHT</Text>
         </View>
 
-        <Text style={st.roundLabel}>· ROUND 1 ·</Text>
+        <Text style={st.roundLabel}>{'▸ ROUND 1 ◂'}</Text>
       </View>
 
       {/* INSERT COIN + PRESS START */}
       <View style={st.bootBottom}>
         <Blink text="INSERT COIN" style={st.insertCoin} />
-        <View style={{marginTop: 20}}>
+        <View style={{marginTop: 18}}>
           <Animated.View style={{transform: [{scale: btnScale}]}}>
             <TouchableOpacity onPress={go} activeOpacity={1}>
               <View style={st.startShadow} />
@@ -131,9 +169,11 @@ function BootScreen({onDone}) {
         </View>
       </View>
 
-      {/* CRT white flash */}
+      {/* CRT white flash on tap */}
       <Animated.View pointerEvents="none"
         style={[StyleSheet.absoluteFill, {backgroundColor: '#fff', opacity: flash}]} />
+
+      <Vignette />
     </View>
   );
 }
@@ -144,80 +184,95 @@ function BootScreen({onDone}) {
 function SelectScreen({onNew, onContinue}) {
   const slideY = useRef(new Animated.Value(24)).current;
   const op     = useRef(new Animated.Value(0)).current;
-  const [count, setCount] = useState(9);
 
   useEffect(() => {
     Animated.parallel([
       Animated.spring(slideY, {toValue: 0, tension: 65, friction: 10, useNativeDriver: true}),
       Animated.timing(op, {toValue: 1, duration: 260, useNativeDriver: true}),
     ]).start();
-    const id = setInterval(() => setCount(n => n > 1 ? n - 1 : 9), 1100);
-    return () => clearInterval(id);
   }, []);
 
   return (
     <Animated.View style={[st.fill, {opacity: op, transform: [{translateY: slideY}]}]}>
-      {/* Breadcrumb nav */}
+      {/* Topbar: 1P · HI-SCORE */}
       <View style={st.topBar}>
-        <Text style={st.stepLabel}>1 · BOOT</Text>
-        <Text style={[st.stepLabel, {color: '#fff'}]}>{'  '}2 · SELECT</Text>
-        <Text style={st.stepLabel}>{'  '}3 · CREATE</Text>
-        <Text style={st.stepLabel}>{'  '}4 · REWARD</Text>
+        <Text style={st.tbCyan}>1P</Text>
+        <Text style={st.tbYellow}>HI-SCORE 24</Text>
       </View>
 
       <ScrollView style={{flex: 1}} contentContainerStyle={st.screenPad} showsVerticalScrollIndicator={false}>
         <Text style={st.screenTitle}>SELECT YOUR{'\n'}FIGHTER</Text>
         <Text style={st.screenSub}>Your squad sees every skip.</Text>
 
-        {/* Online badge */}
-        <View style={st.badge}>
-          <View style={st.badgeDot} />
-          <Text style={st.badgeTxt}>4 fighters online</Text>
+        <View style={st.squad}>
+          <View style={st.squadDot} />
+          <Text style={st.squadTxt}>4 fighters online</Text>
         </View>
 
-        {/* NEW CHALLENGER */}
-        <TouchableOpacity activeOpacity={0.82} onPress={onNew} style={{marginBottom: 14}}>
-          <HardCard borderColor={C.pink} shadowColor="rgba(255,0,112,0.38)">
-            <View style={st.selectorCard}>
+        {/* NEW CHALLENGER — hard-shadow card */}
+        <TouchableOpacity activeOpacity={0.82} onPress={onNew}>
+          <HardCard borderColor={C.pink} shadowColor="rgba(255,45,111,0.38)">
+            <View style={st.selectorRow}>
               <View style={{flex: 1}}>
-                <Text style={[st.cardTitle, {color: C.pink}]}>NEW CHALLENGER</Text>
-                <Text style={st.cardSub}>Create a fighter & enter the arena</Text>
+                <Text style={[st.cardKey, {color: C.pink}]}>NEW CHALLENGER</Text>
+                <Text style={st.cardDesc}>Create a fighter &amp; enter the arena</Text>
               </View>
               <Text style={[st.cardArrow, {color: C.pink}]}>▶</Text>
             </View>
           </HardCard>
         </TouchableOpacity>
 
-        {/* CONTINUE? */}
+        {/* CONTINUE? — hard-shadow card with "9  8  7" countdown */}
         <TouchableOpacity activeOpacity={0.82} onPress={onContinue}>
-          <HardCard borderColor={C.cyan} shadowColor="rgba(0,229,255,0.28)">
-            <View style={st.selectorCard}>
+          <HardCard borderColor={C.cyan} shadowColor="rgba(25,224,255,0.30)">
+            <View style={st.selectorRow}>
               <View style={{flex: 1}}>
-                <Text style={[st.cardTitle, {color: C.cyan}]}>CONTINUE?</Text>
-                <Text style={st.cardSub}>Resume your streak</Text>
-                <Text style={[st.cardCount, {color: C.yellow}]}>{count}</Text>
+                <Text style={[st.cardKey, {color: C.cyan}]}>CONTINUE?</Text>
+                <Text style={st.cardDesc}>Resume your streak</Text>
+                {/* Static "9  8  7" decorative countdown — matches proto4 */}
+                <Text style={st.cardCount}>{'9  8  7'}</Text>
               </View>
               <Text style={[st.cardArrow, {color: C.cyan}]}>▶</Text>
             </View>
           </HardCard>
         </TouchableOpacity>
+
+        {/* RANK PANEL */}
+        <View style={st.rankPanel}>
+          <Text style={st.rankHdr}>
+            RANK {'▶'} <Text style={{color: C.yellow}}>PATH TO GRANDMASTER</Text>
+          </Text>
+          <View style={st.rankRow}>
+            <View style={st.rankConnector} />
+            {RANK_DATA.map(({label, state}) => {
+              const isDone = state === 'done';
+              const isCur  = state === 'cur';
+              const col    = isDone ? C.lime : isCur ? C.yellow : 'rgba(255,255,255,0.28)';
+              const bgMed  = isDone ? 'rgba(155,232,12,0.18)' : isCur ? 'rgba(255,212,0,0.25)' : C.bgDeep;
+              const sz     = isCur ? 50 : 42;
+              return (
+                <View key={label} style={st.rankSlot}>
+                  <View style={[st.medal, {
+                    width: sz, height: sz,
+                    borderColor: col, backgroundColor: bgMed,
+                    ...(isCur ? {
+                      shadowColor: C.yellow, shadowOpacity: 0.8,
+                      shadowRadius: 20, shadowOffset: {width: 0, height: 0}, elevation: 8,
+                    } : {}),
+                  }]}>
+                    <Text style={{color: col, fontSize: 14, transform: [{rotate: '-45deg'}]}}>
+                      {state === 'lock' ? '◆' : '★'}
+                    </Text>
+                  </View>
+                  <Text style={[st.rankLbl, {color: col}]}>{label}</Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
       </ScrollView>
 
-      {/* RANK PATH strip */}
-      <View style={st.rankPanel}>
-        <Text style={st.rankHdr}>RANK → PATH TO GRANDMASTER</Text>
-        <View style={st.rankRow}>
-          <View style={st.rankConnector} />
-          {RANK_LABELS.map((r, i) => (
-            <View key={r} style={st.rankSlot}>
-              <View style={[st.diamond, i === 0 && st.diamondActive]}>
-                <Text style={[st.diamondIcon, {color: i === 0 ? C.yellow : 'rgba(255,255,255,0.22)'}]}>★</Text>
-              </View>
-              <Text style={[st.rankLbl, {color: i === 0 ? C.yellow : 'rgba(255,255,255,0.32)'}]}>{r}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
+      <Vignette />
     </Animated.View>
   );
 }
@@ -236,6 +291,8 @@ function CreateScreen({onBack, signup}) {
   const [color,      setColor]      = useState('pink');
   const [loading,    setLoading]    = useState(false);
   const [nameStatus, setNameStatus] = useState(null);
+  const [emailFocus, setEmailFocus] = useState(false);
+  const [passFocus,  setPassFocus]  = useState(false);
 
   useEffect(() => {
     Animated.parallel([
@@ -286,11 +343,12 @@ function CreateScreen({onBack, signup}) {
   return (
     <Animated.View style={[st.fill, {opacity: op, transform: [{translateY: slideY}]}]}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{flex: 1}}>
+        {/* Topbar: ◀ BACK · NEW FIGHTER */}
         <View style={st.topBar}>
           <TouchableOpacity onPress={onBack}>
-            <Text style={st.stepLabel}>◀ BACK</Text>
+            <Text style={st.tbCyan}>{'◀'} BACK</Text>
           </TouchableOpacity>
-          <Text style={[st.stepLabel, {color: '#fff'}]}>{'  '}3 · CREATE FIGHTER</Text>
+          <Text style={st.tbYellow}>NEW FIGHTER</Text>
         </View>
 
         <ScrollView
@@ -298,27 +356,35 @@ function CreateScreen({onBack, signup}) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* YOU VS SKIP */}
+          {/* YOU VS SKIP — chromatic VS using 3 absolutely positioned layers */}
           <View style={st.vsRow}>
             <Text style={[st.vsWord, {color: C.cyan}]}>YOU</Text>
-            <Text style={st.vsBig}>VS</Text>
+            <View style={st.vsBox}>
+              <Text style={[st.vsBig, st.absText, {color: C.pink, left: 3, top: 3, opacity: 0.75}]}>VS</Text>
+              <Text style={[st.vsBig, st.absText, {color: C.cyan, left: -3, top: -3, opacity: 0.75}]}>VS</Text>
+              <Text style={[st.vsBig, st.absText, {color: '#fff', left: 0, top: 0}]}>VS</Text>
+            </View>
             <Text style={[st.vsWord, {color: C.pink}]}>SKIP</Text>
           </View>
 
-          {/* Single dossier card containing emblem, swatches, fields, button */}
-          <HardCard borderColor={C.pink} shadowColor="rgba(255,0,112,0.28)">
-            <View style={st.dossierPad}>
-              {/* Top row: emblem + name/swatches */}
+          {/* Dossier card */}
+          <HardCard borderColor={C.pink} shadowColor="rgba(255,45,111,0.30)">
+            <View style={{padding: 15}}>
+              {/* Emblem + name row */}
               <View style={st.idRow}>
-                <View style={[st.emblem, {borderColor: emblemColor}]}>
+                <View style={[st.emblem, {
+                  borderColor: emblemColor,
+                  shadowColor: emblemColor,
+                  shadowOpacity: 0.55, shadowRadius: 18, shadowOffset: {width: 0, height: 0},
+                }]}>
                   <Text style={[st.emblemLetter, {color: emblemColor}]}>{initial}</Text>
                 </View>
-                <View style={{flex: 1, minWidth: 0, marginLeft: 12}}>
+                <View style={{flex: 1, minWidth: 0, marginLeft: 14}}>
                   <TextInput
                     style={[
                       st.nameField,
                       nameStatus === 'available' && {borderBottomColor: C.lime},
-                      nameStatus === 'taken'     && {borderBottomColor: C.red},
+                      nameStatus === 'taken'     && {borderBottomColor: '#ff4444'},
                     ]}
                     placeholder="FIGHTER NAME"
                     placeholderTextColor="rgba(255,255,255,0.3)"
@@ -328,9 +394,9 @@ function CreateScreen({onBack, signup}) {
                     autoCorrect={false}
                     maxLength={30}
                   />
-                  {nameStatus === 'checking'  && <ActivityIndicator size="small" color="rgba(255,255,255,0.4)" style={{alignSelf: 'flex-start', marginTop: 4}} />}
+                  {nameStatus === 'checking'  && <ActivityIndicator size="small" color="rgba(255,255,255,0.4)" style={{alignSelf:'flex-start',marginTop:4}} />}
                   {nameStatus === 'available' && <Text style={[st.nameStatus, {color: C.lime}]}>✓ AVAILABLE</Text>}
-                  {nameStatus === 'taken'     && <Text style={[st.nameStatus, {color: C.red}]}>✗ TAKEN</Text>}
+                  {nameStatus === 'taken'     && <Text style={[st.nameStatus, {color:'#ff4444'}]}>✗ TAKEN</Text>}
                   <View style={st.swatches}>
                     {COLORS.map(c => (
                       <TouchableOpacity
@@ -343,14 +409,15 @@ function CreateScreen({onBack, signup}) {
               </View>
 
               {/* ACCOUNT divider */}
-              <View style={st.divider}>
+              <View style={st.divRow}>
                 <View style={st.divLine} />
-                <Text style={st.divTxt}>ACCOUNT</Text>
+                <Text style={st.divTxt}>Account</Text>
                 <View style={st.divLine} />
               </View>
 
+              <Text style={st.fldLabel}>Email</Text>
               <TextInput
-                style={st.credField}
+                style={[st.credField, emailFocus && {borderColor: 'rgba(25,224,255,0.5)'}]}
                 placeholder="you@example.com"
                 placeholderTextColor="rgba(255,255,255,0.35)"
                 value={email}
@@ -358,14 +425,20 @@ function CreateScreen({onBack, signup}) {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
+                onFocus={() => setEmailFocus(true)}
+                onBlur={() => setEmailFocus(false)}
               />
+
+              <Text style={st.fldLabel}>Password</Text>
               <TextInput
-                style={[st.credField, {marginBottom: 0}]}
-                placeholder="••••••••"
+                style={[st.credField, {marginBottom: 0}, passFocus && {borderColor: 'rgba(25,224,255,0.5)'}]}
+                placeholder="min 8 characters"
                 placeholderTextColor="rgba(255,255,255,0.35)"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
+                onFocus={() => setPassFocus(true)}
+                onBlur={() => setPassFocus(false)}
               />
 
               <TouchableOpacity
@@ -380,10 +453,12 @@ function CreateScreen({onBack, signup}) {
           </HardCard>
 
           <TouchableOpacity onPress={onBack} style={st.switchRow}>
-            <Text style={st.switchTxt}>Already fighting? <Text style={{color: C.cyan}}>CONTINUE</Text></Text>
+            <Text style={st.switchTxt}>Already fighting? <Text style={{color: C.cyan, fontWeight: '700'}}>CONTINUE</Text></Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Vignette />
     </Animated.View>
   );
 }
@@ -394,9 +469,11 @@ function CreateScreen({onBack, signup}) {
 function ContinueScreen({onBack, login}) {
   const slideY   = useRef(new Animated.Value(24)).current;
   const op       = useRef(new Animated.Value(0)).current;
-  const [email,    setEmail]    = useState('');
-  const [password, setPassword] = useState('');
-  const [loading,  setLoading]  = useState(false);
+  const [emailOrUser, setEmailOrUser] = useState('');
+  const [password,    setPassword]    = useState('');
+  const [loading,     setLoading]     = useState(false);
+  const [uFocus,      setUFocus]      = useState(false);
+  const [pFocus,      setPFocus]      = useState(false);
 
   useEffect(() => {
     Animated.parallel([
@@ -406,9 +483,9 @@ function ContinueScreen({onBack, login}) {
   }, []);
 
   async function submit() {
-    if (!email || !password) { Alert.alert('Required', 'Enter your email and password'); return; }
+    if (!emailOrUser || !password) { Alert.alert('Required', 'Enter your email or username and password'); return; }
     setLoading(true);
-    try { await login(email, password); }
+    try { await login(emailOrUser, password); }
     catch (e) { Alert.alert('Login Failed', e.message); }
     finally { setLoading(false); }
   }
@@ -416,12 +493,14 @@ function ContinueScreen({onBack, login}) {
   return (
     <Animated.View style={[st.fill, {opacity: op, transform: [{translateY: slideY}]}]}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{flex: 1}}>
+        {/* Topbar: ◀ BACK · CONTINUE? */}
         <View style={st.topBar}>
           <TouchableOpacity onPress={onBack}>
-            <Text style={st.stepLabel}>◀ BACK</Text>
+            <Text style={st.tbCyan}>{'◀'} BACK</Text>
           </TouchableOpacity>
-          <Text style={[st.stepLabel, {color: '#fff'}]}>{'  '}CONTINUE?</Text>
+          <Text style={st.tbYellow}>CONTINUE?</Text>
         </View>
+
         <ScrollView
           contentContainerStyle={[st.screenPad, {paddingBottom: 60}]}
           keyboardShouldPersistTaps="handled"
@@ -430,26 +509,33 @@ function ContinueScreen({onBack, login}) {
           <Text style={st.screenTitle}>WELCOME{'\n'}BACK.</Text>
           <Text style={st.screenSub}>Your streak is waiting.</Text>
 
-          <HardCard borderColor={C.cyan} shadowColor="rgba(0,229,255,0.28)" style={{marginTop: 8}}>
-            <View style={st.dossierPad}>
+          <HardCard borderColor={C.cyan} shadowColor="rgba(25,224,255,0.28)">
+            <View style={{padding: 15}}>
+              <Text style={st.fldLabel}>Email or Username</Text>
               <TextInput
-                style={[st.credField, {borderColor: 'rgba(0,229,255,0.4)'}]}
-                placeholder="you@example.com"
+                style={[st.credField, {borderColor: uFocus ? 'rgba(0,229,255,0.5)' : 'rgba(0,229,255,0.22)'}]}
+                placeholder="you@example.com or fighter_name"
                 placeholderTextColor="rgba(255,255,255,0.35)"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
+                value={emailOrUser}
+                onChangeText={setEmailOrUser}
                 autoCapitalize="none"
                 autoCorrect={false}
+                onFocus={() => setUFocus(true)}
+                onBlur={() => setUFocus(false)}
               />
+
+              <Text style={st.fldLabel}>Password</Text>
               <TextInput
-                style={[st.credField, {marginBottom: 0, borderColor: 'rgba(0,229,255,0.4)'}]}
-                placeholder="••••••••"
+                style={[st.credField, {marginBottom: 0, borderColor: pFocus ? 'rgba(0,229,255,0.5)' : 'rgba(0,229,255,0.22)'}]}
+                placeholder="your password"
                 placeholderTextColor="rgba(255,255,255,0.35)"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
+                onFocus={() => setPFocus(true)}
+                onBlur={() => setPFocus(false)}
               />
+
               <TouchableOpacity
                 onPress={submit} disabled={loading} activeOpacity={0.85}
                 style={[st.fightBtn, {backgroundColor: C.cyan, shadowColor: C.cyan}, loading && {opacity: 0.55}]}
@@ -462,10 +548,12 @@ function ContinueScreen({onBack, login}) {
           </HardCard>
 
           <TouchableOpacity onPress={onBack} style={st.switchRow}>
-            <Text style={st.switchTxt}>New here? <Text style={{color: C.pink}}>NEW CHALLENGER</Text></Text>
+            <Text style={st.switchTxt}>New here? <Text style={{color: C.pink, fontWeight: '700'}}>NEW CHALLENGER</Text></Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Vignette />
     </Animated.View>
   );
 }
@@ -495,180 +583,213 @@ const st = StyleSheet.create({
   root: {flex: 1, backgroundColor: C.bgDeep},
   fill: {flex: 1},
 
-  // ── Floor ──────────────────────────────────────────────────────────
+  // ── CRT vignette ──────────────────────────────────────────────────────
+  vignette: {
+    ...StyleSheet.absoluteFillObject,
+    borderWidth: 72,
+    borderColor: 'rgba(0,0,0,0.65)',
+    zIndex: 50,
+  },
+
+  // ── Floor ─────────────────────────────────────────────────────────────
   floorWrap: {
-    position: 'absolute', bottom: 0, left: 0, right: 0, height: 140,
+    position: 'absolute', bottom: 0, left: 0, right: 0, height: 170,
     overflow: 'hidden',
   },
+  stageGlow: {
+    position: 'absolute',
+    bottom: 90, alignSelf: 'center',
+    width: 280, height: 160,
+    borderRadius: 140,
+    backgroundColor: 'rgba(25,224,255,0.09)',
+    shadowColor: C.cyan,
+    shadowOpacity: 0.9,
+    shadowRadius: 55,
+    shadowOffset: {width: 0, height: 0},
+  },
   horizon: {
-    position: 'absolute', top: 0, left: 0, right: 0, height: 2,
+    position: 'absolute', top: 0, left: '6%', right: '6%', height: 2,
     backgroundColor: C.cyan,
-    shadowColor: C.cyan, shadowOpacity: 1, shadowRadius: 14,
-    shadowOffset: {width: 0, height: 0}, elevation: 6,
+    shadowColor: C.cyan, shadowOpacity: 1, shadowRadius: 22,
+    shadowOffset: {width: 0, height: 0},
   },
   floorLine: {
     position: 'absolute', left: 0, right: 0, height: 1.5,
     backgroundColor: C.cyan,
   },
 
-  // ── Nav bar ────────────────────────────────────────────────────────
+  // ── Topbar ────────────────────────────────────────────────────────────
   topBar: {
-    flexDirection: 'row', flexWrap: 'nowrap',
-    paddingHorizontal: 18, paddingTop: 14, paddingBottom: 10,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 20, paddingTop: 14, paddingBottom: 10,
   },
-  stepLabel: {
-    fontFamily: PIXEL, fontSize: 7,
-    color: 'rgba(0,229,255,0.5)', letterSpacing: 0.5,
-  },
+  tbCyan:   {fontFamily: PIXEL, fontSize: 7, color: C.cyan,   letterSpacing: 1},
+  tbYellow: {fontFamily: PIXEL, fontSize: 7, color: C.yellow, letterSpacing: 1},
 
-  // ── Boot ───────────────────────────────────────────────────────────
+  // ── Boot logo ─────────────────────────────────────────────────────────
   bootCenter: {
     flex: 1, alignItems: 'center', justifyContent: 'center',
-    paddingBottom: 50,
+    paddingBottom: 60,
   },
   logoStreak: {
-    fontFamily: PIXEL, fontSize: 36, color: C.yellow,
-    letterSpacing: 2, marginBottom: 4,
-    textShadowColor: 'rgba(0,0,0,0.9)',
-    textShadowOffset: {width: 5, height: 5}, textShadowRadius: 0,
+    fontFamily: PIXEL, fontSize: 42, color: C.yellow,
+    letterSpacing: 2,
+    textShadowColor: '#05030a',
+    textShadowOffset: {width: 4, height: 4},
+    textShadowRadius: 0,
   },
-  // FIGHT container: full width so absolute layers align by textAlign:center
-  fightBox: {width: '100%', height: 50, marginBottom: 16},
+  fightBox: {width: '100%', height: 58, marginTop: 6, marginBottom: 22},
   logoFight: {
-    fontFamily: PIXEL, fontSize: 36, color: '#fff',
+    fontFamily: PIXEL, fontSize: 42, color: '#fff',
     textAlign: 'center', letterSpacing: 2,
   },
-  abs: {position: 'absolute', width: '100%'},
+  absText: {position: 'absolute', width: '100%'},
   roundLabel: {
-    fontFamily: PIXEL, fontSize: 9, color: C.cyan, letterSpacing: 3,
+    fontFamily: PIXEL, fontSize: 9, color: C.cyan, letterSpacing: 2,
   },
-  bootBottom: {alignItems: 'center', paddingBottom: 150},
-  insertCoin: {fontFamily: PIXEL, fontSize: 10, color: C.lime, letterSpacing: 2},
+  bootBottom: {
+    position: 'absolute', bottom: 190, left: 0, right: 0,
+    alignItems: 'center',
+  },
+  insertCoin: {
+    fontSize: 11, fontWeight: '800', color: C.lime,
+    letterSpacing: 2, textTransform: 'uppercase',
+  },
   startShadow: {
     position: 'absolute', top: 6, left: 0, right: -6, bottom: -6,
     backgroundColor: C.pink,
   },
   startBtn: {
     backgroundColor: C.yellow, borderWidth: 3, borderColor: '#fff',
-    paddingHorizontal: 26, paddingVertical: 15,
+    paddingHorizontal: 26, paddingVertical: 16,
   },
-  startTxt: {fontFamily: PIXEL, fontSize: 13, color: C.bgDeep, letterSpacing: 1},
+  startTxt: {fontFamily: PIXEL, fontSize: 14, color: C.bgDeep, letterSpacing: 1},
 
-  // ── Shared ─────────────────────────────────────────────────────────
+  // ── Shared screen ─────────────────────────────────────────────────────
   screenPad: {paddingHorizontal: 20, paddingTop: 4, paddingBottom: 24},
   screenTitle: {
-    fontFamily: PIXEL, fontSize: 14, color: '#fff',
-    lineHeight: 24, marginTop: 8, marginBottom: 8,
-    textShadowColor: C.pink, textShadowRadius: 0,
-    textShadowOffset: {width: 2, height: 2},
+    fontFamily: PIXEL, fontSize: 13, color: '#fff',
+    lineHeight: 22, marginTop: 8, marginBottom: 6,
+    textShadowColor: C.pink, textShadowOffset: {width: 2, height: 2}, textShadowRadius: 0,
   },
   screenSub: {
     fontSize: 13, fontWeight: '600',
-    color: 'rgba(255,255,255,0.7)', marginBottom: 14,
+    color: 'rgba(255,255,255,0.8)', marginBottom: 14,
   },
-  badge: {
-    flexDirection: 'row', alignItems: 'center', gap: 7,
-    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.18)',
+
+  // ── Online badge ──────────────────────────────────────────────────────
+  squad: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    borderWidth: 2, borderColor: 'rgba(255,255,255,0.15)',
     alignSelf: 'flex-start',
     paddingHorizontal: 10, paddingVertical: 6, marginBottom: 16,
   },
-  badgeDot: {
+  squadDot: {
     width: 7, height: 7, borderRadius: 4, backgroundColor: C.lime,
     shadowColor: C.lime, shadowOpacity: 0.9, shadowRadius: 8,
     shadowOffset: {width: 0, height: 0},
   },
-  badgeTxt: {fontSize: 12, fontWeight: '700', color: '#fff'},
+  squadTxt: {fontSize: 12, fontWeight: '700', color: '#fff'},
 
-  // ── Selector cards ─────────────────────────────────────────────────
-  selectorCard: {flexDirection: 'row', alignItems: 'center', padding: 16, paddingRight: 12},
-  cardTitle:    {fontFamily: PIXEL, fontSize: 10, marginBottom: 8},
-  cardSub:      {fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,0.75)'},
-  cardCount:    {fontFamily: PIXEL, fontSize: 18, marginTop: 6, letterSpacing: 4},
-  cardArrow:    {fontFamily: PIXEL, fontSize: 14, marginLeft: 8},
+  // ── Selector card internals ───────────────────────────────────────────
+  selectorRow: {
+    flexDirection: 'row', alignItems: 'center',
+    padding: 16, paddingRight: 12,
+  },
+  cardKey:   {fontFamily: PIXEL, fontSize: 11, marginBottom: 8},
+  cardDesc:  {fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.8)'},
+  cardCount: {fontFamily: PIXEL, fontSize: 13, color: C.yellow, marginTop: 8, letterSpacing: 4},
+  cardArrow: {fontFamily: PIXEL, fontSize: 13},
 
-  // ── Rank strip ─────────────────────────────────────────────────────
+  // ── Rank panel ────────────────────────────────────────────────────────
   rankPanel: {
-    borderTopWidth: 1.5, borderTopColor: 'rgba(255,255,255,0.1)',
-    backgroundColor: '#0b0716',
-    paddingHorizontal: 20, paddingVertical: 14,
+    marginTop: 4,
+    borderWidth: 2, borderColor: 'rgba(255,255,255,0.13)',
+    backgroundColor: '#0e0916', padding: 16,
   },
   rankHdr: {
-    fontFamily: PIXEL, fontSize: 7,
-    color: 'rgba(255,255,255,0.45)', letterSpacing: 1, marginBottom: 14,
+    fontSize: 11, fontWeight: '700',
+    color: 'rgba(255,255,255,0.8)',
+    textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 18,
   },
   rankRow: {
     flexDirection: 'row', justifyContent: 'space-between', position: 'relative',
   },
   rankConnector: {
-    position: 'absolute', left: '10%', right: '10%', top: 19,
-    height: 2, backgroundColor: 'rgba(255,255,255,0.08)',
+    position: 'absolute', left: '10%', right: '10%', top: 22,
+    height: 2, backgroundColor: 'rgba(255,255,255,0.1)',
   },
   rankSlot: {alignItems: 'center', flex: 1},
-  diamond: {
-    width: 38, height: 38, borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.18)',
+  medal: {
+    width: 42, height: 42, borderWidth: 2,
     transform: [{rotate: '45deg'}],
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: C.bgDeep, marginBottom: 6,
+    marginBottom: 9,
   },
-  diamondActive: {
-    borderColor: C.yellow, backgroundColor: 'rgba(255,224,0,0.15)',
-    shadowColor: C.yellow, shadowOpacity: 0.65, shadowRadius: 14,
-    shadowOffset: {width: 0, height: 0}, elevation: 8,
+  rankLbl: {
+    fontSize: 10, fontWeight: '700', letterSpacing: 0.5,
+    textAlign: 'center', textTransform: 'uppercase',
   },
-  diamondIcon: {fontSize: 13, transform: [{rotate: '-45deg'}]},
-  rankLbl: {fontFamily: PIXEL, fontSize: 5, letterSpacing: 0.5, textAlign: 'center'},
 
-  // ── VS header ──────────────────────────────────────────────────────
+  // ── YOU VS SKIP header ────────────────────────────────────────────────
   vsRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 16, marginTop: 10, marginBottom: 18,
+    gap: 14, marginTop: 12, marginBottom: 14,
   },
-  vsWord: {fontFamily: PIXEL, fontSize: 11},
+  vsWord: {fontFamily: PIXEL, fontSize: 10},
+  vsBox: {width: 70, height: 36},
   vsBig: {
     fontFamily: PIXEL, fontSize: 22, color: '#fff',
-    textShadowColor: C.pink, textShadowRadius: 0,
-    textShadowOffset: {width: 3, height: 3},
+    textAlign: 'center', width: '100%',
     transform: [{skewX: '-8deg'}],
   },
 
-  // ── Dossier card ───────────────────────────────────────────────────
-  dossierPad: {padding: 16},
-  idRow: {flexDirection: 'row', marginBottom: 4, alignItems: 'flex-start'},
+  // ── Dossier card internals ────────────────────────────────────────────
+  idRow:        {flexDirection: 'row', marginBottom: 4, alignItems: 'flex-start'},
   emblem: {
     width: 58, height: 58, borderWidth: 3,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  emblemLetter: {fontFamily: PIXEL, fontSize: 22},
+  emblemLetter: {fontFamily: PIXEL, fontSize: 26},
   nameField: {
-    fontFamily: PIXEL, fontSize: 10, color: '#fff',
+    fontFamily: PIXEL, fontSize: 11, color: '#fff',
     borderBottomWidth: 2, borderBottomColor: C.pink,
     paddingBottom: 4, marginBottom: 6,
   },
   nameStatus: {fontSize: 9, fontWeight: '700', letterSpacing: 1, marginBottom: 6},
-  swatches:   {flexDirection: 'row', gap: 8, marginTop: 4},
-  swatch:     {width: 18, height: 18, borderWidth: 2, borderColor: 'rgba(255,255,255,0.25)'},
+  swatches:   {flexDirection: 'row', gap: 8, marginTop: 8},
+  swatch:     {width: 19, height: 19, borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)'},
   swatchOn:   {borderColor: '#fff'},
 
-  divider: {flexDirection: 'row', alignItems: 'center', gap: 8, marginVertical: 16},
-  divLine: {flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.18)'},
-  divTxt:  {fontSize: 9, fontWeight: '700', color: 'rgba(255,255,255,0.55)', letterSpacing: 2},
+  divRow: {flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 18, marginBottom: 14},
+  divLine: {flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.2)'},
+  divTxt:  {
+    fontSize: 10, fontWeight: '700',
+    color: 'rgba(255,255,255,0.7)', letterSpacing: 2, textTransform: 'uppercase',
+  },
 
+  // ── Field labels + inputs ─────────────────────────────────────────────
+  fldLabel: {
+    fontSize: 10, fontWeight: '700',
+    color: 'rgba(255,255,255,0.7)',
+    letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6,
+  },
   credField: {
-    backgroundColor: '#080612',
-    borderWidth: 2, borderColor: 'rgba(255,255,255,0.14)',
-    paddingHorizontal: 12, paddingVertical: 13,
-    color: '#fff', fontSize: 14, fontWeight: '600', marginBottom: 12,
+    backgroundColor: '#0b0712',
+    borderWidth: 2, borderColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 11, paddingVertical: 11,
+    color: '#fff', fontSize: 14, fontWeight: '600',
+    letterSpacing: 0.5, marginBottom: 16,
   },
 
   fightBtn: {
     backgroundColor: C.pink, borderWidth: 3, borderColor: '#fff',
-    paddingVertical: 16, alignItems: 'center', marginTop: 16,
-    shadowColor: C.pink, shadowOpacity: 0.5, shadowRadius: 20,
-    shadowOffset: {width: 0, height: 4}, elevation: 10,
+    paddingVertical: 15, alignItems: 'center', marginTop: 16,
+    shadowColor: C.pink, shadowOpacity: 0.5, shadowRadius: 24,
+    shadowOffset: {width: 0, height: 0},
   },
-  fightBtnTxt: {fontFamily: PIXEL, fontSize: 13, color: '#000', letterSpacing: 1},
+  fightBtnTxt: {fontFamily: PIXEL, fontSize: 14, color: '#000', letterSpacing: 1},
 
-  switchRow: {alignItems: 'center', marginTop: 18},
-  switchTxt: {fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,0.6)'},
+  switchRow: {alignItems: 'center', marginTop: 14},
+  switchTxt: {fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.65)'},
 });
