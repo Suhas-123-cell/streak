@@ -1,3 +1,7 @@
+// Pixel font — bundled in assets/fonts/PressStart2P-Regular.ttf
+// iOS: Info.plist UIAppFonts, Android: android/app/src/main/assets/fonts/
+export const PIXEL = 'PressStart2P-Regular';
+
 export const C = {
   // Backgrounds — deep purple-void (Gen Z aesthetic)
   bg:           '#0B0015',
