@@ -39,11 +39,11 @@ export function AuthProvider({children}) {
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  async function signup(email, password, username) {
+  async function signup(email, password, username, fighterColor = 'pink') {
     const res = await fetchWithTimeout(endpoints.signup, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({email, password, username}),
+      body: JSON.stringify({email, password, username, fighter_color: fighterColor}),
     });
     if (!res.ok) {
       let msg = 'Signup failed';
