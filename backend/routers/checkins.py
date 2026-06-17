@@ -141,6 +141,9 @@ async def submit_checkin(
     r.sadd(checkin_key, user.id)
     r.expire(checkin_key, 172800)
 
+    milestone_hit = None
+    new_rank = None
+
     if verified:
         streak_key = f"battle:{battle_id}:streak:{user.id}"
         # Seed from DB if Redis key expired to avoid resetting a real streak to 1
@@ -170,7 +173,21 @@ async def submit_checkin(
 
         r.delete(f"leaderboard:battle:{battle_id}")
 
-    return checkin
+        if int(new_streak) in {7, 14, 21, 30, 50, 100}:
+            milestone_hit = int(new_streak)
+            new_rank = _rank_from_streak(int(new_streak))
+
+    return {**checkin, "milestone_hit": milestone_hit, "new_rank": new_rank}
+
+
+_RANK_THRESHOLDS = [(100, "GRANDMASTER"), (50, "LEGEND"), (30, "CHAMPION"), (7, "FIGHTER"), (0, "ROOKIE")]
+
+
+def _rank_from_streak(streak: int) -> str:
+    for threshold, rank in _RANK_THRESHOLDS:
+        if streak >= threshold:
+            return rank
+    return "ROOKIE"
 
 
 @router.get("/{battle_id}")
