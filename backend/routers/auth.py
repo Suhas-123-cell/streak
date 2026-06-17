@@ -32,7 +32,7 @@ class SignupRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: str  # accepts email address or username
     password: str
 
 
@@ -85,11 +85,21 @@ async def signup(request: Request, req: SignupRequest):
 
 
 @router.post("/login")
-@limiter.limit("5/minute")
+@limiter.limit("10/minute")
 async def login(request: Request, req: LoginRequest):
     try:
+        # Resolve username → email when the identifier has no @
+        email = req.email.strip()
+        if "@" not in email:
+            row = supabase.table("profiles").select("id").eq("username", email).limit(1).execute()
+            if not row.data:
+                raise HTTPException(status_code=401, detail="No account found for that username.")
+            uid = row.data[0]["id"]
+            user_info = auth_supabase.auth.admin.get_user_by_id(uid)
+            email = user_info.user.email
+
         resp = auth_supabase.auth.sign_in_with_password(
-            {"email": req.email, "password": req.password}
+            {"email": email, "password": req.password}
         )
         user_id = resp.user.id
         profile = supabase.table("profiles").select("username").eq("id", user_id).limit(1).execute()
@@ -99,7 +109,13 @@ async def login(request: Request, req: LoginRequest):
             "access_token": resp.session.access_token,
             "has_username": has_username,
         }
-    except Exception:
+    except Exception as e:
+        err = str(e).lower()
+        if "email not confirmed" in err or "email_not_confirmed" in err:
+            raise HTTPException(
+                status_code=401,
+                detail="Email not confirmed. Check your inbox and click the confirmation link, or disable email confirmation in Supabase Auth settings."
+            )
         raise HTTPException(status_code=401, detail="Invalid email or password.")
 
 
