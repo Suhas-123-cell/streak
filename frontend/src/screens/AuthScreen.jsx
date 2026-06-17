@@ -247,7 +247,7 @@ function SelectScreen({onNew, onContinue}) {
               const isCur  = state === 'cur';
               const col    = isDone ? C.lime : isCur ? C.yellow : 'rgba(255,255,255,0.28)';
               const bgMed  = isDone ? 'rgba(155,232,12,0.18)' : isCur ? 'rgba(255,212,0,0.25)' : C.bgDeep;
-              const sz     = isCur ? 50 : 42;
+              const sz     = isCur ? 48 : 40;
               return (
                 <View key={label} style={st.rankSlot}>
                   <View style={[st.medal, {
@@ -258,7 +258,7 @@ function SelectScreen({onNew, onContinue}) {
                       shadowRadius: 20, shadowOffset: {width: 0, height: 0}, elevation: 8,
                     } : {}),
                   }]}>
-                    <Text style={{color: col, fontSize: 14, transform: [{rotate: '-45deg'}]}}>
+                    <Text style={[st.medalIcon, {color: col}]}>
                       {state === 'lock' ? '◆' : '★'}
                     </Text>
                   </View>
@@ -706,33 +706,52 @@ const st = StyleSheet.create({
   rankPanel: {
     marginTop: 4,
     borderWidth: 2, borderColor: 'rgba(255,255,255,0.13)',
-    backgroundColor: '#0e0916', padding: 16,
+    backgroundColor: '#0e0916',
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    paddingBottom: 16,
   },
   selectRankPanel: {
     marginTop: 'auto',
     marginBottom: 10,
   },
   rankHdr: {
-    fontSize: 11, fontFamily: 'Oswald-Bold',
+    fontSize: 10, fontFamily: 'Oswald-Bold',
     color: 'rgba(255,255,255,0.80)',
-    textTransform: 'uppercase', letterSpacing: 2, marginBottom: 18,
+    textTransform: 'uppercase', letterSpacing: 2.5, marginBottom: 17,
   },
   rankRow: {
-    flexDirection: 'row', justifyContent: 'space-between', position: 'relative',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    position: 'relative',
+    gap: 12,
   },
   rankConnector: {
-    position: 'absolute', left: '10%', right: '10%', top: 22,
-    height: 2, backgroundColor: 'rgba(255,255,255,0.1)',
+    position: 'absolute',
+    left: 36,
+    right: 36,
+    top: 20,
+    height: 3,
+    backgroundColor: 'rgba(255,255,255,0.12)',
   },
-  rankSlot: {alignItems: 'center', flex: 1},
+  rankSlot: {alignItems: 'center', width: 52},
   medal: {
-    width: 42, height: 42, borderWidth: 2,
+    width: 40, height: 40, borderWidth: 2,
     transform: [{rotate: '45deg'}],
     alignItems: 'center', justifyContent: 'center',
-    marginBottom: 9,
+    marginBottom: 8,
+  },
+  medalIcon: {
+    fontFamily: PIXEL,
+    fontSize: 12,
+    lineHeight: 16,
+    transform: [{rotate: '-45deg'}],
   },
   rankLbl: {
-    fontSize: 10, fontFamily: 'Oswald-Bold', letterSpacing: 0.5,
+    fontSize: 9,
+    fontFamily: 'Oswald-Bold',
+    letterSpacing: 0.5,
     textAlign: 'center', textTransform: 'uppercase',
   },
 
