@@ -42,8 +42,8 @@ export default function PenaltyAssigner({battleId, missedMember, onAssigned}) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.skull}>🎯</Text>
-        <Text style={styles.name}>{missedMember.profiles?.username} missed today</Text>
+        <Text style={styles.skull}>P1</Text>
+        <Text style={styles.name}>{missedMember.profiles?.username} MISSED TODAY</Text>
       </View>
       <View style={styles.inputRow}>
         <TextInput
@@ -63,22 +63,32 @@ export default function PenaltyAssigner({battleId, missedMember, onAssigned}) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(255,56,100,0.08)', borderRadius: 14,
+    backgroundColor: 'rgba(255,45,111,0.08)',
     padding: 14, marginVertical: 4,
-    borderWidth: 1, borderColor: 'rgba(255,56,100,0.3)',
+    borderWidth: 2, borderColor: 'rgba(255,45,111,0.35)',
   },
   header: {flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10},
-  skull: {fontSize: 16},
-  name: {color: C.pink, fontWeight: '700', fontSize: 14},
+  skull: {
+    fontFamily: 'PressStart2P-Regular',
+    fontSize: 8,
+    color: C.pink,
+    lineHeight: 13,
+    borderWidth: 2,
+    borderColor: 'rgba(255,45,111,0.45)',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+  },
+  name: {fontFamily: 'PressStart2P-Regular', fontSize: 9, color: '#FF2D6F', lineHeight: 15},
   inputRow: {flexDirection: 'row', gap: 8},
   input: {
-    flex: 1, backgroundColor: C.white08, borderRadius: 10,
+    flex: 1, backgroundColor: 'rgba(255,255,255,0.07)',
     paddingHorizontal: 12, paddingVertical: 10,
-    color: C.white, borderWidth: 1, borderColor: 'rgba(255,56,100,0.3)', fontSize: 14,
+    color: '#FFFFFF', borderWidth: 2, borderColor: 'rgba(255,45,111,0.35)', fontSize: 14, fontFamily: 'Oswald-SemiBold',
   },
   btn: {
-    backgroundColor: C.pink, borderRadius: 10,
-    paddingHorizontal: 16, justifyContent: 'center',
+    backgroundColor: '#FF2D6F',
+    paddingHorizontal: 14, justifyContent: 'center',
+    borderWidth: 2, borderColor: '#fff',
   },
-  btnText: {color: C.white, fontWeight: '700', fontSize: 14},
+  btnText: {fontFamily: 'PressStart2P-Regular', fontSize: 9, color: '#FFFFFF', lineHeight: 15},
 });

@@ -9,6 +9,7 @@ import {endpoints} from '../constants/api';
 import {C} from '../constants/theme';
 import RankBadge from '../components/RankBadge';
 import {rankFromStreak} from '../utils/rank';
+import {ArcadeBackdrop, ArcadeTopBar, ScreenTitle} from '../components/ArcadeUI';
 
 // Count-up number that animates from 0 to target
 function StatNum({value, style}) {
@@ -91,7 +92,12 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor={C.bgDeep} />
+      <ArcadeBackdrop />
       <ScrollView contentContainerStyle={styles.content}>
+        <ArcadeTopBar center="PLAYER FILE" right="CPU" />
+        <ScreenTitle subtitle={user?.email}>
+          FIGHTER{'\n'}PROFILE
+        </ScreenTitle>
 
         <Animated.View style={[
           styles.topSection,
@@ -104,7 +110,6 @@ export default function ProfileScreen() {
             <Text style={styles.avatarText}>{initial}</Text>
           </View>
           <Text style={styles.username}>{profile?.username || '—'}</Text>
-          <Text style={styles.email}>{user?.email}</Text>
           <RankBadge rank={rankFromStreak(profile?.longest_streak || 0)} size="lg" />
         </Animated.View>
 
@@ -142,49 +147,45 @@ const styles = StyleSheet.create({
   safe: {flex: 1, backgroundColor: C.bg},
   content: {paddingBottom: 20},
 
-  topSection: {paddingTop: 36, paddingHorizontal: 20},
+  topSection: {paddingTop: 6, paddingHorizontal: 20},
   avatar: {
-    width: 80, height: 80, borderRadius: 40,
-    backgroundColor: 'rgba(255,0,112,0.12)',
+    width: 72, height: 72,
+    backgroundColor: 'rgba(255,45,111,0.12)',
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2.5, borderColor: C.pink,
-    shadowColor: C.pink, shadowOpacity: 0.55,
-    shadowRadius: 28, shadowOffset: {width: 0, height: 0},
-    elevation: 14,
+    borderWidth: 3, borderColor: '#FF2D6F',
+    shadowColor: '#FF2D6F', shadowOpacity: 0.55,
+    shadowRadius: 18, shadowOffset: {width: 0, height: 0},
   },
-  avatarText: {color: C.pink, fontSize: 32, fontWeight: '900'},
+  avatarText: {color: '#FF2D6F', fontFamily: 'PressStart2P-Regular', fontSize: 18, lineHeight: 24},
   username: {
-    fontSize: 26, fontWeight: '900', color: C.yellow, marginTop: 14,
-    letterSpacing: 0.6,
-    textShadowColor: C.orange, textShadowRadius: 8, textShadowOffset: {width: 0, height: 0},
+    fontFamily: 'PressStart2P-Regular', fontSize: 13, color: '#FFD400', marginTop: 14,
+    letterSpacing: 1, lineHeight: 22,
+    textShadowColor: '#FF6600', textShadowRadius: 0, textShadowOffset: {width: 2, height: 2},
   },
-  email: {fontSize: 13, color: C.white40, marginTop: 3, fontWeight: '600'},
+  email: {fontSize: 13, color: 'rgba(255,255,255,0.50)', marginTop: 4, fontFamily: 'Oswald-SemiBold'},
 
-  divider: {height: 1, backgroundColor: C.white15, marginHorizontal: 20, marginVertical: 22},
+  divider: {height: 2, backgroundColor: 'rgba(255,255,255,0.13)', marginHorizontal: 20, marginVertical: 20},
 
-  statsRow: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    paddingHorizontal: 20,
-  },
+  statsRow: {flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20},
   stat: {},
   statNum: {
-    fontSize: 32, fontWeight: '900', color: C.yellow,
-    textShadowColor: C.pink, textShadowRadius: 8,
-    textShadowOffset: {width: 0, height: 0},
+    fontFamily: 'PressStart2P-Regular', fontSize: 18, color: '#FFD400', lineHeight: 28,
+    textShadowColor: '#FF2D6F', textShadowRadius: 0,
+    textShadowOffset: {width: 2, height: 2},
   },
-  statLabel: {fontSize: 12, color: C.white70, marginTop: 3, fontWeight: '700', letterSpacing: 0.6},
+  statLabel: {fontFamily: 'PressStart2P-Regular', fontSize: 7, color: 'rgba(255,255,255,0.70)', marginTop: 6, letterSpacing: 1, lineHeight: 12},
 
   quote: {
-    fontSize: 14, fontStyle: 'italic', color: C.white40,
-    lineHeight: 21, paddingHorizontal: 20, marginBottom: 8,
+    fontSize: 14, fontStyle: 'italic', color: 'rgba(255,255,255,0.50)',
+    lineHeight: 22, paddingHorizontal: 20, marginBottom: 8, fontFamily: 'Oswald-SemiBold',
   },
 
   logoutWrap: {paddingHorizontal: 20, paddingVertical: 8},
-  logoutBtn: {paddingVertical: 14, alignItems: 'center'},
-  logoutText: {color: C.white40, fontWeight: '700', fontSize: 15, letterSpacing: 0.5, textDecorationLine: 'underline'},
+  logoutBtn: {paddingVertical: 14, alignItems: 'center', borderWidth: 2, borderColor: 'rgba(255,255,255,0.13)', marginTop: 8},
+  logoutText: {fontFamily: 'PressStart2P-Regular', fontSize: 9, color: 'rgba(255,255,255,0.50)', letterSpacing: 1, lineHeight: 16},
   statsHeading: {
-    fontSize: 11, fontWeight: '900', color: C.white40,
-    textTransform: 'uppercase', letterSpacing: 2,
+    fontFamily: 'PressStart2P-Regular', fontSize: 8, color: 'rgba(255,255,255,0.50)',
+    textTransform: 'uppercase', letterSpacing: 2, lineHeight: 14,
     paddingHorizontal: 20, marginBottom: 10,
   },
 });

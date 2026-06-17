@@ -6,7 +6,7 @@ export default function MemberRow({member, rank, isMe}) {
   const profile = member.profiles || {};
   const checkedIn = member.checked_in_today;
 
-  const medalLabel = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+  const medalLabel = rank === 1 ? '01' : rank === 2 ? '02' : rank === 3 ? '03' : rank;
   const isMedal = rank <= 3;
 
   return (
@@ -37,7 +37,7 @@ export default function MemberRow({member, rank, isMe}) {
 
       <View style={styles.right}>
         <View style={styles.streakPill}>
-          <Text style={styles.streakText}>🔥 {member.current_streak}</Text>
+          <Text style={styles.streakText}>{member.current_streak}D</Text>
         </View>
         <View style={[styles.statusDot, {backgroundColor: checkedIn ? C.green : C.white15}]}>
           <Text style={styles.statusIcon}>{checkedIn ? '✓' : '·'}</Text>
@@ -62,23 +62,23 @@ const styles = StyleSheet.create({
     shadowColor: C.pink, shadowOpacity: 0.8, shadowRadius: 6, shadowOffset: {width: 0, height: 0},
   },
   rankWrap: {width: 36, alignItems: 'center'},
-  medal: {fontSize: 20},
-  rankNum: {fontSize: 14, color: C.white40, fontWeight: '700'},
-  avatar: {width: 40, height: 40, borderRadius: 20, marginRight: 12},
+  medal: {fontFamily: 'PressStart2P-Regular', fontSize: 9, color: C.yellow, lineHeight: 15},
+  rankNum: {fontFamily: 'PressStart2P-Regular', fontSize: 9, color: 'rgba(255,255,255,0.50)', lineHeight: 14},
+  avatar: {width: 40, height: 40, borderRadius: 0, marginRight: 12},
   avatarFallback: {
     backgroundColor: 'rgba(170,0,255,0.14)',
-    borderWidth: 1.5, borderColor: C.purple,
+    borderWidth: 2, borderColor: '#AA00FF',
     alignItems: 'center', justifyContent: 'center',
   },
-  avatarInitial: {fontSize: 15, fontWeight: '800', color: C.purple},
-  name: {flex: 1, fontSize: 14, fontWeight: '700', color: C.white},
+  avatarInitial: {fontFamily: 'PressStart2P-Regular', fontSize: 12, color: '#AA00FF', lineHeight: 18},
+  name: {flex: 1, fontFamily: 'PressStart2P-Regular', fontSize: 9, color: '#FFFFFF', lineHeight: 15},
   right: {flexDirection: 'row', alignItems: 'center', gap: 8},
   streakPill: {
-    backgroundColor: 'rgba(255,102,0,0.12)', borderRadius: 12,
-    paddingHorizontal: 10, paddingVertical: 4,
-    borderWidth: 1, borderColor: 'rgba(255,102,0,0.3)',
+    backgroundColor: 'rgba(255,102,0,0.12)',
+    paddingHorizontal: 8, paddingVertical: 4,
+    borderWidth: 2, borderColor: 'rgba(255,102,0,0.35)',
   },
-  streakText: {fontSize: 12, fontWeight: '800', color: C.orange},
-  statusDot: {width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center'},
-  statusIcon: {color: C.white, fontSize: 12, fontWeight: '900'},
+  streakText: {fontFamily: 'PressStart2P-Regular', fontSize: 8, color: '#FF6600', lineHeight: 13},
+  statusDot: {width: 24, height: 24, alignItems: 'center', justifyContent: 'center'},
+  statusIcon: {color: '#FFFFFF', fontSize: 12, fontFamily: 'Oswald-Bold'},
 });

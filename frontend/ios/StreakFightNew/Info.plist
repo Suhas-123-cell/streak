@@ -36,7 +36,7 @@
 	<key>NSCameraUsageDescription</key>
 	<string>StreakFight needs camera access to capture proof photos for your habit check-ins.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>StreakFight needs microphone access to record voice notes as proof for your habit check-ins.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
@@ -63,6 +63,9 @@
 	<key>UIAppFonts</key>
 	<array>
 		<string>PressStart2P-Regular.ttf</string>
+		<string>Oswald-Bold.ttf</string>
+		<string>Oswald-SemiBold.ttf</string>
+		<string>Oswald-Regular.ttf</string>
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>

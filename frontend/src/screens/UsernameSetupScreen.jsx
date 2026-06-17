@@ -2,32 +2,12 @@ import React, {useState, useRef, useEffect, useCallback} from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   SafeAreaView, Alert, ActivityIndicator,
-  KeyboardAvoidingView, Platform, StatusBar, Animated, Easing,
+  KeyboardAvoidingView, Platform, StatusBar, Animated,
 } from 'react-native';
 import {useAuth} from '../context/AuthContext';
 import {endpoints} from '../constants/api';
 import {C} from '../constants/theme';
-
-function FloatingOrbs() {
-  const o1 = useRef(new Animated.Value(0)).current;
-  const o2 = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    const loop = (v, dur, delay) => Animated.loop(Animated.sequence([
-      Animated.timing(v, {toValue: -18, duration: dur, delay, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
-      Animated.timing(v, {toValue: 0,   duration: dur, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
-    ])).start();
-    loop(o1, 4000, 0);
-    loop(o2, 5200, 600);
-  }, []);
-  return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      <Animated.View style={{position: 'absolute', width: 260, height: 260, borderRadius: 130,
-        backgroundColor: 'rgba(170,0,255,0.14)', top: -80, left: -80, transform: [{translateY: o1}]}} />
-      <Animated.View style={{position: 'absolute', width: 180, height: 180, borderRadius: 90,
-        backgroundColor: 'rgba(255,0,112,0.1)', bottom: 120, right: -50, transform: [{translateY: o2}]}} />
-    </View>
-  );
-}
+import {ArcadeBackdrop, ArcadeTopBar, HardCard, ScreenTitle} from '../components/ArcadeUI';
 
 export default function UsernameSetupScreen() {
   const {saveUsername} = useAuth();
@@ -81,53 +61,57 @@ export default function UsernameSetupScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <FloatingOrbs />
+      <ArcadeBackdrop />
       <StatusBar barStyle="light-content" backgroundColor={C.bgDeep} />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{flex: 1}}>
         <Animated.View style={[styles.container, {opacity: opAnim, transform: [{translateY: slideAnim}]}]}>
 
-          <Text style={styles.emoji}>⚔️</Text>
-          <Text style={styles.heading}>One last thing.</Text>
-          <Text style={styles.sub}>
-            Pick your fighter name — this is how your squad will know you in every battle.
-            You can't change it later.
-          </Text>
+          <ArcadeTopBar center="NEW FIGHTER" right="CPU" />
+          <ScreenTitle subtitle="Pick the name your squad sees in every battle. You can't change it later.">
+            CREATE{'\n'}FIGHTER
+          </ScreenTitle>
 
-          <View style={styles.fieldLabelRow}>
-            <Text style={styles.label}>FIGHTER NAME</Text>
-            {usernameStatus === 'checking'  && <ActivityIndicator size="small" color={C.white40} style={{marginLeft: 8}} />}
-            {usernameStatus === 'available' && <Text style={styles.available}>✓ available</Text>}
-            {usernameStatus === 'taken'     && <Text style={styles.taken}>✗ already taken</Text>}
-          </View>
+          <HardCard
+            borderColor={C.pink}
+            shadowColor="rgba(255,45,111,0.30)"
+            style={styles.dossier}
+            innerStyle={styles.dossierInner}>
+            <View style={styles.fieldLabelRow}>
+              <Text style={styles.label}>FIGHTER NAME</Text>
+              {usernameStatus === 'checking'  && <ActivityIndicator size="small" color={C.white40} style={{marginLeft: 8}} />}
+              {usernameStatus === 'available' && <Text style={styles.available}>✓ available</Text>}
+              {usernameStatus === 'taken'     && <Text style={styles.taken}>✗ already taken</Text>}
+            </View>
 
-          <TextInput
-            style={[
-              styles.input,
-              usernameStatus === 'available' && styles.inputAvailable,
-              usernameStatus === 'taken'     && styles.inputTaken,
-            ]}
-            placeholder="your unique alias"
-            placeholderTextColor={C.white40}
-            value={username}
-            onChangeText={(val) => { setUsername(val); checkUsername(val); }}
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoFocus
-          />
+            <TextInput
+              style={[
+                styles.input,
+                usernameStatus === 'available' && styles.inputAvailable,
+                usernameStatus === 'taken'     && styles.inputTaken,
+              ]}
+              placeholder="neon_striker"
+              placeholderTextColor={C.white40}
+              value={username}
+              onChangeText={(val) => { setUsername(val); checkUsername(val); }}
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoFocus
+            />
 
-          <Animated.View style={{transform: [{scale: btnScale}]}}>
-            <TouchableOpacity
-              style={[styles.btn, (usernameStatus === 'taken' || !username) && styles.btnDisabled]}
-              onPress={handleSave}
-              onPressIn={btnIn}
-              onPressOut={btnOut}
-              disabled={loading || usernameStatus === 'taken' || !username}
-              activeOpacity={1}>
-              {loading
-                ? <ActivityIndicator color={C.bgDeep} />
-                : <Text style={styles.btnText}>Lock it in →</Text>}
-            </TouchableOpacity>
-          </Animated.View>
+            <Animated.View style={{transform: [{scale: btnScale}]}}>
+              <TouchableOpacity
+                style={[styles.btn, (usernameStatus === 'taken' || !username) && styles.btnDisabled]}
+                onPress={handleSave}
+                onPressIn={btnIn}
+                onPressOut={btnOut}
+                disabled={loading || usernameStatus === 'taken' || !username}
+                activeOpacity={1}>
+                {loading
+                  ? <ActivityIndicator color={C.bgDeep} />
+                  : <Text style={styles.btnText}>LOCK IT IN ▶</Text>}
+              </TouchableOpacity>
+            </Animated.View>
+          </HardCard>
 
           <Text style={styles.hint}>
             No spaces. Max 30 characters.
@@ -140,35 +124,38 @@ export default function UsernameSetupScreen() {
 
 const styles = StyleSheet.create({
   safe:      {flex: 1, backgroundColor: C.bg},
-  container: {flex: 1, paddingHorizontal: 28, paddingTop: 60},
+  container: {flex: 1, paddingTop: 12},
   emoji:     {fontSize: 52, marginBottom: 16},
-  heading:   {fontSize: 30, fontWeight: '900', color: C.yellow, letterSpacing: 0.5,
-    textShadowColor: C.pink, textShadowRadius: 12, textShadowOffset: {width: 0, height: 0}},
-  sub:       {fontSize: 15, color: C.white70, lineHeight: 23, marginTop: 10, marginBottom: 34},
+  heading:   {
+    fontFamily: 'PressStart2P-Regular', fontSize: 13, color: '#FFD400', letterSpacing: 1, lineHeight: 24,
+    textShadowColor: '#FF2D6F', textShadowRadius: 0, textShadowOffset: {width: 2, height: 2},
+  },
+  sub:       {fontSize: 15, color: 'rgba(255,255,255,0.80)', lineHeight: 24, marginTop: 12, marginBottom: 34, fontFamily: 'Oswald-SemiBold'},
 
+  dossier: {marginHorizontal: 20, marginTop: 6},
+  dossierInner: {padding: 16},
   fieldLabelRow: {flexDirection: 'row', alignItems: 'center', marginBottom: 10},
-  label:     {fontSize: 11, fontWeight: '800', color: C.white40, letterSpacing: 2},
-  available: {fontSize: 11, fontWeight: '800', color: C.lime, marginLeft: 8},
-  taken:     {fontSize: 11, fontWeight: '800', color: C.red,  marginLeft: 8},
+  label:     {fontFamily: 'PressStart2P-Regular', fontSize: 8, color: 'rgba(255,255,255,0.50)', letterSpacing: 2, lineHeight: 14},
+  available: {fontFamily: 'PressStart2P-Regular', fontSize: 8, color: '#9BE80C', marginLeft: 8, lineHeight: 14},
+  taken:     {fontFamily: 'PressStart2P-Regular', fontSize: 8, color: '#FF3B3B', marginLeft: 8, lineHeight: 14},
 
   input: {
-    backgroundColor: C.white08,
-    borderWidth: 1.5, borderColor: C.white15,
-    borderRadius: 16,
+    backgroundColor: '#160f1e',
+    borderWidth: 2, borderColor: 'rgba(255,255,255,0.13)',
     paddingHorizontal: 18, paddingVertical: 16,
-    fontSize: 17, color: C.white, fontWeight: '700',
+    fontSize: 14, color: '#FFFFFF', fontFamily: 'Oswald-SemiBold',
     marginBottom: 24,
   },
-  inputAvailable: {borderColor: C.lime, backgroundColor: 'rgba(184,255,0,0.07)'},
-  inputTaken:     {borderColor: C.red,  backgroundColor: 'rgba(255,59,59,0.07)'},
+  inputAvailable: {borderColor: '#9BE80C', backgroundColor: 'rgba(155,232,12,0.07)'},
+  inputTaken:     {borderColor: '#FF3B3B', backgroundColor: 'rgba(255,59,59,0.07)'},
 
   btn: {
-    backgroundColor: C.pink, borderRadius: 18,
+    backgroundColor: '#FF2D6F', borderWidth: 3, borderColor: '#fff',
     paddingVertical: 18, alignItems: 'center',
-    shadowColor: C.pink, shadowOpacity: 0.6, shadowRadius: 22,
-    shadowOffset: {width: 0, height: 5}, elevation: 12,
+    shadowColor: '#FF2D6F', shadowOpacity: 0.6, shadowRadius: 0,
+    shadowOffset: {width: 5, height: 5}, elevation: 0,
   },
   btnDisabled: {opacity: 0.45},
-  btnText:     {color: C.white, fontWeight: '900', fontSize: 16, letterSpacing: 1.5},
-  hint:        {textAlign: 'center', color: C.white40, fontSize: 13, marginTop: 16},
+  btnText:     {color: '#FFFFFF', fontFamily: 'PressStart2P-Regular', fontSize: 11, letterSpacing: 1, lineHeight: 20},
+  hint:        {textAlign: 'center', color: 'rgba(255,255,255,0.50)', fontSize: 13, marginTop: 16, fontFamily: 'Oswald-SemiBold'},
 });

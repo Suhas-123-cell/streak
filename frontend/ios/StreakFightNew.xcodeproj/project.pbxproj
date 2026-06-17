@@ -13,6 +13,10 @@
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		A84CDB15B6BD6011BD482FC1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
+		2B29FBEB87E0478EB315CF89 /* PressStart2P-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4456FB4D38264A05A64D204A /* PressStart2P-Regular.ttf */; };
+		F88ACA06A4EB43269DD3CFD4 /* Oswald-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7CAB2A5D1A3A49BE9628387D /* Oswald-Bold.ttf */; };
+		091956ABA0A24D3AABF56DC9 /* Oswald-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D29DE67662684C3A9FE340E2 /* Oswald-SemiBold.ttf */; };
+		7446324E62E54C74979611E5 /* Oswald-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D729C054A8D6490AAB7142D5 /* Oswald-Regular.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +31,10 @@
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = StreakFightNew/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		A7F05C1A3E76BBE7FB7290AF /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "StreakFightNew/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		4456FB4D38264A05A64D204A /* PressStart2P-Regular.ttf */ = {isa = PBXFileReference; name = "PressStart2P-Regular.ttf"; path = "../assets/fonts/PressStart2P-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		7CAB2A5D1A3A49BE9628387D /* Oswald-Bold.ttf */ = {isa = PBXFileReference; name = "Oswald-Bold.ttf"; path = "../assets/fonts/Oswald-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		D29DE67662684C3A9FE340E2 /* Oswald-SemiBold.ttf */ = {isa = PBXFileReference; name = "Oswald-SemiBold.ttf"; path = "../assets/fonts/Oswald-SemiBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		D729C054A8D6490AAB7142D5 /* Oswald-Regular.ttf */ = {isa = PBXFileReference; name = "Oswald-Regular.ttf"; path = "../assets/fonts/Oswald-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -78,6 +86,7 @@
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				66FB926C89F2446BB8EFE428 /* Resources */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -100,6 +109,18 @@
 			);
 			path = Pods;
 			sourceTree = "<group>";
+		};
+		66FB926C89F2446BB8EFE428 /* Resources */ = {
+			isa = "PBXGroup";
+			children = (
+				4456FB4D38264A05A64D204A /* PressStart2P-Regular.ttf */,
+				7CAB2A5D1A3A49BE9628387D /* Oswald-Bold.ttf */,
+				D29DE67662684C3A9FE340E2 /* Oswald-SemiBold.ttf */,
+				D729C054A8D6490AAB7142D5 /* Oswald-Regular.ttf */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+			path = "";
 		};
 /* End PBXGroup section */
 
@@ -166,6 +187,10 @@
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				A84CDB15B6BD6011BD482FC1 /* PrivacyInfo.xcprivacy in Resources */,
 				444374CA3972120AC68390E2 /* GoogleService-Info.plist in Resources */,
+				2B29FBEB87E0478EB315CF89 /* PressStart2P-Regular.ttf in Resources */,
+				F88ACA06A4EB43269DD3CFD4 /* Oswald-Bold.ttf in Resources */,
+				091956ABA0A24D3AABF56DC9 /* Oswald-SemiBold.ttf in Resources */,
+				7446324E62E54C74979611E5 /* Oswald-Regular.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

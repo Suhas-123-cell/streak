@@ -148,9 +148,9 @@ export default function BattleCard({battle, members, myStreak, checkedIn, onPres
   }
 
   function streakLine() {
-    if (checkedIn) return `🔥 ${displayStreak} day streak`;
-    if (myStreak > 0) return `⚡ ${displayStreak} days — keep it alive`;
-    return '✦ Start your streak today';
+    if (checkedIn) return `${displayStreak} DAY STREAK`;
+    if (myStreak > 0) return `${displayStreak} DAYS · KEEP IT ALIVE`;
+    return 'START YOUR STREAK TODAY';
   }
 
   const progressWidth = progressAnim.interpolate({inputRange: [0, 1], outputRange: ['0%', '100%']});
@@ -194,10 +194,10 @@ export default function BattleCard({battle, members, myStreak, checkedIn, onPres
             </Text>
           </View>
           {checkedIn
-            ? <View style={styles.tagDone}><Text style={styles.tagDoneText}>done ✓</Text></View>
+            ? <View style={styles.tagDone}><Text style={styles.tagDoneText}>DONE</Text></View>
             : <View style={[styles.tagPending, isCritical && styles.tagCritical]}>
                 <Text style={[styles.tagPendingText, isCritical && {color: C.pink}]}>
-                  {isCritical ? '⚠ NOW' : 'pending'}
+                  {isCritical ? 'NOW' : 'PENDING'}
                 </Text>
               </View>
           }
@@ -251,7 +251,7 @@ export default function BattleCard({battle, members, myStreak, checkedIn, onPres
         </View>
         <Text style={styles.trackLabel}>
           {checkedInCount === members.length && members.length > 0
-            ? '🎉 Everyone showed up today'
+            ? 'PERFECT ROUND · EVERYONE SHOWED'
             : `${checkedInCount} of ${members.length} checked in`}
         </Text>
 
@@ -272,7 +272,7 @@ export default function BattleCard({battle, members, myStreak, checkedIn, onPres
                 onPress={onPress}
                 activeOpacity={0.82}>
                 <Text style={styles.submitText}>
-                  {isCritical ? '⚡ Submit NOW →' : 'Submit proof →'}
+                  {isCritical ? 'SUBMIT NOW ▶' : 'SUBMIT PROOF ▶'}
                 </Text>
               </TouchableOpacity>
             </Animated.View>
@@ -284,55 +284,48 @@ export default function BattleCard({battle, members, myStreak, checkedIn, onPres
 }
 
 const styles = StyleSheet.create({
-  wrap: {marginHorizontal: 16, marginVertical: 9},
+  wrap: {marginHorizontal: 16, marginVertical: 6},
   card: {
-    backgroundColor: C.card,
-    borderRadius: 24,
+    backgroundColor: '#160f1e',
+    borderRadius: 0,
     padding: 19,
-    borderWidth: 1.5,
-    borderColor: C.cardBorder,
-    shadowColor: C.purple,
-    shadowOpacity: 0.22,
-    shadowRadius: 26,
-    shadowOffset: {width: 0, height: 5},
-    elevation: 10,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.13)',
     overflow: 'hidden',
   },
 
   header: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start'},
-  habitName: {fontSize: 22, fontWeight: '900', color: C.white, lineHeight: 27, letterSpacing: 0.1},
-  meta: {fontSize: 13, color: C.white40, marginTop: 3},
-  urgency: {fontWeight: '800'},
+  habitName: {fontFamily: 'PressStart2P-Regular', fontSize: 11, color: '#FFFFFF', lineHeight: 20, letterSpacing: 0.5},
+  meta: {fontSize: 13, color: 'rgba(255,255,255,0.50)', marginTop: 6, fontFamily: 'Oswald-SemiBold'},
+  urgency: {fontFamily: 'Oswald-Bold'},
 
   tagDone: {
-    backgroundColor: 'rgba(0,255,138,0.12)', borderRadius: 20,
-    paddingHorizontal: 11, paddingVertical: 5,
-    borderWidth: 1.5, borderColor: 'rgba(0,255,138,0.45)',
+    backgroundColor: 'rgba(155,232,12,0.12)',
+    paddingHorizontal: 8, paddingVertical: 4,
+    borderWidth: 2, borderColor: 'rgba(155,232,12,0.45)',
   },
-  tagDoneText: {fontSize: 12, fontWeight: '800', color: C.green},
+  tagDoneText: {fontFamily: 'PressStart2P-Regular', fontSize: 7, color: '#9BE80C', lineHeight: 12},
   tagPending: {
-    backgroundColor: 'rgba(170,0,255,0.12)', borderRadius: 20,
-    paddingHorizontal: 11, paddingVertical: 5,
-    borderWidth: 1.5, borderColor: 'rgba(170,0,255,0.4)',
+    backgroundColor: 'rgba(170,0,255,0.12)',
+    paddingHorizontal: 8, paddingVertical: 4,
+    borderWidth: 2, borderColor: 'rgba(170,0,255,0.4)',
   },
   tagCritical: {
     backgroundColor: 'rgba(255,0,112,0.14)',
     borderColor: 'rgba(255,0,112,0.55)',
   },
-  tagPendingText: {fontSize: 12, fontWeight: '800', color: C.purple},
+  tagPendingText: {fontFamily: 'PressStart2P-Regular', fontSize: 7, color: '#AA00FF', lineHeight: 12},
 
   dotsRow: {flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 16},
   dot: {
-    width: 36, height: 36, borderRadius: 18,
+    width: 36, height: 36, borderRadius: 0,
     alignItems: 'center', justifyContent: 'center',
   },
   dotDone: {
-    backgroundColor: 'rgba(0,229,255,0.18)', borderWidth: 2, borderColor: C.cyan,
-    shadowColor: C.cyan, shadowOpacity: 0.6, shadowRadius: 8,
-    shadowOffset: {width: 0, height: 0}, elevation: 4,
+    backgroundColor: 'rgba(0,229,255,0.18)', borderWidth: 2, borderColor: '#19E0FF',
   },
   dotPending: {backgroundColor: C.white08, borderWidth: 1, borderColor: C.white15},
-  dotText: {fontSize: 13, fontWeight: '800'},
+  dotText: {fontSize: 13, fontFamily: 'Oswald-Bold'},
   dotTextDone: {color: C.cyan},
   dotTextPending: {color: C.white40},
   dotCheck: {
@@ -341,45 +334,45 @@ const styles = StyleSheet.create({
     backgroundColor: C.green, borderWidth: 1.5, borderColor: C.bgDeep,
   },
   dotOverflow: {backgroundColor: C.white08},
-  dotOverflowText: {fontSize: 10, fontWeight: '700', color: C.white40},
+  dotOverflowText: {fontSize: 10, fontFamily: 'Oswald-Bold', color: C.white40},
 
   statsRow: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', marginTop: 16,
   },
-  streakLine: {fontSize: 14, fontWeight: '800', flex: 1},
+  streakLine: {fontFamily: 'PressStart2P-Regular', fontSize: 8, flex: 1, lineHeight: 14},
   countBadge: {
-    backgroundColor: 'rgba(255,224,0,0.12)', borderRadius: 10,
-    paddingHorizontal: 10, paddingVertical: 4,
-    borderWidth: 1.5, borderColor: 'rgba(255,224,0,0.4)',
+    backgroundColor: 'rgba(255,212,0,0.12)',
+    paddingHorizontal: 8, paddingVertical: 4,
+    borderWidth: 2, borderColor: 'rgba(255,212,0,0.4)',
   },
   countBadgeDone: {
     backgroundColor: 'rgba(0,255,138,0.1)',
     borderColor: 'rgba(0,255,138,0.4)',
   },
-  countText: {fontSize: 13, fontWeight: '900', color: C.yellow},
+  countText: {fontFamily: 'PressStart2P-Regular', fontSize: 9, color: '#FFD400', lineHeight: 14},
 
   track: {
     height: 9, backgroundColor: C.white15,
-    borderRadius: 5, overflow: 'hidden', marginTop: 9,
+    borderRadius: 0, overflow: 'hidden', marginTop: 9,
   },
-  fill: {height: 9, borderRadius: 5},
-  trackLabel: {fontSize: 13, color: C.white40, marginTop: 7},
+  fill: {height: 9, borderRadius: 0},
+  trackLabel: {fontSize: 13, color: 'rgba(255,255,255,0.50)', marginTop: 7, fontFamily: 'Oswald-SemiBold'},
 
   submitContainer: {position: 'relative', marginTop: 18},
   submitGlow: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    borderRadius: 16,
+    borderRadius: 0,
   },
   submitBtn: {
-    backgroundColor: C.yellow, borderRadius: 16,
+    backgroundColor: '#FFD400', borderRadius: 0, borderWidth: 3, borderColor: '#fff',
     paddingVertical: 16, alignItems: 'center',
-    shadowColor: C.yellow, shadowOpacity: 0.6, shadowRadius: 20,
-    shadowOffset: {width: 0, height: 5}, elevation: 12,
+    shadowColor: '#FF2D6F', shadowOpacity: 0.9, shadowRadius: 0,
+    shadowOffset: {width: 5, height: 5}, elevation: 0,
   },
   submitBtnCritical: {
-    backgroundColor: C.pink,
-    shadowColor: C.pink, shadowOpacity: 0.7, shadowRadius: 24,
+    backgroundColor: '#FF2D6F',
+    shadowColor: '#AA00FF',
   },
-  submitText: {color: C.bgDeep, fontSize: 15, fontWeight: '900', letterSpacing: 1.2},
+  submitText: {color: '#05030a', fontFamily: 'PressStart2P-Regular', fontSize: 9, letterSpacing: 1, lineHeight: 16},
 });

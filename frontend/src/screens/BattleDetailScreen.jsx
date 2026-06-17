@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useCallback} from 'react';
 import {
   View, Text, StyleSheet, SafeAreaView, ScrollView,
-  RefreshControl, StatusBar, Switch, TouchableOpacity, Modal, Alert, Share,
+  RefreshControl, StatusBar, TouchableOpacity, Modal, Alert, Share,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,6 +16,7 @@ import {endpoints} from '../constants/api';
 import FlawlessVictoryModal from '../components/FlawlessVictoryModal';
 import {rankFromStreak} from '../utils/rank';
 import {C} from '../constants/theme';
+import {ArcadeBackdrop, ArcadeTopBar, ScreenTitle} from '../components/ArcadeUI';
 
 function parseTimeToDate(timeStr) {
   const [h, m] = (timeStr || '21:00').split(':').map(Number);
@@ -169,9 +170,9 @@ export default function BattleDetailScreen({route, navigation}) {
   async function shareStats() {
     const topMember = members[0];
     const msg = [
-      `🔥 StreakFight — ${battle.habit_name}`,
+      `STREAKFIGHT — ${battle.habit_name}`,
       `${members.length} fighters · ${checkedInIds.size}/${members.length} checked in today`,
-      topMember ? `👑 Leader: ${topMember.profiles?.username} (${topMember.current_streak} days)` : '',
+      topMember ? `Leader: ${topMember.profiles?.username} (${topMember.current_streak} days)` : '',
       myMember ? `My streak: ${myMember.current_streak} days` : '',
       daysUntilEnd != null ? `${daysUntilEnd} days left in this season` : '',
     ].filter(Boolean).join('\n');
@@ -181,6 +182,7 @@ export default function BattleDetailScreen({route, navigation}) {
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor={C.bgDeep} />
+      <ArcadeBackdrop />
       <ScrollView
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.cyan} />
@@ -189,15 +191,17 @@ export default function BattleDetailScreen({route, navigation}) {
 
         {/* Hero */}
         <View style={styles.hero}>
+          <ArcadeTopBar center="BATTLE READY" right="CPU" />
           <View style={styles.heroTop}>
-            <Text style={styles.heroTitle}>{battle.habit_name}</Text>
+            <ScreenTitle subtitle={`${members.length} fighters · ${checkedInIds.size} checked in today`} style={styles.heroScreenTitle}>
+              {battle.habit_name}
+            </ScreenTitle>
             {battle.created_by === user.id && (
               <TouchableOpacity onPress={handleDelete} hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
                 <Text style={styles.deleteBtn}>Delete</Text>
               </TouchableOpacity>
             )}
           </View>
-          <Text style={styles.heroSub}>{members.length} members · {checkedInIds.size} checked in today</Text>
           {daysUntilEnd != null && (
             <Text style={styles.heroCountdown}>
               {daysUntilEnd === 0 ? '🏁 Season ends today!' : `⏳ ${daysUntilEnd} days left`}
@@ -240,7 +244,7 @@ export default function BattleDetailScreen({route, navigation}) {
         {myCheckin ? (
           myCheckin.ai_verified === true ? (
             <View style={styles.verifiedCard}>
-              <Text style={styles.verifiedEmoji}>✅</Text>
+              <Text style={[styles.verifiedEmoji, styles.markOk]}>OK</Text>
               <View>
                 <Text style={styles.verifiedTitle}>Verified — {myCheckin.ai_score}/100</Text>
                 {myCheckin.ai_reasoning ? (
@@ -250,7 +254,7 @@ export default function BattleDetailScreen({route, navigation}) {
             </View>
           ) : myCheckin.ai_verified === null ? (
             <View style={styles.juryCard}>
-              <Text style={styles.verifiedEmoji}>⚖️</Text>
+              <Text style={[styles.verifiedEmoji, styles.markVote]}>JV</Text>
               <View style={{flex: 1}}>
                 <Text style={styles.juryTitle}>Pending Group Vote</Text>
                 <Text style={styles.verifiedReason}>AI score {myCheckin.ai_score}/100 — your group decides</Text>
@@ -258,13 +262,13 @@ export default function BattleDetailScreen({route, navigation}) {
             </View>
           ) : (
             <View style={styles.failedCard}>
-              <Text style={styles.verifiedEmoji}>❌</Text>
+                <Text style={[styles.verifiedEmoji, styles.markNo]}>NO</Text>
               <View style={{flex: 1}}>
                 <Text style={styles.failedTitle}>Proof Rejected — Comeback Time</Text>
                 {myCheckin.ai_reasoning ? (
                   <Text style={styles.verifiedReason}>{myCheckin.ai_reasoning}</Text>
                 ) : null}
-                <Text style={styles.recoveryHint}>Complete your redemption challenge below to repair your streak 🔥</Text>
+                <Text style={styles.recoveryHint}>Complete your redemption challenge below to repair your streak.</Text>
               </View>
             </View>
           )
@@ -322,12 +326,14 @@ export default function BattleDetailScreen({route, navigation}) {
               <Text style={styles.reminderTitle}>Daily Reminder</Text>
               <Text style={styles.reminderHint}>Nudge me if I haven't checked in</Text>
             </View>
-            <Switch
-              value={reminderEnabled}
-              onValueChange={toggleReminder}
-              trackColor={{false: C.white15, true: C.cyan}}
-              thumbColor={reminderEnabled ? C.cyan : '#9CA3AF'}
-            />
+            <TouchableOpacity
+              style={[styles.arcadeToggle, reminderEnabled && styles.arcadeToggleOn]}
+              onPress={() => toggleReminder(!reminderEnabled)}
+              activeOpacity={0.82}>
+              <Text style={[styles.arcadeToggleText, reminderEnabled && styles.arcadeToggleTextOn]}>
+                {reminderEnabled ? 'ON' : 'OFF'}
+              </Text>
+            </TouchableOpacity>
           </View>
           {reminderEnabled && (
             <>
@@ -336,7 +342,7 @@ export default function BattleDetailScreen({route, navigation}) {
                 <View>
                   <Text style={styles.reminderTitle}>Reminder time</Text>
                   <Text style={[styles.reminderHint, reminderSaved && {color: C.green}]}>
-                    {reminderSaved ? '✅ Saved!' : 'Tap the time to change'}
+                    {reminderSaved ? 'SAVED' : 'Tap the time to change'}
                   </Text>
                 </View>
                 <TouchableOpacity style={styles.timePill} onPress={() => setShowPicker(true)}>
@@ -365,7 +371,7 @@ export default function BattleDetailScreen({route, navigation}) {
                 mode="time"
                 display="spinner"
                 onChange={onPickerChange}
-                textColor="#111827"
+                textColor={C.white}
               />
             </View>
           </View>
@@ -388,11 +394,11 @@ export default function BattleDetailScreen({route, navigation}) {
             <View style={styles.listCard}>
               {penalties.map(p => (
                 <View key={p.id} style={styles.penaltyRow}>
-                  <Text style={styles.penaltyName}>💀 {p.assignee?.username}</Text>
+                  <Text style={styles.penaltyName}>{p.assignee?.username}</Text>
                   <Text style={styles.penaltyText}>{p.penalty_text}</Text>
                   <View style={[styles.penaltyStatus, p.completed && styles.penaltyDone]}>
                     <Text style={styles.penaltyStatusText}>
-                      {p.completed ? '✅ done' : '⏳ pending'}
+                      {p.completed ? 'DONE' : 'PENDING'}
                     </Text>
                   </View>
                 </View>
@@ -416,7 +422,7 @@ export default function BattleDetailScreen({route, navigation}) {
               <View style={styles.feedContent}>
                 <Text style={styles.feedName}>{c.profiles?.username}</Text>
                 <Text style={styles.feedScore}>
-                  {c.ai_verified === true ? '✅' : c.ai_verified === null ? '⚖️' : '❌'} {c.ai_score}/100 · {c.ai_reasoning}
+                  {c.ai_verified === true ? 'OK' : c.ai_verified === null ? 'VOTE' : 'NO'} · {c.ai_score}/100 · {c.ai_reasoning}
                 </Text>
               </View>
             </View>
@@ -436,87 +442,109 @@ export default function BattleDetailScreen({route, navigation}) {
 const styles = StyleSheet.create({
   safe: {flex: 1, backgroundColor: C.bg},
   hero: {
-    backgroundColor: C.bgDeep, padding: 20,
-    borderBottomWidth: 1.5, borderBottomColor: 'rgba(255,0,112,0.2)',
+    backgroundColor: 'transparent', paddingBottom: 10,
+    borderBottomWidth: 2, borderBottomColor: 'rgba(255,45,111,0.2)',
   },
-  heroTop: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'},
-  heroTitle: {fontSize: 26, fontWeight: '900', color: C.yellow, flex: 1, letterSpacing: 0.6,
-    textShadowColor: C.orange, textShadowRadius: 8, textShadowOffset: {width: 0, height: 0}},
-  deleteBtn: {fontSize: 14, fontWeight: '800', color: C.red},
-  heroSub: {fontSize: 13, color: C.white40, marginTop: 5, fontWeight: '600'},
+  heroTop: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingRight: 20},
+  heroScreenTitle: {flex: 1, paddingRight: 12, paddingBottom: 8},
+  heroTitle: {fontFamily: 'PressStart2P-Regular', fontSize: 13, color: '#FFD400', flex: 1, letterSpacing: 1, lineHeight: 22,
+    textShadowColor: '#FF6600', textShadowRadius: 0, textShadowOffset: {width: 2, height: 2}},
+  deleteBtn: {fontFamily: 'PressStart2P-Regular', fontSize: 8, color: '#FF3B3B', lineHeight: 14, marginTop: 14},
+  heroSub: {fontSize: 13, color: 'rgba(255,255,255,0.50)', marginTop: 5, fontFamily: 'Oswald-SemiBold'},
   heroDesc: {
-    fontSize: 14, color: C.white70, marginTop: 10,
-    backgroundColor: C.white08, borderRadius: 8, padding: 10,
-    lineHeight: 18, borderWidth: 1, borderColor: C.white15,
+    fontSize: 14, color: C.white70, marginTop: 10, marginHorizontal: 20,
+    backgroundColor: C.bgSurface, padding: 10,
+    lineHeight: 18, borderWidth: 2, borderColor: C.white15,
   },
   progressCard: {
-    backgroundColor: C.card, marginHorizontal: 16, marginTop: 14,
-    borderRadius: 18, padding: 17, borderWidth: 1.5, borderColor: 'rgba(170,0,255,0.28)',
-    shadowColor: C.purple, shadowOpacity: 0.18, shadowRadius: 16,
-    shadowOffset: {width: 0, height: 0}, elevation: 5,
+    backgroundColor: '#160f1e', marginHorizontal: 16, marginTop: 14,
+    borderWidth: 2, borderColor: 'rgba(170,0,255,0.3)',
+    padding: 17,
   },
   progressHeader: {flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10},
-  progressLabel: {fontSize: 13, color: C.white40, fontWeight: '600'},
-  progressCount: {fontSize: 14, fontWeight: '900', color: C.yellow},
-  progressTrack: {height: 11, backgroundColor: C.white15, borderRadius: 6, overflow: 'hidden'},
-  progressFill: {height: 11, backgroundColor: C.purple, borderRadius: 6,
-    shadowColor: C.purple, shadowOpacity: 0.7, shadowRadius: 8, shadowOffset: {width: 0, height: 0}},
+  progressLabel: {fontSize: 13, color: 'rgba(255,255,255,0.50)', fontFamily: 'Oswald-SemiBold'},
+  progressCount: {fontFamily: 'PressStart2P-Regular', fontSize: 11, color: '#FFD400', lineHeight: 18},
+  progressTrack: {height: 11, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 0, overflow: 'hidden'},
+  progressFill: {height: 11, backgroundColor: '#AA00FF', borderRadius: 0},
   section: {
-    fontSize: 11, fontWeight: '900', color: C.white40,
-    textTransform: 'uppercase', letterSpacing: 1.8,
+    fontFamily: 'PressStart2P-Regular', fontSize: 8, color: 'rgba(255,255,255,0.50)',
+    textTransform: 'uppercase', letterSpacing: 2, lineHeight: 14,
     marginTop: 22, marginBottom: 8, marginHorizontal: 20,
   },
   listCard: {
-    backgroundColor: C.card, marginHorizontal: 16, borderRadius: 18, overflow: 'hidden',
-    borderWidth: 1.5, borderColor: C.cardBorder,
-    shadowColor: C.purple, shadowOpacity: 0.12, shadowRadius: 14, shadowOffset: {width: 0, height: 0},
+    backgroundColor: '#160f1e', marginHorizontal: 16, overflow: 'hidden',
+    borderWidth: 2, borderColor: 'rgba(255,255,255,0.13)',
   },
   verifiedCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: 'rgba(57,255,20,0.08)', marginHorizontal: 16, borderRadius: 14,
-    padding: 16, borderWidth: 1, borderColor: 'rgba(57,255,20,0.35)',
+    backgroundColor: 'rgba(155,232,12,0.08)', marginHorizontal: 16,
+    padding: 16, borderWidth: 2, borderColor: 'rgba(155,232,12,0.35)',
   },
   juryCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: 'rgba(232,245,49,0.06)', marginHorizontal: 16, borderRadius: 14,
-    padding: 16, borderWidth: 1, borderColor: 'rgba(232,245,49,0.3)',
+    backgroundColor: 'rgba(232,245,49,0.06)', marginHorizontal: 16,
+    padding: 16, borderWidth: 2, borderColor: 'rgba(232,245,49,0.3)',
   },
-  juryTitle: {fontWeight: '800', color: C.yellow, fontSize: 15},
+  juryTitle: {fontFamily: 'PressStart2P-Regular', fontSize: 10, color: '#FFD400', lineHeight: 18},
   failedCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: 'rgba(255,56,100,0.08)', marginHorizontal: 16, borderRadius: 14,
-    padding: 16, borderWidth: 1, borderColor: 'rgba(255,56,100,0.3)',
+    backgroundColor: 'rgba(255,56,100,0.08)', marginHorizontal: 16,
+    padding: 16, borderWidth: 2, borderColor: 'rgba(255,56,100,0.3)',
   },
-  failedTitle: {fontWeight: '800', color: C.pink, fontSize: 15},
-  recoveryHint: {color: C.orange, fontSize: 13, marginTop: 6, fontWeight: '600'},
-  heroCountdown: {fontSize: 13, color: C.yellow, marginTop: 4, fontWeight: '700'},
+  failedTitle: {fontFamily: 'PressStart2P-Regular', fontSize: 10, color: '#FF2D6F', lineHeight: 18},
+  recoveryHint: {color: C.orange, fontSize: 13, marginTop: 6, fontFamily: 'Oswald-SemiBold'},
+  heroCountdown: {fontFamily: 'PressStart2P-Regular', fontSize: 8, color: '#FFD400', marginTop: 6, marginHorizontal: 20, lineHeight: 14},
   shareBtn: {
-    alignSelf: 'flex-start', marginTop: 10,
-    backgroundColor: 'rgba(78,201,232,0.15)', borderRadius: 20,
+    alignSelf: 'flex-start', marginTop: 10, marginHorizontal: 20,
+    backgroundColor: 'rgba(25,224,255,0.15)',
     paddingHorizontal: 14, paddingVertical: 6,
-    borderWidth: 1, borderColor: 'rgba(78,201,232,0.4)',
+    borderWidth: 2, borderColor: 'rgba(25,224,255,0.4)',
   },
-  shareBtnText: {color: C.cyan, fontWeight: '700', fontSize: 13},
+  shareBtnText: {fontFamily: 'PressStart2P-Regular', fontSize: 8, color: '#19E0FF', lineHeight: 13},
   weekCard: {
-    backgroundColor: C.card, marginHorizontal: 16, borderRadius: 14,
-    borderWidth: 1, borderColor: C.cardBorder, padding: 16,
+    backgroundColor: '#160f1e', marginHorizontal: 16,
+    borderWidth: 2, borderColor: 'rgba(255,255,255,0.13)', padding: 16,
   },
   weekRow: {flexDirection: 'row', alignItems: 'center'},
   weekStat: {flex: 1, alignItems: 'center'},
-  weekNum: {fontSize: 22, fontWeight: '900', color: C.yellow},
-  weekLabel: {fontSize: 12, color: C.white40, marginTop: 2},
-  weekDivider: {width: 1, height: 36, backgroundColor: C.white15},
-  verifiedEmoji: {fontSize: 28},
-  verifiedTitle: {fontWeight: '800', color: C.green, fontSize: 15},
-  verifiedReason: {color: C.white70, fontSize: 14, marginTop: 2},
+  weekNum: {fontFamily: 'PressStart2P-Regular', fontSize: 14, color: '#FFD400', lineHeight: 22},
+  weekLabel: {fontSize: 12, color: 'rgba(255,255,255,0.50)', marginTop: 4, fontFamily: 'Oswald-SemiBold'},
+  weekDivider: {width: 1, height: 36, backgroundColor: 'rgba(255,255,255,0.15)'},
+  verifiedEmoji: {
+    width: 42,
+    height: 42,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    fontFamily: 'PressStart2P-Regular',
+    fontSize: 8,
+    lineHeight: 42,
+    borderWidth: 2,
+  },
+  markOk: {
+    color: C.lime,
+    backgroundColor: 'rgba(155,232,12,0.12)',
+    borderColor: 'rgba(155,232,12,0.45)',
+  },
+  markVote: {
+    color: C.yellow,
+    backgroundColor: 'rgba(255,212,0,0.12)',
+    borderColor: 'rgba(255,212,0,0.45)',
+  },
+  markNo: {
+    color: C.pink,
+    backgroundColor: 'rgba(255,45,111,0.12)',
+    borderColor: 'rgba(255,45,111,0.45)',
+  },
+  verifiedTitle: {fontFamily: 'PressStart2P-Regular', fontSize: 10, color: '#9BE80C', lineHeight: 18},
+  verifiedReason: {color: 'rgba(255,255,255,0.80)', fontSize: 14, marginTop: 2, fontFamily: 'Oswald-SemiBold'},
   penaltyWrap: {marginHorizontal: 16, gap: 6},
   penaltyRow: {
     padding: 14, borderBottomWidth: 1, borderBottomColor: C.white08,
   },
-  penaltyName: {fontWeight: '700', color: C.white, fontSize: 14},
-  penaltyText: {color: C.white70, fontSize: 14, marginTop: 2},
+  penaltyName: {fontFamily: 'PressStart2P-Regular', fontSize: 9, color: '#FFFFFF', lineHeight: 15},
+  penaltyText: {color: 'rgba(255,255,255,0.70)', fontSize: 14, marginTop: 2},
   penaltyStatus: {
-    alignSelf: 'flex-start', marginTop: 6, borderRadius: 8,
+    alignSelf: 'flex-start', marginTop: 6,
     backgroundColor: 'rgba(255,140,66,0.12)', paddingHorizontal: 8, paddingVertical: 3,
     borderWidth: 1, borderColor: 'rgba(255,140,66,0.35)',
   },
@@ -524,52 +552,70 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(57,255,20,0.1)',
     borderColor: 'rgba(57,255,20,0.3)',
   },
-  penaltyStatusText: {fontSize: 12, fontWeight: '700', color: C.orange},
+  penaltyStatusText: {fontFamily: 'PressStart2P-Regular', fontSize: 8, color: '#FF6600', lineHeight: 13},
   feedRow: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 10,
     padding: 14, borderBottomWidth: 1, borderBottomColor: C.white08,
   },
   feedAvatar: {
-    width: 38, height: 38, borderRadius: 19,
-    backgroundColor: 'rgba(78,201,232,0.15)', alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: C.cyan,
+    width: 38, height: 38,
+    backgroundColor: 'rgba(25,224,255,0.15)', alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2, borderColor: '#19E0FF',
   },
-  feedInitial: {fontSize: 14, fontWeight: '700', color: C.cyan},
+  feedInitial: {fontFamily: 'PressStart2P-Regular', fontSize: 10, color: '#19E0FF', lineHeight: 16},
   feedContent: {flex: 1},
-  feedName: {fontWeight: '700', color: C.white, fontSize: 14},
-  feedScore: {color: C.white40, fontSize: 13, marginTop: 2},
-  empty: {padding: 20, color: C.white40, textAlign: 'center', fontSize: 14},
+  feedName: {fontFamily: 'PressStart2P-Regular', fontSize: 9, color: '#FFFFFF', lineHeight: 15},
+  feedScore: {color: 'rgba(255,255,255,0.50)', fontSize: 13, marginTop: 2},
+  empty: {padding: 20, color: 'rgba(255,255,255,0.50)', textAlign: 'center', fontSize: 14, fontFamily: 'Oswald-SemiBold'},
   reminderCard: {
-    backgroundColor: C.bgCard || C.card, marginHorizontal: 16, borderRadius: 14, overflow: 'hidden',
-    borderWidth: 1, borderColor: C.cardBorder,
+    backgroundColor: '#160f1e', marginHorizontal: 16, overflow: 'hidden',
+    borderWidth: 2, borderColor: 'rgba(255,255,255,0.13)',
   },
   reminderRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     padding: 16,
   },
-  reminderTitle: {fontSize: 15, fontWeight: '600', color: C.white},
-  reminderHint: {fontSize: 13, color: C.white40, marginTop: 2},
-  reminderDivider: {height: 1, backgroundColor: C.white15},
-  timePill: {
-    backgroundColor: 'rgba(78,201,232,0.15)', borderRadius: 20,
-    paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1, borderColor: C.cyan,
+  reminderTitle: {fontSize: 15, fontFamily: 'Oswald-Bold', color: '#FFFFFF'},
+  reminderHint: {fontSize: 13, color: 'rgba(255,255,255,0.50)', marginTop: 2},
+  reminderDivider: {height: 1, backgroundColor: 'rgba(255,255,255,0.15)'},
+  arcadeToggle: {
+    minWidth: 58,
+    alignItems: 'center',
+    backgroundColor: C.bgDeep,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 2,
+    borderColor: C.white15,
   },
-  timeText: {color: C.cyan, fontWeight: '700', fontSize: 15},
-  timeEdit: {color: C.white40, fontWeight: '400', fontSize: 13},
+  arcadeToggleOn: {
+    backgroundColor: 'rgba(25,224,255,0.16)',
+    borderColor: C.cyan,
+  },
+  arcadeToggleText: {
+    fontFamily: 'PressStart2P-Regular',
+    fontSize: 8,
+    color: C.white40,
+    lineHeight: 13,
+  },
+  arcadeToggleTextOn: {color: C.cyan},
+  timePill: {
+    backgroundColor: 'rgba(25,224,255,0.15)',
+    paddingHorizontal: 16, paddingVertical: 8, borderWidth: 2, borderColor: '#19E0FF',
+  },
+  timeText: {fontFamily: 'PressStart2P-Regular', fontSize: 9, color: '#19E0FF', lineHeight: 15},
   pickerOverlay: {
     flex: 1, justifyContent: 'flex-end',
     backgroundColor: 'rgba(0,0,0,0.6)',
   },
   pickerSheet: {
     backgroundColor: C.bgDeep,
-    borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    paddingBottom: 32, borderTopWidth: 1, borderTopColor: C.white15,
+    paddingBottom: 32, borderTopWidth: 2, borderTopColor: C.cyan,
   },
   pickerHeader: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16,
     borderBottomWidth: 1, borderBottomColor: C.white15,
   },
-  pickerTitle: {fontSize: 16, fontWeight: '700', color: C.white},
-  pickerDone: {fontSize: 16, fontWeight: '700', color: C.yellow},
+  pickerTitle: {fontSize: 16, fontFamily: 'Oswald-Bold', color: C.white},
+  pickerDone: {fontSize: 16, fontFamily: 'Oswald-Bold', color: C.yellow},
 });

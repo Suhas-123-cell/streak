@@ -11,34 +11,7 @@ import {useMembers} from '../hooks/useMembers';
 import BattleCard from '../components/BattleCard';
 import {endpoints} from '../constants/api';
 import {C} from '../constants/theme';
-
-// Ambient background orbs — simulates gradient mesh depth
-function AmbientBg() {
-  const orb1 = useRef(new Animated.Value(0)).current;
-  const orb2 = useRef(new Animated.Value(0)).current;
-  const orb3 = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    const loop = (val, dur, delay) => Animated.loop(
-      Animated.sequence([
-        Animated.timing(val, {toValue: -18, duration: dur, delay, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
-        Animated.timing(val, {toValue: 0, duration: dur, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
-      ])
-    ).start();
-    loop(orb1, 4500, 0);
-    loop(orb2, 5800, 800);
-    loop(orb3, 3900, 400);
-  }, []);
-  return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      <Animated.View style={{position: 'absolute', width: 280, height: 280, borderRadius: 140,
-        backgroundColor: 'rgba(170,0,255,0.1)', top: -100, left: -80, transform: [{translateY: orb1}]}} />
-      <Animated.View style={{position: 'absolute', width: 200, height: 200, borderRadius: 100,
-        backgroundColor: 'rgba(255,0,112,0.08)', top: 200, right: -60, transform: [{translateY: orb2}]}} />
-      <Animated.View style={{position: 'absolute', width: 160, height: 160, borderRadius: 80,
-        backgroundColor: 'rgba(0,229,255,0.06)', bottom: 120, left: -30, transform: [{translateY: orb3}]}} />
-    </View>
-  );
-}
+import {ArcadeBackdrop, ArcadeTopBar, FighterBadge, HardCard, ScreenTitle} from '../components/ArcadeUI';
 
 function BattleItem({battle, onPress, token, userId, onCheckinStatus, index, refreshKey}) {
   const {members, fetchMembers} = useMembers(battle.id);
@@ -162,17 +135,9 @@ function StepRow({num, title, desc, delay, showDivider}) {
 
 // ── Animated onboarding empty state ──────────────────────────────
 function OnboardingEmpty({onPress}) {
-  const floatAnim = useRef(new Animated.Value(0)).current;
   const btnScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(floatAnim, {toValue: -7, duration: 1600, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
-        Animated.timing(floatAnim, {toValue: 0, duration: 1600, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
-      ])
-    ).start();
-
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(btnScale, {toValue: 1.035, duration: 950, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
@@ -191,15 +156,16 @@ function OnboardingEmpty({onPress}) {
 
   return (
     <View style={styles.onboarding}>
-      <Animated.Text style={[styles.onboardingIcon, {transform: [{translateY: floatAnim}]}]}>
-        ⚔️
-      </Animated.Text>
-      <Text style={styles.onboardingTitle}>No battles yet.</Text>
-      <Text style={styles.onboardingDesc}>
-        Challenge a friend to build a habit.{'\n'}Miss a day and they'll know.
-      </Text>
+      <ScreenTitle subtitle="Challenge a friend to build a habit. Miss a day and they'll know.">
+        SELECT YOUR{'\n'}FIRST FIGHT
+      </ScreenTitle>
+      <FighterBadge text="0 fighters online" style={styles.onlineBadge} />
 
-      <View style={styles.steps}>
+      <HardCard
+        borderColor={C.pink}
+        shadowColor="rgba(255,45,111,0.30)"
+        style={styles.steps}
+        innerStyle={{backgroundColor: C.bgSurface}}>
         {steps.map((s, i) => (
           <StepRow
             key={s.num}
@@ -210,11 +176,11 @@ function OnboardingEmpty({onPress}) {
             showDivider={i < steps.length - 1}
           />
         ))}
-      </View>
+      </HardCard>
 
       <Animated.View style={{transform: [{scale: btnScale}]}}>
         <TouchableOpacity style={styles.onboardingBtn} onPress={onPress} activeOpacity={0.85}>
-          <Text style={styles.onboardingBtnText}>Start your first battle →</Text>
+          <Text style={styles.onboardingBtnText}>NEW CHALLENGER ▶</Text>
         </TouchableOpacity>
       </Animated.View>
     </View>
@@ -233,8 +199,10 @@ function AnimatedHeader() {
       styles.header,
       {opacity: anim, transform: [{translateY: anim.interpolate({inputRange: [0, 1], outputRange: [-10, 0]})}]},
     ]}>
-      <Text style={styles.title}>Battles</Text>
-      <Text style={styles.dateText}>{today}</Text>
+      <ArcadeTopBar center="HI-SCORE 24" right="CPU" />
+      <ScreenTitle subtitle={today}>
+        SELECT YOUR{'\n'}BATTLE
+      </ScreenTitle>
     </Animated.View>
   );
 }
@@ -286,8 +254,8 @@ export default function HomeScreen({navigation}) {
     return (
       <SafeAreaView style={styles.safe}>
         <StatusBar barStyle="light-content" backgroundColor={C.bgDeep} />
-        <AmbientBg />
-        <AnimatedHeader />
+        <ArcadeBackdrop />
+        <ArcadeTopBar center="HI-SCORE 24" right="CPU" />
         <OnboardingEmpty onPress={() => navigation.navigate('NewBattle')} />
         <Animated.View style={{
           position: 'absolute', bottom: 28, right: 24,
@@ -305,7 +273,7 @@ export default function HomeScreen({navigation}) {
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor={C.bgDeep} />
-      <AmbientBg />
+      <ArcadeBackdrop />
       <FlatList
         data={sortedBattles}
         keyExtractor={b => b.id}
@@ -342,82 +310,76 @@ export default function HomeScreen({navigation}) {
 const styles = StyleSheet.create({
   safe: {flex: 1, backgroundColor: C.bg},
 
-  header: {paddingHorizontal: 20, paddingTop: 24, paddingBottom: 16},
+  header: {paddingBottom: 2},
   title: {
-    fontSize: 38, fontWeight: '900', color: C.yellow,
-    letterSpacing: 2,
-    textShadowColor: C.pink, textShadowRadius: 14,
-    textShadowOffset: {width: 0, height: 0},
+    fontFamily: 'PressStart2P-Regular', fontSize: 16, color: '#FFD400',
+    letterSpacing: 2, lineHeight: 28,
+    textShadowColor: '#FF2D6F', textShadowRadius: 0,
+    textShadowOffset: {width: 2, height: 2},
   },
-  dateText: {fontSize: 13, color: C.white40, marginTop: 3, letterSpacing: 0.4, fontWeight: '600'},
+  dateText: {fontSize: 12, color: 'rgba(255,255,255,0.50)', marginTop: 3, letterSpacing: 0.4, fontFamily: 'Oswald-SemiBold'},
 
   summaryCard: {
-    marginHorizontal: 16, marginBottom: 10, borderRadius: 18, padding: 17,
-    borderWidth: 1.5,
+    marginHorizontal: 16, marginBottom: 12, borderRadius: 0, padding: 17,
+    borderWidth: 2,
   },
   summaryCardDone: {
-    backgroundColor: 'rgba(0,255,138,0.07)',
-    borderColor: 'rgba(0,255,138,0.35)',
-    shadowColor: C.green, shadowOpacity: 0.2, shadowRadius: 16,
-    shadowOffset: {width: 0, height: 0},
+    backgroundColor: 'rgba(155,232,12,0.07)',
+    borderColor: 'rgba(155,232,12,0.35)',
   },
   summaryCardPending: {
-    backgroundColor: 'rgba(170,0,255,0.07)',
-    borderColor: 'rgba(170,0,255,0.3)',
-    shadowColor: C.purple, shadowOpacity: 0.2, shadowRadius: 16,
-    shadowOffset: {width: 0, height: 0},
+    backgroundColor: C.bgSurface,
+    borderColor: 'rgba(25,224,255,0.45)',
   },
-  summaryDoneTitle: {fontSize: 15, fontWeight: '800', color: C.lime},
+  summaryDoneTitle: {fontFamily: 'PressStart2P-Regular', fontSize: 10, color: '#9BE80C', lineHeight: 18},
   summaryDoneSub: {fontSize: 13, color: C.white70, marginTop: 3},
   summaryRow: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start'},
-  summaryPendingTitle: {fontSize: 15, fontWeight: '800', color: C.yellow, flex: 1},
-  summaryHours: {fontSize: 14, fontWeight: '700', color: C.orange},
+  summaryPendingTitle: {fontFamily: 'PressStart2P-Regular', fontSize: 9, color: '#FFD400', flex: 1, lineHeight: 17},
+  summaryHours: {fontFamily: 'PressStart2P-Regular', fontSize: 9, color: '#FF6600', lineHeight: 17},
   summaryTrack: {
     height: 9, backgroundColor: C.white15,
-    borderRadius: 5, overflow: 'hidden', marginTop: 11,
+    borderRadius: 0, overflow: 'hidden', marginTop: 11,
   },
   summaryFill: {
-    height: 9, borderRadius: 5, backgroundColor: C.purple,
+    height: 9, borderRadius: 0, backgroundColor: C.purple,
     shadowColor: C.purple, shadowOpacity: 0.8, shadowRadius: 8,
     shadowOffset: {width: 0, height: 0},
   },
-  summaryCount: {fontSize: 13, color: C.white40, marginTop: 7, fontWeight: '600'},
+  summaryCount: {fontSize: 13, color: 'rgba(255,255,255,0.50)', marginTop: 7, fontFamily: 'Oswald-SemiBold'},
 
-  onboarding: {flex: 1, paddingHorizontal: 24, paddingTop: 8},
+  onboarding: {flex: 1, paddingTop: 4},
   onboardingIcon: {fontSize: 56, marginBottom: 18},
-  onboardingTitle: {fontSize: 26, fontWeight: '900', color: C.yellow, letterSpacing: 0.8,
-    textShadowColor: C.pink, textShadowRadius: 12, textShadowOffset: {width: 0, height: 0}},
+  onboardingTitle: {fontFamily: 'PressStart2P-Regular', fontSize: 14, color: '#FFD400', letterSpacing: 1, lineHeight: 26,
+    textShadowColor: '#FF2D6F', textShadowRadius: 0, textShadowOffset: {width: 2, height: 2}},
   onboardingDesc: {fontSize: 15, color: C.white70, lineHeight: 23, marginTop: 10, marginBottom: 30},
-  steps: {
-    borderWidth: 1.5, borderColor: 'rgba(170,0,255,0.25)', borderRadius: 20,
-    overflow: 'hidden', marginBottom: 30, backgroundColor: 'rgba(170,0,255,0.06)',
-  },
+  onlineBadge: {marginLeft: 20, marginBottom: 16},
+  steps: {marginHorizontal: 20, marginBottom: 28},
   step: {flexDirection: 'row', alignItems: 'flex-start', padding: 18, gap: 14},
   stepDivider: {height: 1, backgroundColor: C.white15},
   stepNum: {
-    width: 30, height: 30, borderRadius: 15,
+    width: 30, height: 30,
     backgroundColor: C.pink, alignItems: 'center', justifyContent: 'center',
     marginTop: 1,
     shadowColor: C.pink, shadowOpacity: 0.5, shadowRadius: 8, shadowOffset: {width: 0, height: 0},
   },
-  stepNumText: {color: C.white, fontWeight: '900', fontSize: 13},
-  stepTitle: {fontSize: 15, fontWeight: '800', color: C.white},
+  stepNumText: {color: '#FFFFFF', fontFamily: 'PressStart2P-Regular', fontSize: 10, lineHeight: 16},
+  stepTitle: {fontSize: 15, fontFamily: 'Oswald-Bold', color: '#FFFFFF'},
   stepDesc: {fontSize: 14, color: C.white70, marginTop: 3, lineHeight: 19},
   onboardingBtn: {
-    backgroundColor: C.pink, borderRadius: 16,
-    paddingVertical: 17, alignItems: 'center',
-    shadowColor: C.pink, shadowOpacity: 0.6, shadowRadius: 22,
-    shadowOffset: {width: 0, height: 6}, elevation: 12,
+    backgroundColor: '#FF2D6F', borderWidth: 3, borderColor: '#fff',
+    paddingVertical: 16, alignItems: 'center', marginHorizontal: 20,
+    shadowColor: '#AA00FF', shadowOpacity: 0.9, shadowRadius: 0,
+    shadowOffset: {width: 5, height: 5},
   },
-  onboardingBtnText: {color: C.white, fontWeight: '900', fontSize: 16, letterSpacing: 1.2},
+  onboardingBtnText: {color: '#05030a', fontFamily: 'PressStart2P-Regular', fontSize: 10, letterSpacing: 1, lineHeight: 18},
 
   fab: {
-    width: 64, height: 64, borderRadius: 32,
+    width: 64, height: 64, borderRadius: 0,
     backgroundColor: C.pink,
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: C.pink, shadowOpacity: 0.75, shadowRadius: 28,
-    shadowOffset: {width: 0, height: 6}, elevation: 18,
-    borderWidth: 2, borderColor: 'rgba(255,0,112,0.4)',
+    shadowColor: C.pink, shadowOpacity: 0.9, shadowRadius: 0,
+    shadowOffset: {width: 5, height: 5}, elevation: 18,
+    borderWidth: 3, borderColor: C.white,
   },
-  fabText: {color: C.white, fontSize: 30, fontWeight: '900', lineHeight: 34},
+  fabText: {color: '#FFFFFF', fontSize: 30, fontFamily: 'Oswald-Bold', lineHeight: 34},
 });

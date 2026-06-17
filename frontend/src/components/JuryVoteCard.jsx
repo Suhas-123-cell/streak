@@ -48,7 +48,7 @@ export default function JuryVoteCard({checkin, onResolved}) {
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.badge}>⚖️ JURY</Text>
+        <Text style={styles.badge}>JURY</Text>
         <Text style={styles.name}>{username}'s proof</Text>
       </View>
       <Text style={styles.sub}>AI wasn't sure (score {checkin.ai_score}/100). Group decides.</Text>
@@ -56,7 +56,7 @@ export default function JuryVoteCard({checkin, onResolved}) {
       {votes && (
         <View style={styles.tally}>
           <Text style={styles.tallyText}>
-            {votes.approvals} ✅  ·  {votes.total - votes.approvals} ❌  ·  {votes.total} voted
+            {votes.approvals} OK · {votes.total - votes.approvals} NO · {votes.total} VOTED
           </Text>
         </View>
       )}
@@ -65,17 +65,17 @@ export default function JuryVoteCard({checkin, onResolved}) {
         <Text style={styles.waiting}>Waiting for your group to vote…</Text>
       ) : votes?.my_vote != null ? (
         <Text style={styles.voted}>
-          You voted {votes.my_vote ? '✅ Approve' : '❌ Reject'}
+          YOU VOTED {votes.my_vote ? 'APPROVE' : 'REJECT'}
         </Text>
       ) : submitting ? (
         <ActivityIndicator color={C.cyan} style={{marginTop: 10}} />
       ) : (
         <View style={styles.btns}>
           <TouchableOpacity style={[styles.btn, styles.approveBtn]} onPress={() => castVote(true)}>
-            <Text style={styles.btnText}>✅ Approve</Text>
+            <Text style={styles.btnText}>APPROVE</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.btn, styles.rejectBtn]} onPress={() => castVote(false)}>
-            <Text style={styles.btnText}>❌ Reject</Text>
+            <Text style={styles.btnText}>REJECT</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -85,37 +85,36 @@ export default function JuryVoteCard({checkin, onResolved}) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'rgba(232,245,49,0.06)',
-    borderRadius: 14,
+    backgroundColor: 'rgba(255,212,0,0.06)',
     padding: 14,
     marginBottom: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(232,245,49,0.3)',
+    borderWidth: 2,
+    borderColor: 'rgba(255,212,0,0.3)',
   },
   header: {flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6},
   badge: {
-    fontSize: 11, fontWeight: '800', color: C.yellow,
-    backgroundColor: 'rgba(232,245,49,0.12)',
-    paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6,
+    fontFamily: 'PressStart2P-Regular', fontSize: 8, color: '#FFD400', lineHeight: 13,
+    backgroundColor: 'rgba(255,212,0,0.12)',
+    paddingHorizontal: 6, paddingVertical: 2,
   },
-  name: {fontWeight: '700', color: C.white, fontSize: 14},
-  sub: {color: C.white40, fontSize: 13, marginBottom: 10},
+  name: {fontFamily: 'PressStart2P-Regular', fontSize: 9, color: '#FFFFFF', lineHeight: 15},
+  sub: {color: 'rgba(255,255,255,0.50)', fontSize: 13, marginBottom: 10, fontFamily: 'Oswald-SemiBold'},
   tally: {
-    backgroundColor: C.white08, borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.07)',
     paddingVertical: 6, paddingHorizontal: 10, marginBottom: 10,
   },
-  tallyText: {color: C.white70, fontSize: 13, fontWeight: '600'},
-  waiting: {color: C.white40, fontSize: 13, fontStyle: 'italic'},
-  voted: {color: C.white70, fontSize: 14, fontWeight: '600'},
+  tallyText: {color: 'rgba(255,255,255,0.80)', fontSize: 13, fontFamily: 'Oswald-SemiBold'},
+  waiting: {color: 'rgba(255,255,255,0.50)', fontSize: 13, fontStyle: 'italic', fontFamily: 'Oswald-SemiBold'},
+  voted: {color: 'rgba(255,255,255,0.80)', fontSize: 13, fontFamily: 'Oswald-SemiBold'},
   btns: {flexDirection: 'row', gap: 8},
-  btn: {flex: 1, borderRadius: 10, paddingVertical: 10, alignItems: 'center'},
+  btn: {flex: 1, paddingVertical: 10, alignItems: 'center', borderWidth: 2},
   approveBtn: {
-    backgroundColor: 'rgba(110,231,138,0.15)',
-    borderWidth: 1, borderColor: 'rgba(110,231,138,0.4)',
+    backgroundColor: 'rgba(155,232,12,0.12)',
+    borderColor: 'rgba(155,232,12,0.4)',
   },
   rejectBtn: {
-    backgroundColor: 'rgba(255,56,100,0.12)',
-    borderWidth: 1, borderColor: 'rgba(255,56,100,0.35)',
+    backgroundColor: 'rgba(255,45,111,0.12)',
+    borderColor: 'rgba(255,45,111,0.35)',
   },
-  btnText: {color: C.white, fontWeight: '700', fontSize: 14},
+  btnText: {fontFamily: 'PressStart2P-Regular', fontSize: 8, color: '#FFFFFF', lineHeight: 13},
 });
