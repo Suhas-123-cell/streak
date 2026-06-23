@@ -1,4 +1,5 @@
 import logging
+from typing import cast
 import os
 import tempfile
 from datetime import date
@@ -68,14 +69,14 @@ async def submit_checkin(
     if not membership.data:
         raise HTTPException(403, "You are not an active member of this battle")
 
-    battle = (
+    battle = cast(dict, (
         supabase.table("battles")
         .select("habit_name, habit_description")
         .eq("id", battle_id)
         .single()
         .execute()
         .data
-    )
+    ))
 
     content = await proof_file.read(MAX_UPLOAD_BYTES + 1)
     if len(content) > MAX_UPLOAD_BYTES:
@@ -148,13 +149,13 @@ async def submit_checkin(
         streak_key = f"battle:{battle_id}:streak:{user.id}"
         # Seed from DB if Redis key expired to avoid resetting a real streak to 1
         if not r.exists(streak_key):
-            seed = (supabase.table("battle_members").select("current_streak")
+            seed = cast(dict, supabase.table("battle_members").select("current_streak")
                     .eq("battle_id", battle_id).eq("user_id", user.id)
                     .single().execute().data or {}).get("current_streak", 0)
             r.set(streak_key, seed)
         new_streak = r.incr(streak_key)
 
-        current = (
+        current = cast(dict, (
             supabase.table("battle_members")
             .select("longest_streak, freeze_tokens")
             .eq("battle_id", battle_id)
@@ -162,10 +163,10 @@ async def submit_checkin(
             .single()
             .execute()
             .data
-        )
-        longest = max(int(new_streak), current["longest_streak"])
-        update_data = {"current_streak": int(new_streak), "longest_streak": longest}
-        if int(new_streak) % 7 == 0:
+        ))
+        longest = max(new_streak, current["longest_streak"])
+        update_data: dict = {"current_streak": new_streak, "longest_streak": longest}
+        if new_streak % 7 == 0:
             update_data["freeze_tokens"] = (current.get("freeze_tokens") or 0) + 1
         supabase.table("battle_members").update(update_data).eq(
             "battle_id", battle_id
@@ -173,11 +174,11 @@ async def submit_checkin(
 
         r.delete(f"leaderboard:battle:{battle_id}")
 
-        if int(new_streak) in {7, 14, 21, 30, 50, 100}:
-            milestone_hit = int(new_streak)
-            new_rank = _rank_from_streak(int(new_streak))
+        if new_streak in {7, 14, 21, 30, 50, 100}:
+            milestone_hit = new_streak
+            new_rank = _rank_from_streak(new_streak)
 
-    return {**checkin, "milestone_hit": milestone_hit, "new_rank": new_rank}
+    return {**cast(dict, checkin), "milestone_hit": milestone_hit, "new_rank": new_rank}
 
 
 _RANK_THRESHOLDS = [(100, "GRANDMASTER"), (50, "LEGEND"), (30, "CHAMPION"), (7, "FIGHTER"), (0, "ROOKIE")]

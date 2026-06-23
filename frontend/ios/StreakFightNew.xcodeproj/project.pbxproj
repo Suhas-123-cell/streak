@@ -7,16 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		091956ABA0A24D3AABF56DC9 /* Oswald-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D29DE67662684C3A9FE340E2 /* Oswald-SemiBold.ttf */; };
 		0C80B921A6F3F58F76C31292 /* libPods-StreakFightNew.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-StreakFightNew.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		2B29FBEB87E0478EB315CF89 /* PressStart2P-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4456FB4D38264A05A64D204A /* PressStart2P-Regular.ttf */; };
 		444374CA3972120AC68390E2 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = A7F05C1A3E76BBE7FB7290AF /* GoogleService-Info.plist */; };
+		7446324E62E54C74979611E5 /* Oswald-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D729C054A8D6490AAB7142D5 /* Oswald-Regular.ttf */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		A84CDB15B6BD6011BD482FC1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
-		2B29FBEB87E0478EB315CF89 /* PressStart2P-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4456FB4D38264A05A64D204A /* PressStart2P-Regular.ttf */; };
 		F88ACA06A4EB43269DD3CFD4 /* Oswald-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7CAB2A5D1A3A49BE9628387D /* Oswald-Bold.ttf */; };
-		091956ABA0A24D3AABF56DC9 /* Oswald-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D29DE67662684C3A9FE340E2 /* Oswald-SemiBold.ttf */; };
-		7446324E62E54C74979611E5 /* Oswald-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D729C054A8D6490AAB7142D5 /* Oswald-Regular.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,16 +25,16 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = StreakFightNew/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = StreakFightNew/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-StreakFightNew.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-StreakFightNew.debug.xcconfig"; path = "Target Support Files/Pods-StreakFightNew/Pods-StreakFightNew.debug.xcconfig"; sourceTree = "<group>"; };
+		4456FB4D38264A05A64D204A /* PressStart2P-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "PressStart2P-Regular.ttf"; path = "../assets/fonts/PressStart2P-Regular.ttf"; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-StreakFightNew.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-StreakFightNew.release.xcconfig"; path = "Target Support Files/Pods-StreakFightNew/Pods-StreakFightNew.release.xcconfig"; sourceTree = "<group>"; };
 		5DCACB8F33CDC322A6C60F78 /* libPods-StreakFightNew.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-StreakFightNew.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = StreakFightNew/AppDelegate.swift; sourceTree = "<group>"; };
+		7CAB2A5D1A3A49BE9628387D /* Oswald-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Oswald-Bold.ttf"; path = "../assets/fonts/Oswald-Bold.ttf"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = StreakFightNew/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		A7F05C1A3E76BBE7FB7290AF /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "StreakFightNew/GoogleService-Info.plist"; sourceTree = "<group>"; };
+		D29DE67662684C3A9FE340E2 /* Oswald-SemiBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Oswald-SemiBold.ttf"; path = "../assets/fonts/Oswald-SemiBold.ttf"; sourceTree = "<group>"; };
+		D729C054A8D6490AAB7142D5 /* Oswald-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Oswald-Regular.ttf"; path = "../assets/fonts/Oswald-Regular.ttf"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		4456FB4D38264A05A64D204A /* PressStart2P-Regular.ttf */ = {isa = PBXFileReference; name = "PressStart2P-Regular.ttf"; path = "../assets/fonts/PressStart2P-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		7CAB2A5D1A3A49BE9628387D /* Oswald-Bold.ttf */ = {isa = PBXFileReference; name = "Oswald-Bold.ttf"; path = "../assets/fonts/Oswald-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		D29DE67662684C3A9FE340E2 /* Oswald-SemiBold.ttf */ = {isa = PBXFileReference; name = "Oswald-SemiBold.ttf"; path = "../assets/fonts/Oswald-SemiBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		D729C054A8D6490AAB7142D5 /* Oswald-Regular.ttf */ = {isa = PBXFileReference; name = "Oswald-Regular.ttf"; path = "../assets/fonts/Oswald-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -69,6 +69,18 @@
 				5DCACB8F33CDC322A6C60F78 /* libPods-StreakFightNew.a */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		66FB926C89F2446BB8EFE428 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				4456FB4D38264A05A64D204A /* PressStart2P-Regular.ttf */,
+				7CAB2A5D1A3A49BE9628387D /* Oswald-Bold.ttf */,
+				D29DE67662684C3A9FE340E2 /* Oswald-SemiBold.ttf */,
+				D729C054A8D6490AAB7142D5 /* Oswald-Regular.ttf */,
+			);
+			name = Resources;
+			path = "";
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -109,18 +121,6 @@
 			);
 			path = Pods;
 			sourceTree = "<group>";
-		};
-		66FB926C89F2446BB8EFE428 /* Resources */ = {
-			isa = "PBXGroup";
-			children = (
-				4456FB4D38264A05A64D204A /* PressStart2P-Regular.ttf */,
-				7CAB2A5D1A3A49BE9628387D /* Oswald-Bold.ttf */,
-				D29DE67662684C3A9FE340E2 /* Oswald-SemiBold.ttf */,
-				D729C054A8D6490AAB7142D5 /* Oswald-Regular.ttf */,
-			);
-			name = Resources;
-			sourceTree = "<group>";
-			path = "";
 		};
 /* End PBXGroup section */
 

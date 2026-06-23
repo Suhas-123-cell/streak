@@ -54,12 +54,15 @@ def verify_photo(image_path: str, habit: str, rules: str) -> dict:
     prompt = PHOTO_PROMPT.format(habit=habit, rules=rules or "")
     response = client.models.generate_content(
         model='gemini-2.5-flash',
-        contents=[
-            prompt,
-            types.Part.from_bytes(data=image_bytes, mime_type='image/jpeg')
-        ]
+        contents=types.Content(
+            role='user',
+            parts=[
+                types.Part.from_text(text=prompt),
+                types.Part.from_bytes(data=image_bytes, mime_type='image/jpeg'),
+            ]
+        )
     )
-    return _parse(response.text)
+    return _parse(response.text or "")
 
 
 def verify_voice(transcript: str, habit: str, rules: str) -> dict:
@@ -68,4 +71,4 @@ def verify_voice(transcript: str, habit: str, rules: str) -> dict:
         model='gemini-2.5-flash',
         contents=prompt
     )
-    return _parse(response.text)
+    return _parse(response.text or "")

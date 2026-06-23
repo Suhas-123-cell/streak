@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from typing import Any, Dict, cast
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from database import supabase
@@ -62,6 +63,9 @@ async def mark_done(penalty_id: str, user=Depends(get_current_user)):
         .execute()
         .data
     )
+    if not penalty:
+        raise HTTPException(404, "Penalty not found")
+    penalty = cast(Dict[str, Any], penalty)
     if penalty["assigned_to"] != user.id:
         raise HTTPException(403, "Only the penalised member can mark it done")
     if penalty["completed"]:
@@ -72,10 +76,11 @@ async def mark_done(penalty_id: str, user=Depends(get_current_user)):
     battle_id = penalty["battle_id"]
     streak_key = f"battle:{battle_id}:streak:{user.id}"
     if not r.exists(streak_key):
-        seed = (supabase.table("battle_members").select("current_streak")
+        seed_row = (supabase.table("battle_members").select("current_streak")
                 .eq("battle_id", battle_id).eq("user_id", user.id)
-                .single().execute().data or {}).get("current_streak", 0)
-        r.set(streak_key, seed)
+                .single().execute().data)
+        seed = cast(Dict[str, Any], seed_row).get("current_streak", 0) if seed_row else 0
+        r.set(streak_key, int(seed))
     new_streak = r.incr(streak_key)
     current = (
         supabase.table("battle_members")
@@ -86,14 +91,15 @@ async def mark_done(penalty_id: str, user=Depends(get_current_user)):
         .execute()
         .data
     )
-    longest = max(int(new_streak), current["longest_streak"])
+    current = cast(Dict[str, Any], current) if current else {}
+    longest = max(new_streak, int(current.get("longest_streak", 0)))
     supabase.table("battle_members").update(
-        {"current_streak": int(new_streak), "longest_streak": longest}
+        {"current_streak": new_streak, "longest_streak": longest}
     ).eq("battle_id", battle_id).eq("user_id", user.id).execute()
     r.delete(f"battle:{battle_id}:members")
     r.delete(f"leaderboard:battle:{battle_id}")
 
-    return {"ok": True, "streak_repaired": True, "new_streak": int(new_streak)}
+    return {"ok": True, "streak_repaired": True, "new_streak": new_streak}
 
 
 @router.get("/{battle_id}")

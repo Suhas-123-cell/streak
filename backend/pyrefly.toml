@@ -1,0 +1,13 @@
+[tool.pyrefly]
+python_environment = "./venv"
+
+# Suppress Supabase SDK false positives — Pyrefly can't resolve the
+# dynamic JSON return types from .execute().data (dict access, subscript, etc.)
+ignore_errors = [
+    "bad-index",
+    "unsupported-operation",
+    "bad-argument-type",
+    "bad-specialization",
+    "missing-attribute",
+    "no-matching-overload",
+]

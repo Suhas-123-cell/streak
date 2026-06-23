@@ -1,6 +1,7 @@
+from typing import Any, Optional, cast
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from typing import Optional
 from database import supabase
 from middleware.auth import get_current_user
 
@@ -29,7 +30,7 @@ async def get_profile(user_id: str, user=Depends(get_current_user)):
         .eq("user_id", user_id)
         .execute()
     )
-    return {**profile.data, "preferences": prefs.data[0] if prefs.data else {}}
+    return {**cast(dict[str, Any], profile.data), "preferences": prefs.data[0] if prefs.data else {}}
 
 
 @router.put("/profile/{user_id}")
@@ -45,7 +46,7 @@ async def update_profile(user_id: str, req: ProfileUpdate, user=Depends(get_curr
     if profile_data:
         supabase.table("profiles").update(profile_data).eq("id", user_id).execute()
 
-    pref_data = {}
+    pref_data: dict[str, Any] = {}
     if req.reminder_time is not None:
         pref_data["reminder_time"] = req.reminder_time
     if req.timezone is not None:

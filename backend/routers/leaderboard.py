@@ -1,4 +1,5 @@
 import json
+from typing import Any, Dict, cast
 from fastapi import APIRouter, Depends
 from database import supabase
 from redis_client import r
@@ -24,16 +25,17 @@ async def global_leaderboard(user=Depends(get_current_user)):
 
     result = []
     for p in profiles:
+        profile = cast(Dict[str, Any], p)
         members = (
             supabase.table("battle_members")
             .select("current_streak")
-            .eq("user_id", p["id"])
+            .eq("user_id", profile["id"])
             .eq("status", "active")
             .execute()
             .data
         )
-        best_streak = max((m["current_streak"] for m in members), default=0)
-        result.append({**p, "active_streak": best_streak})
+        best_streak = max((int(cast(Dict[str, Any], m)["current_streak"]) for m in members), default=0)
+        result.append({**profile, "active_streak": best_streak})
 
     result.sort(key=lambda x: (x["total_wins"], x["active_streak"]), reverse=True)
     r.setex("leaderboard:global", 600, json.dumps(result))
@@ -58,9 +60,10 @@ async def battle_leaderboard(battle_id: str, user=Depends(get_current_user)):
 
     result = []
     for m in members:
-        uid = m["user_id"]
-        streak = int(r.get(f"battle:{battle_id}:streak:{uid}") or m["current_streak"])
-        result.append({**m, "current_streak": streak})
+        member = cast(Dict[str, Any], m)
+        uid = member["user_id"]
+        streak = int(r.get(f"battle:{battle_id}:streak:{uid}") or member["current_streak"])
+        result.append({**member, "current_streak": streak})
 
     result.sort(key=lambda x: x["current_streak"], reverse=True)
     r.setex(cache_key, 300, json.dumps(result))
