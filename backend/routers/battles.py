@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, cast
 from database import supabase
 from middleware.auth import get_current_user
 
@@ -29,6 +29,7 @@ async def create_battle(req: CreateBattleRequest, user=Depends(get_current_user)
         .execute()
         .data[0]
     )
+    battle = cast(Dict[str, Any], battle)
 
     supabase.table("battle_members").insert(
         {"battle_id": battle["id"], "user_id": user.id, "status": "active"}
@@ -42,10 +43,11 @@ async def create_battle(req: CreateBattleRequest, user=Depends(get_current_user)
             .execute()
         )
         if res.data:
+            profile = cast(Dict[str, Any], res.data[0])
             supabase.table("battle_members").insert(
                 {
                     "battle_id": battle["id"],
-                    "user_id": res.data[0]["id"],
+                    "user_id": profile["id"],
                     "status": "pending",
                 }
             ).execute()
@@ -65,7 +67,7 @@ async def get_user_battles(user_id: str, user=Depends(get_current_user)):
         .execute()
         .data
     )
-    ids = [m["battle_id"] for m in memberships]
+    ids = [cast(Dict[str, Any], m)["battle_id"] for m in memberships]
     if not ids:
         return []
     return supabase.table("battles").select("*").in_("id", ids).execute().data
@@ -88,7 +90,8 @@ async def delete_battle(battle_id: str, user=Depends(get_current_user)):
         .single()
         .execute()
     )
-    if row.data["created_by"] != user.id:
+    data = cast(Dict[str, Any], row.data)
+    if data["created_by"] != user.id:
         raise HTTPException(403, "Only the creator can delete this battle")
     supabase.table("battles").delete().eq("id", battle_id).execute()
     return {"ok": True}

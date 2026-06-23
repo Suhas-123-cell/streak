@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from database import supabase
@@ -15,13 +17,14 @@ class VoteRequest(BaseModel):
 
 @router.post("/{checkin_id}/vote")
 async def cast_vote(checkin_id: str, req: VoteRequest, user=Depends(get_current_user)):
-    checkin = (
+    checkin = cast(
+        dict[str, Any],
         supabase.table("checkins")
         .select("id, user_id, battle_id, ai_verified, date")
         .eq("id", checkin_id)
         .single()
         .execute()
-        .data
+        .data,
     )
     if not checkin:
         raise HTTPException(404, "Checkin not found")
@@ -58,19 +61,20 @@ async def cast_vote(checkin_id: str, req: VoteRequest, user=Depends(get_current_
         "vote": req.vote,
     }).execute()
 
-    votes = (
+    votes = cast(
+        list[dict[str, Any]],
         supabase.table("jury_votes")
         .select("vote")
         .eq("checkin_id", checkin_id)
         .execute()
-        .data
+        .data,
     )
     total = len(votes)
     approvals = sum(1 for v in votes if v["vote"])
 
     member_count = (
         supabase.table("battle_members")
-        .select("id", count="exact")
+        .select("id", count="exact")  # pyrefly: ignore
         .eq("battle_id", checkin["battle_id"])
         .eq("status", "active")
         .execute()
@@ -97,18 +101,19 @@ async def cast_vote(checkin_id: str, req: VoteRequest, user=Depends(get_current_
             streak_key = f"battle:{checkin['battle_id']}:streak:{checkin['user_id']}"
             new_streak = r.incr(streak_key)
 
-            current = (
+            current = cast(
+                dict[str, Any],
                 supabase.table("battle_members")
                 .select("longest_streak, freeze_tokens")
                 .eq("battle_id", checkin["battle_id"])
                 .eq("user_id", checkin["user_id"])
                 .single()
                 .execute()
-                .data
+                .data,
             )
-            longest = max(int(new_streak), current["longest_streak"])
-            update_data = {"current_streak": int(new_streak), "longest_streak": longest}
-            if int(new_streak) % 7 == 0:
+            longest = max(new_streak, current["longest_streak"])
+            update_data: dict[str, Any] = {"current_streak": new_streak, "longest_streak": longest}
+            if new_streak % 7 == 0:
                 update_data["freeze_tokens"] = (current.get("freeze_tokens") or 0) + 1
             supabase.table("battle_members").update(update_data).eq(
                 "battle_id", checkin["battle_id"]
@@ -120,13 +125,14 @@ async def cast_vote(checkin_id: str, req: VoteRequest, user=Depends(get_current_
 
 @router.get("/{checkin_id}/votes")
 async def get_votes(checkin_id: str, user=Depends(get_current_user)):
-    checkin = (
+    checkin = cast(
+        dict[str, Any],
         supabase.table("checkins")
         .select("battle_id, ai_verified")
         .eq("id", checkin_id)
         .single()
         .execute()
-        .data
+        .data,
     )
     if not checkin:
         raise HTTPException(404, "Checkin not found")
@@ -142,22 +148,24 @@ async def get_votes(checkin_id: str, user=Depends(get_current_user)):
     if not membership.data:
         raise HTTPException(403, "Members only")
 
-    votes = (
+    votes = cast(
+        list[dict[str, Any]],
         supabase.table("jury_votes")
         .select("vote, created_at")
         .eq("checkin_id", checkin_id)
         .execute()
-        .data
+        .data,
     )
     approvals = sum(1 for v in votes if v["vote"])
 
-    my_vote_res = (
+    my_vote_res = cast(
+        list[dict[str, Any]],
         supabase.table("jury_votes")
         .select("vote")
         .eq("checkin_id", checkin_id)
         .eq("voter_id", user.id)
         .execute()
-        .data
+        .data,
     )
 
     return {

@@ -1,7 +1,7 @@
 import json
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from typing import List
+from typing import Any, Dict, List, cast
 from datetime import date
 from database import supabase
 from redis_client import r
@@ -24,7 +24,7 @@ async def invite_members(battle_id: str, req: InviteRequest, user=Depends(get_cu
         res = supabase.table("profiles").select("id").eq("username", username).execute()
         if not res.data:
             continue
-        uid = res.data[0]["id"]
+        uid = cast(Dict[str, Any], res.data[0])["id"]
         existing = (
             supabase.table("battle_members")
             .select("id")
@@ -93,15 +93,16 @@ async def get_members(battle_id: str, user=Depends(get_current_user)):
         .execute()
         .data
     )
-    checked_in_ids = {c["user_id"] for c in today_checkins}
+    checked_in_ids = {cast(Dict[str, Any], c)["user_id"] for c in today_checkins}
 
     result = []
     for m in members:
-        uid = m["user_id"]
-        streak = int(r.get(f"battle:{battle_id}:streak:{uid}") or m["current_streak"])
+        member_row = cast(Dict[str, Any], m)
+        uid = member_row["user_id"]
+        streak = int(r.get(f"battle:{battle_id}:streak:{uid}") or member_row["current_streak"])
         result.append(
             {
-                **m,
+                **member_row,
                 "current_streak": streak,
                 "checked_in_today": uid in checked_in_ids,
             }
@@ -126,6 +127,7 @@ async def use_freeze(battle_id: str, user=Depends(get_current_user)):
     )
     if not member:
         raise HTTPException(403, "Not an active member of this battle")
+    member = cast(Dict[str, Any], member)
     if (member.get("freeze_tokens") or 0) < 1:
         raise HTTPException(400, "No freeze tokens available")
 
@@ -135,16 +137,16 @@ async def use_freeze(battle_id: str, user=Depends(get_current_user)):
         raise HTTPException(400, "Already checked in today — no freeze needed")
 
     # Use the token: protect streak for today
-    new_tokens = (member["freeze_tokens"] or 0) - 1
+    new_tokens = int(member["freeze_tokens"] or 0) - 1
     streak_key = f"battle:{battle_id}:streak:{user.id}"
     if not r.exists(streak_key):
-        r.set(streak_key, member["current_streak"] or 0)
+        r.set(streak_key, int(member["current_streak"] or 0))
     new_streak = r.incr(streak_key)
-    longest = max(int(new_streak), member["longest_streak"])
+    longest = max(new_streak, int(member["longest_streak"] or 0))
 
     supabase.table("battle_members").update({
         "freeze_tokens": new_tokens,
-        "current_streak": int(new_streak),
+        "current_streak": new_streak,
         "longest_streak": longest,
     }).eq("battle_id", battle_id).eq("user_id", user.id).execute()
 
@@ -152,4 +154,4 @@ async def use_freeze(battle_id: str, user=Depends(get_current_user)):
     r.expire(checkin_key, 172800)
     _invalidate_member_cache(battle_id)
 
-    return {"ok": True, "freeze_tokens_remaining": new_tokens, "current_streak": int(new_streak)}
+    return {"ok": True, "freeze_tokens_remaining": new_tokens, "current_streak": new_streak}

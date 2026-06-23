@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 from fastapi import APIRouter, Depends, HTTPException
 from database import supabase
 from middleware.auth import get_current_user
@@ -17,30 +19,32 @@ def _rank_from_streak(streak: int) -> str:
 
 @router.get("/stats/{user_id}")
 async def get_reward_stats(user_id: str, user=Depends(get_current_user)):
-    profile = (
+    profile: dict[str, Any] = cast(
+        dict[str, Any],
         supabase.table("profiles")
         .select("longest_streak, fighter_color")
         .eq("id", user_id)
         .single()
         .execute()
-        .data
+        .data,
     )
     if not profile:
         raise HTTPException(404, "Profile not found")
 
-    longest = profile.get("longest_streak") or 0
+    longest: int = profile.get("longest_streak") or 0
     rank = _rank_from_streak(longest)
     combo = _RANK_COMBO.get(rank, 1)
 
-    members = (
+    members: list[dict[str, Any]] = cast(
+        list[dict[str, Any]],
         supabase.table("battle_members")
         .select("current_streak")
         .eq("user_id", user_id)
         .eq("status", "active")
         .execute()
-        .data
+        .data,
     )
-    active_streak = max((m["current_streak"] or 0 for m in members), default=0)
+    active_streak = max((int(m["current_streak"] or 0) for m in members), default=0)
 
     return {
         "longest_streak": longest,
@@ -49,3 +53,4 @@ async def get_reward_stats(user_id: str, user=Depends(get_current_user)):
         "combo_multiplier": combo,
         "fighter_color": profile.get("fighter_color") or "pink",
     }
+

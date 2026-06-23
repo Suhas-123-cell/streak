@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Dict, Optional, cast
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, EmailStr, field_validator
 from database import supabase, auth_supabase
@@ -94,16 +94,20 @@ async def login(request: Request, req: LoginRequest):
             row = supabase.table("profiles").select("id").eq("username", email).limit(1).execute()
             if not row.data:
                 raise HTTPException(status_code=401, detail="No account found for that username.")
-            uid = row.data[0]["id"]
-            user_info = auth_supabase.auth.admin.get_user_by_id(uid)
+            uid = cast(Dict[str, Any], row.data[0])["id"]
+            user_info = auth_supabase.auth.admin.get_user_by_id(str(uid))
+            if user_info.user is None or user_info.user.email is None:
+                raise HTTPException(status_code=401, detail="Unable to resolve email for this user.")
             email = user_info.user.email
 
         resp = auth_supabase.auth.sign_in_with_password(
-            {"email": email, "password": req.password}
+            {"email": email, "password": req.password}  # type: ignore[arg-type]
         )
+        if resp.user is None or resp.session is None:
+            raise HTTPException(status_code=401, detail="Invalid email or password.")
         user_id = resp.user.id
         profile = supabase.table("profiles").select("username").eq("id", user_id).limit(1).execute()
-        has_username = bool(profile.data and profile.data[0].get("username"))
+        has_username = bool(profile.data and cast(Dict[str, Any], profile.data[0]).get("username"))
         return {
             "user_id": user_id,
             "access_token": resp.session.access_token,
@@ -122,14 +126,15 @@ async def login(request: Request, req: LoginRequest):
 @router.post("/set-username")
 @limiter.limit("10/minute")
 async def set_username(request: Request, req: UsernameRequest):
-    from database import auth_supabase
     authorization = request.headers.get("authorization") or request.headers.get("Authorization", "")
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing bearer token")
     token = authorization.split(" ", 1)[1]
     try:
         resp = auth_supabase.auth.get_user(token)
-        user_id = resp.user.id
+        if resp.user is None:  # type: ignore[union-attr]
+            raise HTTPException(status_code=401, detail="Invalid or expired token")
+        user_id = resp.user.id  # type: ignore[union-attr]
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
     if _username_taken(req.username):
