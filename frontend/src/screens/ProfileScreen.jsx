@@ -50,15 +50,21 @@ function StatCol({label, value, delay}) {
   );
 }
 
-export default function ProfileScreen() {
+export default function ProfileScreen({navigation}) {
   const {user, token, logout} = useAuth();
   const [profile, setProfile] = useState(null);
+  const [isPro, setIsPro] = useState(false);
 
   // Section entrance animations
   const topAnim = useRef(new Animated.Value(0)).current;
   const contentAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    fetch(endpoints.subscriptionStatus, {headers: {Authorization: `Bearer ${token}`}})
+      .then(r => r.json())
+      .then(data => setIsPro(data?.is_pro === true))
+      .catch(() => {});
+
     fetch(endpoints.profile(user.id), {headers: {Authorization: `Bearer ${token}`}})
       .then(r => r.json())
       .then(data => {
@@ -135,6 +141,18 @@ export default function ProfileScreen() {
       </ScrollView>
 
       <View style={styles.logoutWrap}>
+        {isPro ? (
+          <View style={styles.proBadge}>
+            <Text style={styles.proBadgeText}>♛ PRO FIGHTER</Text>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={styles.goProBtn}
+            onPress={() => navigation.navigate('Paywall')}
+            activeOpacity={0.85}>
+            <Text style={styles.goProText}>♛ GO PRO — UNLIMITED BATTLES</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity style={styles.logoutBtn} onPress={logout} activeOpacity={0.8}>
           <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
@@ -181,6 +199,18 @@ const styles = StyleSheet.create({
   },
 
   logoutWrap: {paddingHorizontal: 20, paddingVertical: 8},
+  goProBtn: {
+    backgroundColor: C.yellow, borderWidth: 3, borderColor: '#fff',
+    paddingVertical: 16, alignItems: 'center', marginBottom: 10,
+    shadowColor: C.purple, shadowOpacity: 0.9, shadowRadius: 0, shadowOffset: {width: 5, height: 5},
+  },
+  goProText: {color: '#05030a', fontFamily: 'PressStart2P-Regular', fontSize: 8, letterSpacing: 1, lineHeight: 14},
+  proBadge: {
+    borderWidth: 2, borderColor: C.yellow, paddingVertical: 12,
+    alignItems: 'center', marginBottom: 10,
+    backgroundColor: 'rgba(255,212,0,0.08)',
+  },
+  proBadgeText: {fontFamily: 'PressStart2P-Regular', fontSize: 8, color: C.yellow, letterSpacing: 1, lineHeight: 14},
   logoutBtn: {paddingVertical: 14, alignItems: 'center', borderWidth: 2, borderColor: 'rgba(255,255,255,0.13)', marginTop: 8},
   logoutText: {fontFamily: 'PressStart2P-Regular', fontSize: 9, color: 'rgba(255,255,255,0.50)', letterSpacing: 1, lineHeight: 16},
   statsHeading: {

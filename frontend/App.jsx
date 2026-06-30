@@ -16,6 +16,7 @@ import LeaderboardScreen from './src/screens/LeaderboardScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import AuthScreen from './src/screens/AuthScreen';
 import UsernameSetupScreen from './src/screens/UsernameSetupScreen';
+import PaywallScreen from './src/screens/PaywallScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -131,6 +132,15 @@ function AppTabs() {
   );
 }
 
+function AppScreens() {
+  return (
+    <Stack.Navigator screenOptions={stackOpts}>
+      <Stack.Screen name="Main" component={AppTabs} options={{headerShown: false}} />
+      <Stack.Screen name="Paywall" component={PaywallScreen} options={{headerShown: false}} />
+    </Stack.Navigator>
+  );
+}
+
 function Root() {
   const {user, loading, needsUsername, fetchWithAuth} = useAuth();
   const [splashDone, setSplashDone] = React.useState(false);
@@ -187,7 +197,7 @@ function Root() {
   }
   if (!user) return <AuthScreen />;
   if (needsUsername) return <UsernameSetupScreen />;
-  return <AppTabs />;
+  return <AppScreens />;
 }
 
 export default function App() {

@@ -1,4 +1,6 @@
 import json
+import random
+import string
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Any, Dict, List, cast
@@ -8,6 +10,10 @@ from redis_client import r
 from middleware.auth import get_current_user
 
 router = APIRouter()
+
+
+def _generate_code(length: int = 8) -> str:
+    return "".join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
 
 class InviteRequest(BaseModel):
@@ -155,3 +161,127 @@ async def use_freeze(battle_id: str, user=Depends(get_current_user)):
     _invalidate_member_cache(battle_id)
 
     return {"ok": True, "freeze_tokens_remaining": new_tokens, "current_streak": new_streak}
+
+
+# ── Invite codes ──────────────────────────────────────────────────────
+
+@router.post("/{battle_id}/invite-link")
+async def create_invite_link(battle_id: str, user=Depends(get_current_user)):
+    membership = (
+        supabase.table("battle_members")
+        .select("id")
+        .eq("battle_id", battle_id)
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .execute()
+    )
+    if not membership.data:
+        raise HTTPException(403, "Only active members can create invite links")
+
+    # Re-use an existing active code if available
+    existing = (
+        supabase.table("invite_codes")
+        .select("code, expires_at")
+        .eq("battle_id", battle_id)
+        .eq("created_by", user.id)
+        .execute()
+    )
+    if existing.data:
+        from datetime import datetime, timezone
+        row = cast(Dict[str, Any], existing.data[0])
+        exp = row.get("expires_at", "")
+        if exp and datetime.fromisoformat(exp.replace("Z", "+00:00")) > datetime.now(timezone.utc):
+            return {"code": row["code"]}
+
+    # Generate unique code
+    for _ in range(10):
+        code = _generate_code()
+        check = supabase.table("invite_codes").select("id").eq("code", code).execute()
+        if not check.data:
+            break
+
+    supabase.table("invite_codes").insert({
+        "battle_id": battle_id,
+        "created_by": user.id,
+        "code": code,
+    }).execute()
+    return {"code": code}
+
+
+@router.get("/invite/{code}")
+async def get_invite_info(code: str, user=Depends(get_current_user)):
+    row = supabase.table("invite_codes").select("*").eq("code", code.upper()).execute()
+    if not row.data:
+        raise HTTPException(404, "Invalid or expired invite code")
+    invite = cast(Dict[str, Any], row.data[0])
+
+    from datetime import datetime, timezone
+    exp = invite.get("expires_at", "")
+    if exp and datetime.fromisoformat(exp.replace("Z", "+00:00")) < datetime.now(timezone.utc):
+        raise HTTPException(410, "Invite code expired")
+    if invite.get("uses_count", 0) >= invite.get("max_uses", 50):
+        raise HTTPException(410, "Invite code has reached its limit")
+
+    battle = supabase.table("battles").select("id, habit_name, habit_description").eq(
+        "id", invite["battle_id"]
+    ).single().execute()
+    if not battle.data:
+        raise HTTPException(404, "Battle not found")
+
+    member_count = (
+        supabase.table("battle_members")
+        .select("id", count="exact")  # pyrefly: ignore
+        .eq("battle_id", invite["battle_id"])
+        .eq("status", "active")
+        .execute()
+    )
+
+    return {
+        "battle": battle.data,
+        "member_count": member_count.count or 0,
+        "code": code.upper(),
+    }
+
+
+@router.post("/invite/{code}/join")
+async def join_via_code(code: str, user=Depends(get_current_user)):
+    row = supabase.table("invite_codes").select("*").eq("code", code.upper()).execute()
+    if not row.data:
+        raise HTTPException(404, "Invalid invite code")
+    invite = cast(Dict[str, Any], row.data[0])
+
+    from datetime import datetime, timezone
+    exp = invite.get("expires_at", "")
+    if exp and datetime.fromisoformat(exp.replace("Z", "+00:00")) < datetime.now(timezone.utc):
+        raise HTTPException(410, "Invite code expired")
+    if invite.get("uses_count", 0) >= invite.get("max_uses", 50):
+        raise HTTPException(410, "Invite code limit reached")
+
+    battle_id = invite["battle_id"]
+    existing = (
+        supabase.table("battle_members")
+        .select("id, status")
+        .eq("battle_id", battle_id)
+        .eq("user_id", user.id)
+        .execute()
+    )
+    if existing.data:
+        m = cast(Dict[str, Any], existing.data[0])
+        if m["status"] == "active":
+            raise HTTPException(409, "Already a member of this battle")
+        # Reactivate pending/declined
+        supabase.table("battle_members").update({"status": "active"}).eq(
+            "id", m["id"]
+        ).execute()
+    else:
+        supabase.table("battle_members").insert({
+            "battle_id": battle_id,
+            "user_id": user.id,
+            "status": "active",
+        }).execute()
+
+    supabase.table("invite_codes").update({"uses_count": invite.get("uses_count", 0) + 1}).eq(
+        "code", code.upper()
+    ).execute()
+    _invalidate_member_cache(battle_id)
+    return {"ok": True, "battle_id": battle_id}

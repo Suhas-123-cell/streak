@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import Any, Dict, List, Optional, cast
 from database import supabase
 from middleware.auth import get_current_user
+from routers.subscription import is_pro, FREE_BATTLE_LIMIT
 
 router = APIRouter()
 
@@ -16,6 +17,20 @@ class CreateBattleRequest(BaseModel):
 
 @router.post("")
 async def create_battle(req: CreateBattleRequest, user=Depends(get_current_user)):
+    if not is_pro(user.id):
+        active = (
+            supabase.table("battle_members")
+            .select("id", count="exact")  # pyrefly: ignore
+            .eq("user_id", user.id)
+            .eq("status", "active")
+            .execute()
+        )
+        if (active.count or 0) >= FREE_BATTLE_LIMIT:
+            raise HTTPException(
+                403,
+                f"Free tier is limited to {FREE_BATTLE_LIMIT} active battles. Upgrade to Pro for unlimited battles."
+            )
+
     battle = (
         supabase.table("battles")
         .insert(
