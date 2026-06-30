@@ -376,6 +376,14 @@ export default function BattleDetailScreen({route, navigation}) {
           )
         ) : (
           <>
+            {todayCheckins.length > 0 && (
+              <View style={styles.counterBanner}>
+                <Text style={styles.counterTitle}>
+                  👊 {todayCheckins[0]?.profiles?.username?.toUpperCase()} ALREADY PROVED IT
+                </Text>
+                <Text style={styles.counterSub}>Don't let them win. Snap back below.</Text>
+              </View>
+            )}
             <FreezeButton
               battleId={battle.id}
               freezeTokens={myMember?.freeze_tokens}
@@ -655,6 +663,15 @@ const styles = StyleSheet.create({
   },
   failedTitle: {fontFamily: 'PressStart2P-Regular', fontSize: 10, color: '#FF2D6F', lineHeight: 18},
   recoveryHint: {color: C.orange, fontSize: 13, marginTop: 6, fontFamily: 'Oswald-SemiBold'},
+  counterBanner: {
+    marginHorizontal: 16, marginBottom: 8,
+    backgroundColor: 'rgba(255,45,111,0.08)',
+    borderWidth: 2, borderColor: 'rgba(255,45,111,0.5)',
+    padding: 14,
+    shadowColor: C.pink, shadowOpacity: 0.6, shadowRadius: 0, shadowOffset: {width: 4, height: 4},
+  },
+  counterTitle: {fontFamily: 'PressStart2P-Regular', fontSize: 8, color: C.pink, lineHeight: 14, letterSpacing: 1},
+  counterSub: {fontSize: 13, color: 'rgba(255,255,255,0.60)', marginTop: 5, fontFamily: 'Oswald-SemiBold'},
   repairBtn: {
     marginTop: 10, backgroundColor: 'rgba(25,224,255,0.12)',
     borderWidth: 2, borderColor: '#19E0FF',
