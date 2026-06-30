@@ -8,6 +8,7 @@ import {endpoints} from '../constants/api';
 
 import {C} from '../constants/theme';
 import RankBadge from '../components/RankBadge';
+import StreakCard from '../components/StreakCard';
 import {rankFromStreak} from '../utils/rank';
 import {ArcadeBackdrop, ArcadeTopBar, ScreenTitle} from '../components/ArcadeUI';
 
@@ -129,6 +130,18 @@ export default function ProfileScreen({navigation}) {
             <StatCol key={s.label} label={s.label} value={s.value} delay={180 + i * 60} />
           ))}
         </Animated.View>
+
+        <View style={styles.divider} />
+
+        {profile?.active_streak > 0 && (
+          <Animated.View style={{opacity: contentAnim}}>
+            <StreakCard
+              username={profile.username || '—'}
+              streak={profile.active_streak}
+              rank={rankFromStreak(profile.longest_streak || 0)}
+            />
+          </Animated.View>
+        )}
 
         <View style={styles.divider} />
 
