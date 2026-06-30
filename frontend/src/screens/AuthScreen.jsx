@@ -192,7 +192,7 @@ function SelectScreen({onNew, onContinue}) {
       {/* Topbar: 1P · HI-SCORE */}
       <View style={st.topBar}>
         <Text style={st.tbCyan}>1P</Text>
-        <Text style={st.tbYellow}>HI-SCORE 24</Text>
+        <Text style={st.tbYellow}>STREAK FIGHT</Text>
       </View>
 
       <ScrollView
@@ -202,10 +202,6 @@ function SelectScreen({onNew, onContinue}) {
         <Text style={st.screenTitle}>SELECT YOUR{'\n'}FIGHTER</Text>
         <Text style={st.screenSub}>Your squad sees every skip.</Text>
 
-        <View style={st.squad}>
-          <View style={st.squadDot} />
-          <Text style={st.squadTxt}>4 fighters online</Text>
-        </View>
 
         {/* NEW CHALLENGER — hard-shadow card */}
         <TouchableOpacity activeOpacity={0.82} onPress={onNew}>

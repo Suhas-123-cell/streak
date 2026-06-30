@@ -14,3 +14,4 @@ python-dotenv
 slowapi
 email-validator
 Pillow
+razorpay

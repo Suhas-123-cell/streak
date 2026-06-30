@@ -30,4 +30,10 @@ export const endpoints = {
   juryVotes: (checkinId) => `${API_URL}/jury/${checkinId}/votes`,
   useFreeze: (battleId) => `${API_URL}/battles/${battleId}/freeze`,
   rewardStats: (userId) => `${API_URL}/rewards/stats/${userId}`,
+  subscriptionStatus: `${API_URL}/subscription/status`,
+  subscriptionOrder: `${API_URL}/subscription/order`,
+  subscriptionVerify: `${API_URL}/subscription/verify`,
+  createInviteLink: (battleId) => `${API_URL}/battles/${battleId}/invite-link`,
+  inviteInfo: (code) => `${API_URL}/battles/invite/${code}`,
+  joinViaCode: (code) => `${API_URL}/battles/invite/${code}/join`,
 };

@@ -159,7 +159,6 @@ function OnboardingEmpty({onPress}) {
       <ScreenTitle subtitle="Challenge a friend to build a habit. Miss a day and they'll know.">
         SELECT YOUR{'\n'}FIRST FIGHT
       </ScreenTitle>
-      <FighterBadge text="0 fighters online" style={styles.onlineBadge} />
 
       <HardCard
         borderColor={C.pink}
@@ -199,7 +198,7 @@ function AnimatedHeader() {
       styles.header,
       {opacity: anim, transform: [{translateY: anim.interpolate({inputRange: [0, 1], outputRange: [-10, 0]})}]},
     ]}>
-      <ArcadeTopBar center="HI-SCORE 24" right="CPU" />
+      <ArcadeTopBar center="STREAK FIGHT" right="CPU" />
       <ScreenTitle subtitle={today}>
         SELECT YOUR{'\n'}BATTLE
       </ScreenTitle>
@@ -255,7 +254,7 @@ export default function HomeScreen({navigation}) {
       <SafeAreaView style={styles.safe}>
         <StatusBar barStyle="light-content" backgroundColor={C.bgDeep} />
         <ArcadeBackdrop />
-        <ArcadeTopBar center="HI-SCORE 24" right="CPU" />
+        <ArcadeTopBar center="STREAK FIGHT" right="CPU" />
         <OnboardingEmpty onPress={() => navigation.navigate('NewBattle')} />
         <Animated.View style={{
           position: 'absolute', bottom: 28, right: 24,
