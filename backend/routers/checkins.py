@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
 from database import supabase
 from redis_client import r
 from middleware.auth import get_current_user
-from services.gemini_verifier import verify_photo, verify_voice
+from services.gemini_verifier import verify_photo, verify_voice, verify_video
 from services.transcriber import transcribe_audio
 from extensions import limiter
 
@@ -19,7 +19,9 @@ MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB
 
 ALLOWED_PHOTO_TYPES = {"image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"}
 ALLOWED_AUDIO_TYPES = {"audio/mpeg", "audio/mp4", "audio/m4a", "audio/wav", "audio/ogg", "audio/webm"}
-ALLOWED_PROOF_TYPES = {"photo", "voice"}
+ALLOWED_PROOF_TYPES = {"photo", "voice", "video"}
+ALLOWED_VIDEO_TYPES = {"video/mp4", "video/quicktime", "video/x-msvideo", "video/webm", "video/3gpp"}
+VIDEO_EXTENSIONS = {"mp4", "mov", "avi", "webm", "3gp"}
 
 PHOTO_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "heic", "heif"}
 AUDIO_EXTENSIONS = {"mp3", "mp4", "m4a", "wav", "ogg", "webm"}
@@ -46,11 +48,18 @@ async def submit_checkin(
             raise HTTPException(400, "Invalid file type for photo proof")
     if proof_type == "voice" and content_type not in ALLOWED_AUDIO_TYPES:
         raise HTTPException(400, "Invalid file type for voice proof")
+    if proof_type == "video" and content_type not in ALLOWED_VIDEO_TYPES:
+        raise HTTPException(400, "Invalid file type for video proof")
 
     raw_name = proof_file.filename or ""
     raw_ext = raw_name.rsplit(".", 1)[-1].lower() if "." in raw_name else ""
-    allowed_exts = PHOTO_EXTENSIONS if proof_type == "photo" else AUDIO_EXTENSIONS
-    ext = raw_ext if raw_ext in allowed_exts else ("jpg" if proof_type == "photo" else "mp3")
+    if proof_type == "photo":
+        allowed_exts, default_ext = PHOTO_EXTENSIONS, "jpg"
+    elif proof_type == "video":
+        allowed_exts, default_ext = VIDEO_EXTENSIONS, "mp4"
+    else:
+        allowed_exts, default_ext = AUDIO_EXTENSIONS, "mp3"
+    ext = raw_ext if raw_ext in allowed_exts else default_ext
 
     today = date.today().isoformat()
     checkin_key = f"battle:{battle_id}:checkedin:{today}"
@@ -89,6 +98,8 @@ async def submit_checkin(
     try:
         if proof_type == "photo":
             result = verify_photo(tmp_path, battle["habit_name"], battle["habit_description"])
+        elif proof_type == "video":
+            result = verify_video(tmp_path, battle["habit_name"], battle["habit_description"])
         else:
             transcript = transcribe_audio(tmp_path)
             result = verify_voice(transcript, battle["habit_name"], battle["habit_description"])

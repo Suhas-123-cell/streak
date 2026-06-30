@@ -65,6 +65,40 @@ def verify_photo(image_path: str, habit: str, rules: str) -> dict:
     return _parse(response.text or "")
 
 
+VIDEO_PROMPT = """You are a strict habit accountability judge.
+
+The user's habit is: "{habit}"
+Proof rules: "{rules}"
+
+Watch this short video clip and determine if it is valid proof they completed their habit today.
+- Reject if the video is clearly unrelated to the habit
+- Reject if it appears to be old footage or a recording of a screen
+- Be strict but fair
+
+Return ONLY this JSON:
+{{"verified": true | false, "score": 0-100, "reasoning": "one sentence"}}"""
+
+
+def verify_video(video_path: str, habit: str, rules: str) -> dict:
+    ext = video_path.rsplit('.', 1)[-1].lower()
+    mime_map = {'mp4': 'video/mp4', 'mov': 'video/quicktime', 'avi': 'video/x-msvideo', 'webm': 'video/webm'}
+    mime_type = mime_map.get(ext, 'video/mp4')
+    with open(video_path, 'rb') as f:
+        video_bytes = f.read()
+    prompt = VIDEO_PROMPT.format(habit=habit, rules=rules or "")
+    response = client.models.generate_content(
+        model='gemini-2.5-flash',
+        contents=types.Content(
+            role='user',
+            parts=[
+                types.Part.from_text(text=prompt),
+                types.Part.from_bytes(data=video_bytes, mime_type=mime_type),
+            ]
+        )
+    )
+    return _parse(response.text or "")
+
+
 def verify_voice(transcript: str, habit: str, rules: str) -> dict:
     prompt = VOICE_PROMPT.format(habit=habit, rules=rules or "", transcript=transcript)
     response = client.models.generate_content(
