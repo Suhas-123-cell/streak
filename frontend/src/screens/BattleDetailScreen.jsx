@@ -184,6 +184,11 @@ export default function BattleDetailScreen({route, navigation}) {
     ? Math.round((members.reduce((s, m) => s + Math.min(m.current_streak || 0, 7), 0) / (members.length * 7)) * 100)
     : 0;
 
+  const activeMembers = members.filter(m => m.status === 'active');
+  const teamStreak = activeMembers.length
+    ? Math.min(...activeMembers.map(m => m.current_streak || 0))
+    : 0;
+
   async function shareStats() {
     const topMember = members[0];
     const msg = [
@@ -423,6 +428,13 @@ export default function BattleDetailScreen({route, navigation}) {
 
         <Text style={styles.section}>This Week</Text>
         <View style={styles.weekCard}>
+          {teamStreak > 0 && (
+            <View style={styles.teamStreakRow}>
+              <Text style={styles.teamStreakLabel}>🔥 CREW FLOOR</Text>
+              <Text style={styles.teamStreakNum}>{teamStreak} days</Text>
+              <Text style={styles.teamStreakSub}>Everyone's kept this up — don't be the one who breaks it</Text>
+            </View>
+          )}
           <View style={styles.weekRow}>
             <View style={styles.weekStat}>
               <Text style={styles.weekNum}>{weeklyRate}%</Text>
@@ -693,6 +705,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#160f1e', marginHorizontal: 16,
     borderWidth: 2, borderColor: 'rgba(255,255,255,0.13)', padding: 16,
   },
+  teamStreakRow: {
+    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.10)',
+    paddingBottom: 14, marginBottom: 14,
+  },
+  teamStreakLabel: {fontFamily: 'PressStart2P-Regular', fontSize: 7, color: '#FF6600', lineHeight: 13, letterSpacing: 1},
+  teamStreakNum: {fontFamily: 'PressStart2P-Regular', fontSize: 22, color: '#FFD400', lineHeight: 34, marginTop: 4,
+    textShadowColor: '#FF2D6F', textShadowRadius: 0, textShadowOffset: {width: 2, height: 2}},
+  teamStreakSub: {fontSize: 12, color: 'rgba(255,255,255,0.45)', fontFamily: 'Oswald-SemiBold', marginTop: 4},
   weekRow: {flexDirection: 'row', alignItems: 'center'},
   weekStat: {flex: 1, alignItems: 'center'},
   weekNum: {fontFamily: 'PressStart2P-Regular', fontSize: 14, color: '#FFD400', lineHeight: 22},
