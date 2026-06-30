@@ -41,6 +41,7 @@ export default function BattleDetailScreen({route, navigation}) {
   const [penalties, setPenalties] = useState([]);
   const [myCheckin, setMyCheckin] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [reactions, setReactions] = useState({});
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [reminderDate, setReminderDate] = useState(() => parseTimeToDate('21:00'));
   const [showPicker, setShowPicker] = useState(false);
@@ -194,6 +195,20 @@ export default function BattleDetailScreen({route, navigation}) {
     } catch (e) {
       Alert.alert('Invite failed', e.message || 'Please try again.');
     }
+  }
+
+  async function reactToCheckin(checkinId, emoji) {
+    try {
+      const res = await fetch(endpoints.reactToCheckin(checkinId), {
+        method: 'POST',
+        headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'},
+        body: JSON.stringify({emoji}),
+      });
+      const data = await res.json();
+      if (data.reactions) {
+        setReactions(prev => ({...prev, [checkinId]: data.reactions}));
+      }
+    } catch {}
   }
 
   return (
@@ -444,8 +459,26 @@ export default function BattleDetailScreen({route, navigation}) {
               <View style={styles.feedContent}>
                 <Text style={styles.feedName}>{c.profiles?.username}</Text>
                 <Text style={styles.feedScore}>
-                  {c.ai_verified === true ? 'OK' : c.ai_verified === null ? 'VOTE' : 'NO'} · {c.ai_score}/100 · {c.ai_reasoning}
+                  {c.ai_verified === true ? 'OK' : c.ai_verified === null ? 'VOTE' : 'NO'} · {c.ai_score}/100
                 </Text>
+                {c.ai_reasoning ? (
+                  <Text style={styles.feedReason} numberOfLines={2}>{c.ai_reasoning}</Text>
+                ) : null}
+                <View style={styles.reactionRow}>
+                  {['🔥','❤️','👏','💪','😤'].map(e => {
+                    const count = reactions[c.id]?.[e];
+                    return (
+                      <TouchableOpacity
+                        key={e}
+                        style={[styles.reactionBtn, count && styles.reactionBtnActive]}
+                        onPress={() => reactToCheckin(c.id, e)}
+                        activeOpacity={0.7}>
+                        <Text style={styles.reactionEmoji}>{e}</Text>
+                        {count ? <Text style={styles.reactionCount}>{count}</Text> : null}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
               </View>
             </View>
           ))}
@@ -591,6 +624,20 @@ const styles = StyleSheet.create({
   feedName: {fontFamily: 'PressStart2P-Regular', fontSize: 9, color: '#FFFFFF', lineHeight: 15},
   feedScore: {color: 'rgba(255,255,255,0.50)', fontSize: 13, marginTop: 2},
   empty: {padding: 20, color: 'rgba(255,255,255,0.50)', textAlign: 'center', fontSize: 14, fontFamily: 'Oswald-SemiBold'},
+  feedReason: {color: 'rgba(255,255,255,0.40)', fontSize: 12, marginTop: 2, fontFamily: 'Oswald-SemiBold', lineHeight: 16},
+  reactionRow: {flexDirection: 'row', gap: 6, marginTop: 8, flexWrap: 'wrap'},
+  reactionBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    paddingHorizontal: 7, paddingVertical: 4,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
+  },
+  reactionBtnActive: {
+    backgroundColor: 'rgba(255,212,0,0.12)',
+    borderColor: 'rgba(255,212,0,0.4)',
+  },
+  reactionEmoji: {fontSize: 14},
+  reactionCount: {fontSize: 11, color: '#FFD400', fontFamily: 'PressStart2P-Regular', lineHeight: 14},
   reminderCard: {
     backgroundColor: '#160f1e', marginHorizontal: 16, overflow: 'hidden',
     borderWidth: 2, borderColor: 'rgba(255,255,255,0.13)',
