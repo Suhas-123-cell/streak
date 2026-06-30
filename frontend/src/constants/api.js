@@ -29,6 +29,8 @@ export const endpoints = {
   juryVote: (checkinId) => `${API_URL}/jury/${checkinId}/vote`,
   juryVotes: (checkinId) => `${API_URL}/jury/${checkinId}/votes`,
   useFreeze: (battleId) => `${API_URL}/battles/${battleId}/freeze`,
+  repairStreak: (battleId) => `${API_URL}/battles/${battleId}/repair-streak`,
+  leaveBattle: (battleId) => `${API_URL}/battles/${battleId}/leave`,
   rewardStats: (userId) => `${API_URL}/rewards/stats/${userId}`,
   subscriptionStatus: `${API_URL}/subscription/status`,
   subscriptionOrder: `${API_URL}/subscription/order`,

@@ -110,3 +110,44 @@ async def delete_battle(battle_id: str, user=Depends(get_current_user)):
         raise HTTPException(403, "Only the creator can delete this battle")
     supabase.table("battles").delete().eq("id", battle_id).execute()
     return {"ok": True}
+
+
+@router.post("/{battle_id}/repair-streak")
+async def repair_streak(battle_id: str, user=Depends(get_current_user)):
+    member = cast(Dict[str, Any], (
+        supabase.table("battle_members")
+        .select("current_streak, freeze_tokens, status")
+        .eq("battle_id", battle_id)
+        .eq("user_id", user.id)
+        .single()
+        .execute()
+        .data
+    ))
+    if not member or member.get("status") != "active":
+        raise HTTPException(403, "Not an active member of this battle")
+    tokens = member.get("freeze_tokens") or 0
+    if tokens < 1:
+        raise HTTPException(400, "No freeze tokens available")
+    new_streak = (member.get("current_streak") or 0) + 1
+    supabase.table("battle_members").update({
+        "current_streak": new_streak,
+        "freeze_tokens": tokens - 1,
+    }).eq("battle_id", battle_id).eq("user_id", user.id).execute()
+    return {"ok": True, "new_streak": new_streak, "tokens_remaining": tokens - 1}
+
+
+@router.post("/{battle_id}/leave")
+async def leave_battle(battle_id: str, user=Depends(get_current_user)):
+    member = (
+        supabase.table("battle_members")
+        .select("id")
+        .eq("battle_id", battle_id)
+        .eq("user_id", user.id)
+        .execute()
+    )
+    if not member.data:
+        raise HTTPException(404, "Not a member of this battle")
+    supabase.table("battle_members").update({"status": "left"}).eq(
+        "battle_id", battle_id
+    ).eq("user_id", user.id).execute()
+    return {"ok": True}

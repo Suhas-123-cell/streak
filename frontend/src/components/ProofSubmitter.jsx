@@ -1,5 +1,5 @@
 import React, {useState, useRef, useEffect} from 'react';
-import {View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Animated, Vibration} from 'react-native';
+import {View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Animated, Vibration, Modal, SafeAreaView} from 'react-native';
 import {launchCamera} from 'react-native-image-picker';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import {useCheckin} from '../hooks/useCheckin';
@@ -11,9 +11,12 @@ const recorder = new AudioRecorderPlayer();
 export default function ProofSubmitter({battleId, onSuccess}) {
   const {submitCheckin, loading, result} = useCheckin();
   const [recording, setRecording] = useState(false);
-  const enterAnim  = useRef(new Animated.Value(0)).current;
-  const celebScale = useRef(new Animated.Value(1)).current;
-  const celebFlash = useRef(new Animated.Value(0)).current;
+  const [showModal, setShowModal] = useState(false);
+  const enterAnim   = useRef(new Animated.Value(0)).current;
+  const celebScale  = useRef(new Animated.Value(1)).current;
+  const celebFlash  = useRef(new Animated.Value(0)).current;
+  const modalScale  = useRef(new Animated.Value(0.7)).current;
+  const modalOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.spring(enterAnim, {toValue: 1, tension: 180, friction: 8, useNativeDriver: true}).start();
@@ -21,9 +24,13 @@ export default function ProofSubmitter({battleId, onSuccess}) {
 
   useEffect(() => {
     if (!result) return;
-    // Haptic pattern: short-short-long for success, single for fail
     if (result.ai_verified === true) {
       Vibration.vibrate([0, 60, 40, 120]);
+      setShowModal(true);
+      Animated.parallel([
+        Animated.spring(modalScale, {toValue: 1, tension: 120, friction: 7, useNativeDriver: true}),
+        Animated.timing(modalOpacity, {toValue: 1, duration: 220, useNativeDriver: true}),
+      ]).start();
     } else {
       Vibration.vibrate(80);
     }
@@ -113,7 +120,28 @@ export default function ProofSubmitter({battleId, onSuccess}) {
           <Text style={styles.loadingText}>AI VERIFYING...</Text>
         </View>
       )}
-      {result && <AIVerdictCard checkin={result} />}
+      {result && result.ai_verified !== true && <AIVerdictCard checkin={result} />}
+
+      {/* Full-screen celebration for verified check-ins */}
+      <Modal visible={showModal} transparent animationType="none" statusBarTranslucent>
+        <SafeAreaView style={modal.backdrop}>
+          <Animated.View style={[modal.card, {opacity: modalOpacity, transform: [{scale: modalScale}]}]}>
+            <Text style={modal.crown}>♛</Text>
+            <Text style={modal.headline}>VERIFIED</Text>
+            <Text style={modal.score}>{result?.ai_score}/100</Text>
+            {result?.ai_reasoning ? (
+              <Text style={modal.reason}>{result.ai_reasoning}</Text>
+            ) : null}
+            <Text style={modal.streak}>Streak updated ✓</Text>
+            <TouchableOpacity
+              style={modal.doneBtn}
+              onPress={() => { setShowModal(false); onSuccess?.(result); }}
+              activeOpacity={0.85}>
+              <Text style={modal.doneBtnText}>KEEP GOING ▶</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </SafeAreaView>
+      </Modal>
     </Animated.View>
   );
 }
@@ -141,4 +169,38 @@ const styles = StyleSheet.create({
   btnLabel: {fontFamily: 'PressStart2P-Regular', fontSize: 8, color: '#FF2D6F', lineHeight: 13},
   loadingRow: {flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16},
   loadingText: {fontFamily: 'PressStart2P-Regular', fontSize: 8, color: 'rgba(255,255,255,0.80)', lineHeight: 13},
+});
+
+const modal = StyleSheet.create({
+  backdrop: {
+    flex: 1, backgroundColor: 'rgba(5,3,10,0.96)',
+    alignItems: 'center', justifyContent: 'center', padding: 24,
+  },
+  card: {
+    width: '100%', alignItems: 'center',
+    borderWidth: 3, borderColor: C.lime,
+    backgroundColor: C.bgSurface, padding: 32,
+    shadowColor: C.lime, shadowOpacity: 0.6, shadowRadius: 0, shadowOffset: {width: 6, height: 6},
+  },
+  crown: {fontSize: 52, marginBottom: 8},
+  headline: {
+    fontFamily: 'PressStart2P-Regular', fontSize: 24, color: C.lime, letterSpacing: 3, lineHeight: 36,
+    textShadowColor: '#fff', textShadowOffset: {width: 2, height: 2}, textShadowRadius: 0,
+  },
+  score: {
+    fontFamily: 'PressStart2P-Regular', fontSize: 16, color: C.yellow, marginTop: 12, lineHeight: 24,
+  },
+  reason: {
+    fontFamily: 'Oswald-SemiBold', fontSize: 14, color: 'rgba(255,255,255,0.75)',
+    textAlign: 'center', lineHeight: 20, marginTop: 12, paddingHorizontal: 8,
+  },
+  streak: {
+    fontFamily: 'Oswald-Bold', fontSize: 13, color: C.cyan, marginTop: 16, letterSpacing: 1,
+  },
+  doneBtn: {
+    marginTop: 28, backgroundColor: C.lime, borderWidth: 3, borderColor: '#fff',
+    paddingVertical: 16, paddingHorizontal: 32,
+    shadowColor: C.purple, shadowOpacity: 0.9, shadowRadius: 0, shadowOffset: {width: 5, height: 5},
+  },
+  doneBtnText: {color: '#05030a', fontFamily: 'PressStart2P-Regular', fontSize: 10, letterSpacing: 1, lineHeight: 18},
 });
