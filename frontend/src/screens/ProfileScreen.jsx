@@ -89,6 +89,25 @@ export default function ProfileScreen({navigation}) {
 
   const initial = (profile?.username || user?.email || '?')[0].toUpperCase();
 
+  const RANK_LADDER = [
+    {name: 'ROOKIE', min: 0, max: 7},
+    {name: 'FIGHTER', min: 7, max: 30},
+    {name: 'CHAMP', min: 30, max: 50},
+    {name: 'MASTER', min: 50, max: 100},
+    {name: 'LEGEND', min: 100, max: 200},
+    {name: 'GRANDMASTER', min: 200, max: 200},
+  ];
+  const longestStreak = profile?.longest_streak || 0;
+  const currentRungIdx = RANK_LADDER.findIndex((r, i) =>
+    longestStreak >= r.min && (i === RANK_LADDER.length - 1 || longestStreak < RANK_LADDER[i + 1].min)
+  );
+  const currentRung = RANK_LADDER[currentRungIdx] || RANK_LADDER[0];
+  const nextRung = RANK_LADDER[currentRungIdx + 1];
+  const rankProgress = nextRung
+    ? (longestStreak - currentRung.min) / (nextRung.min - currentRung.min)
+    : 1;
+  const daysToNext = nextRung ? Math.max(0, nextRung.min - longestStreak) : 0;
+
   const stats = [
     {label: 'Wins', value: profile?.total_wins || 0},
     {label: 'Streak', value: profile?.active_streak || 0},
@@ -118,6 +137,18 @@ export default function ProfileScreen({navigation}) {
           </View>
           <Text style={styles.username}>{profile?.username || '—'}</Text>
           <RankBadge rank={rankFromStreak(profile?.longest_streak || 0)} size="lg" />
+          {nextRung ? (
+            <View style={styles.rankProgress}>
+              <View style={styles.rankProgressTrack}>
+                <View style={[styles.rankProgressFill, {width: `${Math.round(rankProgress * 100)}%`}]} />
+              </View>
+              <Text style={styles.rankProgressLabel}>
+                {daysToNext} days to {nextRung.name}
+              </Text>
+            </View>
+          ) : (
+            <Text style={styles.rankProgressLabel}>GRANDMASTER ♛</Text>
+          )}
         </Animated.View>
 
         <View style={styles.divider} />
@@ -195,6 +226,13 @@ const styles = StyleSheet.create({
   },
   email: {fontSize: 13, color: 'rgba(255,255,255,0.50)', marginTop: 4, fontFamily: 'Oswald-SemiBold'},
 
+  rankProgress: {marginTop: 10, width: '100%'},
+  rankProgressTrack: {height: 6, backgroundColor: 'rgba(255,255,255,0.12)', overflow: 'hidden'},
+  rankProgressFill: {height: 6, backgroundColor: C.yellow},
+  rankProgressLabel: {
+    fontFamily: 'PressStart2P-Regular', fontSize: 7, color: C.white70,
+    letterSpacing: 1, lineHeight: 13, marginTop: 5,
+  },
   divider: {height: 2, backgroundColor: 'rgba(255,255,255,0.13)', marginHorizontal: 20, marginVertical: 20},
 
   statsRow: {flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20},
