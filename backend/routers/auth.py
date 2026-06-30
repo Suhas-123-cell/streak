@@ -107,11 +107,13 @@ async def login(request: Request, req: LoginRequest):
             raise HTTPException(status_code=401, detail="Invalid email or password.")
         user_id = resp.user.id
         profile = supabase.table("profiles").select("username").eq("id", user_id).limit(1).execute()
-        has_username = bool(profile.data and cast(Dict[str, Any], profile.data[0]).get("username"))
+        username = cast(Dict[str, Any], profile.data[0]).get("username") if profile.data else None
+        has_username = bool(username)
         return {
             "user_id": user_id,
             "access_token": resp.session.access_token,
             "has_username": has_username,
+            "username": username,
         }
     except Exception as e:
         err = str(e).lower()
@@ -145,4 +147,13 @@ async def set_username(request: Request, req: UsernameRequest):
     else:
         supabase.table("profiles").insert({"id": user_id, "username": req.username}).execute()
         supabase.table("reminder_preferences").insert({"user_id": user_id}).execute()
+    return {"ok": True}
+
+
+@router.delete("/delete-account")
+async def delete_account(user=Depends(get_current_user)):
+    try:
+        supabase.auth.admin.delete_user(user.id)
+    except Exception as e:
+        raise HTTPException(500, f"Could not delete account: {str(e)[:80]}")
     return {"ok": True}

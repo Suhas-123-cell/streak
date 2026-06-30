@@ -215,6 +215,30 @@ async def list_checkins(battle_id: str, page: int = 0, user=Depends(get_current_
     return checkins.data
 
 
+ALLOWED_REACTIONS = {"🔥", "❤️", "👏", "💪", "😤"}
+
+
+@router.post("/{checkin_id}/react")
+async def react_to_checkin(checkin_id: str, body: dict, user=Depends(get_current_user)):
+    emoji = body.get("emoji", "🔥")
+    if emoji not in ALLOWED_REACTIONS:
+        raise HTTPException(400, f"Emoji must be one of: {', '.join(ALLOWED_REACTIONS)}")
+    supabase.table("checkin_reactions").upsert({
+        "checkin_id": checkin_id,
+        "user_id": user.id,
+        "emoji": emoji,
+    }, on_conflict="checkin_id,user_id").execute()
+    counts = (
+        supabase.table("checkin_reactions")
+        .select("emoji")
+        .eq("checkin_id", checkin_id)
+        .execute()
+    )
+    from collections import Counter
+    tally = dict(Counter(r["emoji"] for r in (counts.data or [])))
+    return {"ok": True, "reactions": tally}
+
+
 @router.get("/{battle_id}/today")
 async def today_checkins(battle_id: str, user=Depends(get_current_user)):
     today = date.today().isoformat()
