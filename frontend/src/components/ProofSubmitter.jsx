@@ -52,10 +52,20 @@ export default function ProofSubmitter({battleId, onSuccess}) {
     const asset = response.assets?.[0];
     if (!asset?.uri) return;
     try {
-      const data = await submitCheckin(
-        battleId, 'photo', asset.uri,
-        asset.fileName || 'photo.jpg', asset.type || 'image/jpeg',
-      );
+      const data = await submitCheckin(battleId, 'photo', asset.uri, asset.fileName || 'photo.jpg', asset.type || 'image/jpeg');
+      if (data?.ai_verified !== undefined) onSuccess?.(data);
+    } catch (e) {
+      Alert.alert('Error', e.message);
+    }
+  }
+
+  async function handleVideo() {
+    const response = await launchCamera({mediaType: 'video', videoQuality: 'medium', durationLimit: 15, saveToPhotos: false});
+    if (response.didCancel || response.errorCode) return;
+    const asset = response.assets?.[0];
+    if (!asset?.uri) return;
+    try {
+      const data = await submitCheckin(battleId, 'video', asset.uri, asset.fileName || 'proof.mp4', asset.type || 'video/mp4');
       if (data?.ai_verified !== undefined) onSuccess?.(data);
     } catch (e) {
       Alert.alert('Error', e.message);
@@ -96,11 +106,15 @@ export default function ProofSubmitter({battleId, onSuccess}) {
       }]} pointerEvents="none" />
 
       <Text style={styles.title}>PROOF ROUND</Text>
-      <Text style={styles.sub}>Submit photo or voice proof. AI checks the run.</Text>
+      <Text style={styles.sub}>Photo, 15-sec video, or voice. AI judges.</Text>
       <View style={styles.btnRow}>
         <TouchableOpacity style={styles.btn} onPress={handlePhoto} disabled={loading}>
           <Text style={styles.btnIcon}>CAM</Text>
           <Text style={styles.btnLabel}>PHOTO</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.btn} onPress={handleVideo} disabled={loading}>
+          <Text style={styles.btnIcon}>VID</Text>
+          <Text style={styles.btnLabel}>VIDEO</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.btn, recording && styles.btnActive]}
