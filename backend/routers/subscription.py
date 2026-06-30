@@ -11,7 +11,7 @@ router = APIRouter()
 RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID", "")
 RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "")
 
-FREE_BATTLE_LIMIT = 5
+FREE_BATTLE_LIMIT = 20  # generous limit so the social loop forms; Pro gates freeze tokens + AI
 FREE_AI_CHECKINS_PER_DAY = 10
 
 PLANS = {
