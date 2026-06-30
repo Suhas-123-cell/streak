@@ -8,11 +8,23 @@ from routers.subscription import is_pro, FREE_BATTLE_LIMIT
 router = APIRouter()
 
 
+@router.get("/discover")
+async def discover_battles(user=Depends(get_current_user)):
+    joined = supabase.table("battle_members").select("battle_id").eq("user_id", user.id).execute()
+    joined_ids = [r["battle_id"] for r in (joined.data or [])]
+    query = supabase.table("battles").select("id, habit_name, habit_description, ends_at, created_by").eq("is_public", True)
+    if joined_ids:
+        query = query.not_.in_("id", joined_ids)
+    result = query.order("created_at", desc=True).limit(20).execute()
+    return result.data or []
+
+
 class CreateBattleRequest(BaseModel):
     habit_name: str
     habit_description: Optional[str] = None
     ends_at: Optional[str] = None
     member_usernames: List[str] = []
+    is_public: Optional[bool] = False
 
 
 @router.post("")
@@ -39,6 +51,7 @@ async def create_battle(req: CreateBattleRequest, user=Depends(get_current_user)
                 "habit_name": req.habit_name,
                 "habit_description": req.habit_description,
                 "ends_at": req.ends_at,
+                "is_public": bool(req.is_public),
             }
         )
         .execute()

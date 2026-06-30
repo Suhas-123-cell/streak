@@ -24,3 +24,7 @@ CREATE POLICY "Users can delete own comments"
 
 CREATE INDEX IF NOT EXISTS idx_checkin_comments_checkin_id
   ON checkin_comments (checkin_id);
+
+-- Public battle discovery
+ALTER TABLE battles ADD COLUMN IF NOT EXISTS is_public boolean DEFAULT false;
+CREATE INDEX IF NOT EXISTS idx_battles_is_public ON battles (is_public) WHERE is_public = true;

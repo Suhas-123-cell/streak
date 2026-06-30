@@ -33,6 +33,7 @@ export const endpoints = {
   leaveBattle: (battleId) => `${API_URL}/battles/${battleId}/leave`,
   pokeMember: (battleId, userId) => `${API_URL}/battles/${battleId}/poke/${userId}`,
   reactToCheckin: (checkinId) => `${API_URL}/checkins/${checkinId}/react`,
+  discoverBattles: `${API_URL}/battles/discover`,
   addComment: (checkinId) => `${API_URL}/checkins/${checkinId}/comment`,
   listComments: (checkinId) => `${API_URL}/checkins/${checkinId}/comments`,
   deleteAccount: `${API_URL}/auth/delete-account`,
