@@ -179,6 +179,23 @@ export default function BattleDetailScreen({route, navigation}) {
     Share.share({message: msg}).catch(() => {});
   }
 
+  async function shareInvite() {
+    try {
+      const res = await fetch(endpoints.createInviteLink(battle.id), {
+        method: 'POST',
+        headers: {Authorization: `Bearer ${token}`},
+      });
+      if (!res.ok) throw new Error('Could not generate invite link');
+      const {code} = await res.json();
+      Share.share({
+        message: `Join my "${battle.habit_name}" battle on StreakFight!\n\nCode: ${code}\nDownload: https://streakfight.app`,
+        title: 'Join my StreakFight battle',
+      }).catch(() => {});
+    } catch (e) {
+      Alert.alert('Invite failed', e.message || 'Please try again.');
+    }
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor={C.bgDeep} />
@@ -210,9 +227,14 @@ export default function BattleDetailScreen({route, navigation}) {
           {battle.habit_description ? (
             <Text style={styles.heroDesc}>{battle.habit_description}</Text>
           ) : null}
-          <TouchableOpacity style={styles.shareBtn} onPress={shareStats}>
-            <Text style={styles.shareBtnText}>↗ Share</Text>
-          </TouchableOpacity>
+          <View style={styles.shareBtnRow}>
+            <TouchableOpacity style={styles.shareBtn} onPress={shareStats}>
+              <Text style={styles.shareBtnText}>↗ Stats</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.shareBtn, styles.inviteBtn]} onPress={shareInvite}>
+              <Text style={styles.shareBtnText}>+ Invite</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Progress bar */}
@@ -494,6 +516,8 @@ const styles = StyleSheet.create({
   failedTitle: {fontFamily: 'PressStart2P-Regular', fontSize: 10, color: '#FF2D6F', lineHeight: 18},
   recoveryHint: {color: C.orange, fontSize: 13, marginTop: 6, fontFamily: 'Oswald-SemiBold'},
   heroCountdown: {fontFamily: 'PressStart2P-Regular', fontSize: 8, color: '#FFD400', marginTop: 6, marginHorizontal: 20, lineHeight: 14},
+  shareBtnRow: {flexDirection: 'row', gap: 8},
+  inviteBtn: {borderColor: C.yellow},
   shareBtn: {
     alignSelf: 'flex-start', marginTop: 10, marginHorizontal: 20,
     backgroundColor: 'rgba(25,224,255,0.15)',
