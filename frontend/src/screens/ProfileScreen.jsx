@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, SafeAreaView, ScrollView,
   TouchableOpacity, StatusBar, Animated, Easing,
 } from 'react-native';
+import {Alert} from 'react-native';
 import {useAuth} from '../context/AuthContext';
 import {endpoints} from '../constants/api';
 
@@ -53,6 +54,24 @@ function StatCol({label, value, delay}) {
 
 export default function ProfileScreen({navigation}) {
   const {user, token, logout} = useAuth();
+
+  async function handleDeleteAccount() {
+    Alert.alert(
+      'Delete Account',
+      'This permanently deletes your account, all battles, and streaks. This cannot be undone.',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {text: 'Delete Forever', style: 'destructive', onPress: async () => {
+          try {
+            await fetch(endpoints.deleteAccount, {method: 'DELETE', headers: {Authorization: `Bearer ${token}`}});
+            logout();
+          } catch {
+            Alert.alert('Error', 'Could not delete account. Please try again.');
+          }
+        }},
+      ]
+    );
+  }
   const [profile, setProfile] = useState(null);
   const [isPro, setIsPro] = useState(false);
 

@@ -31,6 +31,8 @@ export const endpoints = {
   useFreeze: (battleId) => `${API_URL}/battles/${battleId}/freeze`,
   repairStreak: (battleId) => `${API_URL}/battles/${battleId}/repair-streak`,
   leaveBattle: (battleId) => `${API_URL}/battles/${battleId}/leave`,
+  reactToCheckin: (checkinId) => `${API_URL}/checkins/${checkinId}/react`,
+  deleteAccount: `${API_URL}/auth/delete-account`,
   rewardStats: (userId) => `${API_URL}/rewards/stats/${userId}`,
   subscriptionStatus: `${API_URL}/subscription/status`,
   subscriptionOrder: `${API_URL}/subscription/order`,
