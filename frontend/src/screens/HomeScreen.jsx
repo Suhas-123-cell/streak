@@ -212,6 +212,8 @@ export default function HomeScreen({navigation}) {
   const {battles, loading, fetchBattles} = useBattles();
   const [checkinStatus, setCheckinStatus] = useState({});
   const [focusKey, setFocusKey] = useState(0);
+  const [publicBattles, setPublicBattles] = useState([]);
+  const [joiningId, setJoiningId] = useState(null);
 
   const fabAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -221,7 +223,22 @@ export default function HomeScreen({navigation}) {
   useFocusEffect(useCallback(() => {
     fetchBattles();
     setFocusKey(k => k + 1);
-  }, [fetchBattles]));
+    fetch(endpoints.discoverBattles, {headers: {Authorization: `Bearer ${token}`}})
+      .then(r => r.json())
+      .then(d => setPublicBattles(Array.isArray(d) ? d : []))
+      .catch(() => {});
+  }, [fetchBattles, token]));
+
+  async function joinPublicBattle(battleId) {
+    if (joiningId) return;
+    setJoiningId(battleId);
+    try {
+      await fetch(endpoints.accept(battleId), {method: 'POST', headers: {Authorization: `Bearer ${token}`}});
+      setPublicBattles(prev => prev.filter(b => b.id !== battleId));
+      fetchBattles();
+    } catch {}
+    setJoiningId(null);
+  }
 
   const handleCheckinStatus = useCallback((battleId, status) => {
     setCheckinStatus(prev => ({...prev, [battleId]: status}));
@@ -291,6 +308,26 @@ export default function HomeScreen({navigation}) {
           <RefreshControl refreshing={loading} onRefresh={handleRefresh} tintColor={C.cyan} />
         }
         ListHeaderComponent={ListHeader}
+        ListFooterComponent={publicBattles.length > 0 ? (
+          <View style={styles.discoverSection}>
+            <Text style={styles.discoverTitle}>DISCOVER BATTLES</Text>
+            {publicBattles.map(b => (
+              <View key={b.id} style={styles.discoverCard}>
+                <View style={{flex: 1}}>
+                  <Text style={styles.discoverHabit}>{b.habit_name}</Text>
+                  {b.habit_description ? <Text style={styles.discoverDesc}>{b.habit_description}</Text> : null}
+                </View>
+                <TouchableOpacity
+                  style={[styles.discoverJoinBtn, joiningId === b.id && {opacity: 0.5}]}
+                  onPress={() => joinPublicBattle(b.id)}
+                  disabled={joiningId === b.id}
+                  activeOpacity={0.8}>
+                  <Text style={styles.discoverJoinText}>{joiningId === b.id ? '...' : 'JOIN'}</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        ) : null}
         contentContainerStyle={{paddingBottom: 110}}
       />
       <Animated.View style={{
@@ -371,6 +408,24 @@ const styles = StyleSheet.create({
     shadowOffset: {width: 5, height: 5},
   },
   onboardingBtnText: {color: '#05030a', fontFamily: 'PressStart2P-Regular', fontSize: 10, letterSpacing: 1, lineHeight: 18},
+
+  discoverSection: {marginHorizontal: 16, marginTop: 8, marginBottom: 8},
+  discoverTitle: {
+    fontFamily: 'PressStart2P-Regular', fontSize: 8, color: 'rgba(255,255,255,0.40)',
+    letterSpacing: 2, lineHeight: 14, marginBottom: 10,
+  },
+  discoverCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: '#160f1e', borderWidth: 2, borderColor: 'rgba(255,255,255,0.10)',
+    padding: 14, marginBottom: 8,
+  },
+  discoverHabit: {fontFamily: 'PressStart2P-Regular', fontSize: 9, color: '#FFD400', lineHeight: 15},
+  discoverDesc: {fontSize: 12, color: 'rgba(255,255,255,0.50)', marginTop: 3, fontFamily: 'Oswald-SemiBold'},
+  discoverJoinBtn: {
+    backgroundColor: 'rgba(25,224,255,0.15)', borderWidth: 2, borderColor: '#19E0FF',
+    paddingHorizontal: 12, paddingVertical: 8,
+  },
+  discoverJoinText: {fontFamily: 'PressStart2P-Regular', fontSize: 8, color: '#19E0FF', lineHeight: 13},
 
   fab: {
     width: 64, height: 64, borderRadius: 0,
