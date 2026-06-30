@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useCallback} from 'react';
 import {
   View, Text, StyleSheet, SafeAreaView, ScrollView,
-  RefreshControl, StatusBar, TouchableOpacity, Modal, Alert, Share, TextInput, KeyboardAvoidingView, Platform,
+  RefreshControl, StatusBar, TouchableOpacity, Modal, Alert, Share, TextInput, KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -535,6 +535,15 @@ export default function BattleDetailScreen({route, navigation}) {
               </View>
               <View style={styles.feedContent}>
                 <Text style={styles.feedName}>{c.profiles?.username}</Text>
+                {c.proof_url && c.proof_type === 'photo' && (
+                  <Image source={{uri: c.proof_url}} style={styles.feedProofImg} resizeMode="cover" />
+                )}
+                {c.proof_url && c.proof_type === 'video' && (
+                  <View style={styles.feedVideoThumb}>
+                    <Text style={styles.feedVideoIcon}>▶</Text>
+                    <Text style={styles.feedVideoLabel}>VIDEO PROOF</Text>
+                  </View>
+                )}
                 <Text style={styles.feedScore}>
                   {c.ai_verified === true ? 'OK' : c.ai_verified === null ? 'VOTE' : 'NO'} · {c.ai_score}/100
                 </Text>
@@ -737,6 +746,15 @@ const styles = StyleSheet.create({
   feedName: {fontFamily: 'PressStart2P-Regular', fontSize: 9, color: '#FFFFFF', lineHeight: 15},
   feedScore: {color: 'rgba(255,255,255,0.50)', fontSize: 13, marginTop: 2},
   empty: {padding: 20, color: 'rgba(255,255,255,0.50)', textAlign: 'center', fontSize: 14, fontFamily: 'Oswald-SemiBold'},
+  feedProofImg: {width: '100%', height: 140, marginTop: 8, borderWidth: 2, borderColor: 'rgba(255,255,255,0.12)'},
+  feedVideoThumb: {
+    width: '100%', height: 72, marginTop: 8,
+    backgroundColor: 'rgba(170,0,255,0.15)',
+    borderWidth: 2, borderColor: 'rgba(170,0,255,0.4)',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+  },
+  feedVideoIcon: {fontFamily: 'PressStart2P-Regular', fontSize: 14, color: '#AA00FF', lineHeight: 20},
+  feedVideoLabel: {fontFamily: 'PressStart2P-Regular', fontSize: 7, color: 'rgba(170,0,255,0.8)', lineHeight: 13},
   feedReason: {color: 'rgba(255,255,255,0.40)', fontSize: 12, marginTop: 2, fontFamily: 'Oswald-SemiBold', lineHeight: 16},
   reactionRow: {flexDirection: 'row', gap: 6, marginTop: 8, flexWrap: 'wrap'},
   reactionBtn: {
