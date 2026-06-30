@@ -17,6 +17,7 @@ import ProfileScreen from './src/screens/ProfileScreen';
 import AuthScreen from './src/screens/AuthScreen';
 import UsernameSetupScreen from './src/screens/UsernameSetupScreen';
 import PaywallScreen from './src/screens/PaywallScreen';
+import InviteJoinScreen from './src/screens/InviteJoinScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -137,6 +138,7 @@ function AppScreens() {
     <Stack.Navigator screenOptions={stackOpts}>
       <Stack.Screen name="Main" component={AppTabs} options={{headerShown: false}} />
       <Stack.Screen name="Paywall" component={PaywallScreen} options={{headerShown: false}} />
+      <Stack.Screen name="InviteJoin" component={InviteJoinScreen} options={{headerShown: false}} />
     </Stack.Navigator>
   );
 }
