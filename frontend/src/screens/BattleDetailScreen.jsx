@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useCallback} from 'react';
 import {
   View, Text, StyleSheet, SafeAreaView, ScrollView,
-  RefreshControl, StatusBar, TouchableOpacity, Modal, Alert, Share,
+  RefreshControl, StatusBar, TouchableOpacity, Modal, Alert, Share, TextInput, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -42,6 +42,8 @@ export default function BattleDetailScreen({route, navigation}) {
   const [myCheckin, setMyCheckin] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [reactions, setReactions] = useState({});
+  const [comments, setComments] = useState({});
+  const [commentDraft, setCommentDraft] = useState({});
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [reminderDate, setReminderDate] = useState(() => parseTimeToDate('21:00'));
   const [showPicker, setShowPicker] = useState(false);
@@ -139,6 +141,19 @@ export default function BattleDetailScreen({route, navigation}) {
       setPenalties(pens);
       setMyCheckin(checkins.find(c => c.user_id === user.id) || null);
       await fetchMembers();
+      // Load comments for all today's check-ins in parallel
+      const commentResults = await Promise.allSettled(
+        checkins.map(c =>
+          fetch(endpoints.listComments(c.id), {headers}).then(r => r.json()).then(d => [c.id, d])
+        )
+      );
+      const commentMap = {};
+      commentResults.forEach(r => {
+        if (r.status === 'fulfilled' && Array.isArray(r.value[1])) {
+          commentMap[r.value[0]] = r.value[1];
+        }
+      });
+      setComments(prev => ({...prev, ...commentMap}));
     } catch {}
   }, [battle.id, token]);
 
@@ -195,6 +210,24 @@ export default function BattleDetailScreen({route, navigation}) {
     } catch (e) {
       Alert.alert('Invite failed', e.message || 'Please try again.');
     }
+  }
+
+  async function submitComment(checkinId) {
+    const text = (commentDraft[checkinId] || '').trim();
+    if (!text) return;
+    setCommentDraft(prev => ({...prev, [checkinId]: ''}));
+    try {
+      const res = await fetch(endpoints.addComment(checkinId), {
+        method: 'POST',
+        headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'},
+        body: JSON.stringify({text}),
+      });
+      const newComment = await res.json();
+      setComments(prev => ({
+        ...prev,
+        [checkinId]: [...(prev[checkinId] || []), newComment],
+      }));
+    } catch {}
   }
 
   async function reactToCheckin(checkinId, emoji) {
@@ -299,13 +332,32 @@ export default function BattleDetailScreen({route, navigation}) {
             </View>
           ) : (
             <View style={styles.failedCard}>
-                <Text style={[styles.verifiedEmoji, styles.markNo]}>NO</Text>
+              <Text style={[styles.verifiedEmoji, styles.markNo]}>NO</Text>
               <View style={{flex: 1}}>
-                <Text style={styles.failedTitle}>Proof Rejected — Comeback Time</Text>
+                <Text style={styles.failedTitle}>Proof Rejected</Text>
                 {myCheckin.ai_reasoning ? (
                   <Text style={styles.verifiedReason}>{myCheckin.ai_reasoning}</Text>
                 ) : null}
-                <Text style={styles.recoveryHint}>Complete your redemption challenge below to repair your streak.</Text>
+                {myMember?.freeze_tokens > 0 ? (
+                  <TouchableOpacity
+                    style={styles.repairBtn}
+                    onPress={async () => {
+                      try {
+                        const res = await fetch(endpoints.repairStreak(battle.id), {
+                          method: 'POST', headers: {Authorization: `Bearer ${token}`},
+                        });
+                        const data = await res.json();
+                        if (data.ok) { Alert.alert('Streak Repaired!', `Back to ${data.new_streak} days. ${data.tokens_remaining} freeze token${data.tokens_remaining !== 1 ? 's' : ''} left.`); loadData(); }
+                        else Alert.alert('Error', data.detail || 'Could not repair streak.');
+                      } catch { Alert.alert('Error', 'Could not repair streak.'); }
+                    }}
+                    activeOpacity={0.8}>
+                    <Text style={styles.repairBtnText}>❄ USE FREEZE TOKEN — SAVE STREAK</Text>
+                    <Text style={styles.repairBtnSub}>{myMember.freeze_tokens} token{myMember.freeze_tokens !== 1 ? 's' : ''} available</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <Text style={styles.recoveryHint}>Complete your redemption challenge below to repair your streak.</Text>
+                )}
               </View>
             </View>
           )
@@ -479,6 +531,27 @@ export default function BattleDetailScreen({route, navigation}) {
                     );
                   })}
                 </View>
+                {(comments[c.id] || []).map(cm => (
+                  <View key={cm.id} style={styles.commentRow}>
+                    <Text style={styles.commentAuthor}>{cm.profiles?.username}</Text>
+                    <Text style={styles.commentText}>{cm.text}</Text>
+                  </View>
+                ))}
+                <View style={styles.commentInputRow}>
+                  <TextInput
+                    style={styles.commentInput}
+                    placeholder="Say something..."
+                    placeholderTextColor="rgba(255,255,255,0.25)"
+                    value={commentDraft[c.id] || ''}
+                    onChangeText={t => setCommentDraft(prev => ({...prev, [c.id]: t}))}
+                    onSubmitEditing={() => submitComment(c.id)}
+                    returnKeyType="send"
+                    maxLength={200}
+                  />
+                  <TouchableOpacity onPress={() => submitComment(c.id)} style={styles.commentSendBtn}>
+                    <Text style={styles.commentSendText}>▶</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           ))}
@@ -548,6 +621,13 @@ const styles = StyleSheet.create({
   },
   failedTitle: {fontFamily: 'PressStart2P-Regular', fontSize: 10, color: '#FF2D6F', lineHeight: 18},
   recoveryHint: {color: C.orange, fontSize: 13, marginTop: 6, fontFamily: 'Oswald-SemiBold'},
+  repairBtn: {
+    marginTop: 10, backgroundColor: 'rgba(25,224,255,0.12)',
+    borderWidth: 2, borderColor: '#19E0FF',
+    paddingVertical: 10, paddingHorizontal: 12, alignItems: 'center',
+  },
+  repairBtnText: {fontFamily: 'PressStart2P-Regular', fontSize: 7, color: '#19E0FF', lineHeight: 13, letterSpacing: 1},
+  repairBtnSub: {fontSize: 11, color: 'rgba(25,224,255,0.65)', fontFamily: 'Oswald-SemiBold', marginTop: 3},
   heroCountdown: {fontFamily: 'PressStart2P-Regular', fontSize: 8, color: '#FFD400', marginTop: 6, marginHorizontal: 20, lineHeight: 14},
   shareBtnRow: {flexDirection: 'row', gap: 8},
   inviteBtn: {borderColor: C.yellow},
@@ -638,6 +718,21 @@ const styles = StyleSheet.create({
   },
   reactionEmoji: {fontSize: 14},
   reactionCount: {fontSize: 11, color: '#FFD400', fontFamily: 'PressStart2P-Regular', lineHeight: 14},
+  commentRow: {flexDirection: 'row', gap: 6, marginTop: 5, paddingLeft: 2},
+  commentAuthor: {fontFamily: 'PressStart2P-Regular', fontSize: 7, color: C.cyan, lineHeight: 13, minWidth: 60},
+  commentText: {flex: 1, fontSize: 12, color: 'rgba(255,255,255,0.75)', fontFamily: 'Oswald-SemiBold', lineHeight: 16},
+  commentInputRow: {flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8},
+  commentInput: {
+    flex: 1, backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 10, paddingVertical: 6,
+    color: '#FFFFFF', fontSize: 13, fontFamily: 'Oswald-SemiBold',
+  },
+  commentSendBtn: {
+    backgroundColor: 'rgba(25,224,255,0.15)', borderWidth: 1, borderColor: '#19E0FF',
+    paddingHorizontal: 10, paddingVertical: 6,
+  },
+  commentSendText: {color: '#19E0FF', fontFamily: 'PressStart2P-Regular', fontSize: 9, lineHeight: 14},
   reminderCard: {
     backgroundColor: '#160f1e', marginHorizontal: 16, overflow: 'hidden',
     borderWidth: 2, borderColor: 'rgba(255,255,255,0.13)',

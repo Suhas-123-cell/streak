@@ -4,6 +4,7 @@ import os
 import tempfile
 from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, Form
+from pydantic import BaseModel
 from database import supabase
 from redis_client import r
 from middleware.auth import get_current_user
@@ -237,6 +238,39 @@ async def react_to_checkin(checkin_id: str, body: dict, user=Depends(get_current
     from collections import Counter
     tally = dict(Counter(r["emoji"] for r in (counts.data or [])))
     return {"ok": True, "reactions": tally}
+
+
+class CommentBody(BaseModel):
+    text: str
+
+
+@router.post("/{checkin_id}/comment")
+async def add_comment(checkin_id: str, body: CommentBody, user=Depends(get_current_user)):
+    text = (body.text or "").strip()
+    if not text or len(text) > 200:
+        raise HTTPException(400, "Comment must be 1-200 characters")
+    comment = (
+        supabase.table("checkin_comments")
+        .insert({"checkin_id": checkin_id, "user_id": user.id, "text": text})
+        .execute()
+        .data[0]
+    )
+    profile = supabase.table("profiles").select("username").eq("id", user.id).single().execute()
+    username = profile.data.get("username") if profile.data else None
+    return {**cast(dict, comment), "profiles": {"username": username}}
+
+
+@router.get("/{checkin_id}/comments")
+async def list_comments(checkin_id: str, user=Depends(get_current_user)):
+    comments = (
+        supabase.table("checkin_comments")
+        .select("*, profiles(username)")
+        .eq("checkin_id", checkin_id)
+        .order("created_at", desc=False)
+        .limit(50)
+        .execute()
+    )
+    return comments.data or []
 
 
 @router.get("/{battle_id}/today")
