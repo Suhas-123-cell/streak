@@ -15,11 +15,11 @@ const PLANS = {
 };
 
 const FEATURES = [
-  {free: '3 battles max',       pro: 'Unlimited battles'},
-  {free: '10 AI check-ins/day', pro: 'Unlimited AI verification'},
-  {free: 'Basic rank badges',   pro: 'All badges + Pro crown ♛'},
-  {free: '—',                   pro: 'Shareable streak cards'},
-  {free: '—',                   pro: 'Priority support'},
+  {free: 'Up to 20 battles',         pro: 'Unlimited battles'},
+  {free: '1 freeze token / 7 days',  pro: 'Unlimited freeze tokens'},
+  {free: 'Photo + voice proof',      pro: 'Video proof (15-sec)'},
+  {free: 'Standard rank badges',     pro: 'Animated rank card ♛'},
+  {free: '—',                        pro: 'Priority AI verification'},
 ];
 
 function FeatureRow({free, pro, index}) {
