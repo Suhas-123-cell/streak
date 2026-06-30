@@ -1,8 +1,9 @@
 from typing import Any, Dict, Optional, cast
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, EmailStr, field_validator
 from database import supabase, auth_supabase
 from extensions import limiter
+from middleware.auth import get_current_user
 
 router = APIRouter()
 
@@ -153,7 +154,7 @@ async def set_username(request: Request, req: UsernameRequest):
 @router.delete("/delete-account")
 async def delete_account(user=Depends(get_current_user)):
     try:
-        supabase.auth.admin.delete_user(user.id)
+        auth_supabase.auth.admin.delete_user(user.id)
     except Exception as e:
         raise HTTPException(500, f"Could not delete account: {str(e)[:80]}")
     return {"ok": True}
