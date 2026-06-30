@@ -31,6 +31,7 @@ export const endpoints = {
   useFreeze: (battleId) => `${API_URL}/battles/${battleId}/freeze`,
   repairStreak: (battleId) => `${API_URL}/battles/${battleId}/repair-streak`,
   leaveBattle: (battleId) => `${API_URL}/battles/${battleId}/leave`,
+  pokeMember: (battleId, userId) => `${API_URL}/battles/${battleId}/poke/${userId}`,
   reactToCheckin: (checkinId) => `${API_URL}/checkins/${checkinId}/react`,
   addComment: (checkinId) => `${API_URL}/checkins/${checkinId}/comment`,
   listComments: (checkinId) => `${API_URL}/checkins/${checkinId}/comments`,

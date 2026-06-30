@@ -44,6 +44,7 @@ export default function BattleDetailScreen({route, navigation}) {
   const [reactions, setReactions] = useState({});
   const [comments, setComments] = useState({});
   const [commentDraft, setCommentDraft] = useState({});
+  const [pokingId, setPokingId] = useState(null);
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [reminderDate, setReminderDate] = useState(() => parseTimeToDate('21:00'));
   const [showPicker, setShowPicker] = useState(false);
@@ -212,6 +213,18 @@ export default function BattleDetailScreen({route, navigation}) {
     }
   }
 
+  async function pokeMember(targetUserId) {
+    if (pokingId) return;
+    setPokingId(targetUserId);
+    try {
+      await fetch(endpoints.pokeMember(battle.id, targetUserId), {
+        method: 'POST',
+        headers: {Authorization: `Bearer ${token}`},
+      });
+    } catch {}
+    setTimeout(() => setPokingId(null), 3000);
+  }
+
   async function submitComment(checkinId) {
     const text = (commentDraft[checkinId] || '').trim();
     if (!text) return;
@@ -377,12 +390,24 @@ export default function BattleDetailScreen({route, navigation}) {
             <Text style={styles.section}>Assign Redemption</Text>
             <View style={styles.penaltyWrap}>
               {missedMembers.map(m => (
-                <PenaltyAssigner
-                  key={m.user_id}
-                  battleId={battle.id}
-                  missedMember={m}
-                  onAssigned={loadData}
-                />
+                <View key={m.user_id} style={styles.pokeRow}>
+                  <View style={{flex: 1}}>
+                    <PenaltyAssigner
+                      battleId={battle.id}
+                      missedMember={m}
+                      onAssigned={loadData}
+                    />
+                  </View>
+                  <TouchableOpacity
+                    style={[styles.pokeBtn, pokingId === m.user_id && styles.pokeBtnSent]}
+                    onPress={() => pokeMember(m.user_id)}
+                    disabled={pokingId === m.user_id}
+                    activeOpacity={0.75}>
+                    <Text style={styles.pokeBtnText}>
+                      {pokingId === m.user_id ? 'SENT!' : '👊'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               ))}
             </View>
           </>
@@ -675,6 +700,14 @@ const styles = StyleSheet.create({
   verifiedTitle: {fontFamily: 'PressStart2P-Regular', fontSize: 10, color: '#9BE80C', lineHeight: 18},
   verifiedReason: {color: 'rgba(255,255,255,0.80)', fontSize: 14, marginTop: 2, fontFamily: 'Oswald-SemiBold'},
   penaltyWrap: {marginHorizontal: 16, gap: 6},
+  pokeRow: {flexDirection: 'row', alignItems: 'center', gap: 8},
+  pokeBtn: {
+    width: 48, height: 48, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(255,45,111,0.12)',
+    borderWidth: 2, borderColor: 'rgba(255,45,111,0.4)',
+  },
+  pokeBtnSent: {backgroundColor: 'rgba(25,224,255,0.15)', borderColor: '#19E0FF'},
+  pokeBtnText: {fontFamily: 'PressStart2P-Regular', fontSize: 7, color: C.pink, lineHeight: 13},
   penaltyRow: {
     padding: 14, borderBottomWidth: 1, borderBottomColor: C.white08,
   },

@@ -136,6 +136,40 @@ async def repair_streak(battle_id: str, user=Depends(get_current_user)):
     return {"ok": True, "new_streak": new_streak, "tokens_remaining": tokens - 1}
 
 
+POKE_MESSAGES = [
+    "{name} is watching. Don't let them win. 👀",
+    "{name} already checked in and is judging you right now. 😤",
+    "{name} called you out. What are you doing? 🔥",
+    "Your excuse better be good. {name} wants to see your proof. 💪",
+]
+
+
+@router.post("/{battle_id}/poke/{target_user_id}")
+async def poke_member(battle_id: str, target_user_id: str, user=Depends(get_current_user)):
+    if user.id == target_user_id:
+        raise HTTPException(400, "Cannot poke yourself")
+    memberships = (
+        supabase.table("battle_members")
+        .select("user_id")
+        .eq("battle_id", battle_id)
+        .in_("user_id", [user.id, target_user_id])
+        .eq("status", "active")
+        .execute()
+    )
+    if len(memberships.data or []) < 2:
+        raise HTTPException(403, "Both users must be active members of this battle")
+    poker = supabase.table("profiles").select("username").eq("id", user.id).single().execute()
+    poker_name = (poker.data or {}).get("username") or "Someone"
+    pref = supabase.table("reminder_preferences").select("fcm_token").eq("user_id", target_user_id).single().execute()
+    fcm_token = (pref.data or {}).get("fcm_token")
+    if fcm_token:
+        import random
+        from tasks import _send_fcm
+        body = random.choice(POKE_MESSAGES).format(name=poker_name)
+        _send_fcm(str(fcm_token), "👊 You've been poked", body)
+    return {"ok": True}
+
+
 @router.post("/{battle_id}/leave")
 async def leave_battle(battle_id: str, user=Depends(get_current_user)):
     member = (
