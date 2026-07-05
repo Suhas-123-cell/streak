@@ -26,17 +26,60 @@ export function AuthProvider({children}) {
   const [needsUsername, setNeedsUsername] = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      Keychain.getGenericPassword({service: 'streakfight_token'}),
-      AsyncStorage.getItem('user'),
-    ]).then(([creds, u]) => {
-      if (creds && u) {
+    async function hydrate() {
+      try {
+        const [creds, u] = await Promise.all([
+          Keychain.getGenericPassword({service: 'streakfight_token'}),
+          AsyncStorage.getItem('user'),
+        ]);
+        if (!creds || !u) return;
         const parsed = JSON.parse(u);
-        setToken(creds.password);
+        const tok = creds.password;
+
+        if (!parsed.username) {
+          // Username missing locally — validate token and fetch real profile.
+          // This handles stale installs where login saved {id, email} only.
+          try {
+            const res = await fetchWithTimeout(
+              `${endpoints.profile(parsed.id)}`,
+              {headers: {Authorization: `Bearer ${tok}`}},
+              8000,
+            );
+            if (res.status === 401) {
+              // Expired/invalid token — clear and fall through to login screen
+              await Keychain.resetGenericPassword({service: 'streakfight_token'});
+              await AsyncStorage.removeItem('user');
+              return;
+            }
+            if (res.ok) {
+              const profile = await res.json();
+              if (profile.username) {
+                parsed.username = profile.username;
+                await AsyncStorage.setItem('user', JSON.stringify(parsed));
+              } else {
+                // Valid token, user genuinely has no username yet
+                setToken(tok);
+                setUser(parsed);
+                setNeedsUsername(true);
+                return;
+              }
+            }
+          } catch {
+            // Network error — credentials may still be valid; don't clear them.
+            // Fall through to AuthScreen (loading=false, user=null) so user can retry.
+            return;
+          }
+        }
+
+        setToken(tok);
         setUser(parsed);
-        if (!parsed.username) setNeedsUsername(true);
+      } catch {
+        // ignore corrupt storage
+      } finally {
+        setLoading(false);
       }
-    }).catch(() => {}).finally(() => setLoading(false));
+    }
+    hydrate();
   }, []);
 
   async function signup(email, password, username, fighterColor = 'pink') {
@@ -66,7 +109,7 @@ export function AuthProvider({children}) {
       throw new Error(msg);
     }
     const data = await res.json();
-    const u = {id: data.user_id, email};
+    const u = {id: data.user_id, email, username: data.username || null};
     await _persist(data.access_token, u);
     if (!data.has_username) setNeedsUsername(true);
   }
