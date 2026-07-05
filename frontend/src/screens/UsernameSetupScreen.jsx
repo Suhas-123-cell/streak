@@ -10,7 +10,7 @@ import {C} from '../constants/theme';
 import {ArcadeBackdrop, ArcadeTopBar, HardCard, ScreenTitle} from '../components/ArcadeUI';
 
 export default function UsernameSetupScreen() {
-  const {saveUsername} = useAuth();
+  const {saveUsername, logout} = useAuth();
   const [username, setUsername]         = useState('');
   const [loading, setLoading]           = useState(false);
   const [usernameStatus, setStatus]     = useState(null); // null | 'checking' | 'available' | 'taken'
@@ -116,6 +116,10 @@ export default function UsernameSetupScreen() {
           <Text style={styles.hint}>
             No spaces. Max 30 characters.
           </Text>
+
+          <TouchableOpacity onPress={logout} style={styles.logoutRow}>
+            <Text style={styles.logoutTxt}>Not you? Log out</Text>
+          </TouchableOpacity>
         </Animated.View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -158,4 +162,6 @@ const styles = StyleSheet.create({
   btnDisabled: {opacity: 0.45},
   btnText:     {color: '#FFFFFF', fontFamily: 'PressStart2P-Regular', fontSize: 11, letterSpacing: 1, lineHeight: 20},
   hint:        {textAlign: 'center', color: 'rgba(255,255,255,0.50)', fontSize: 13, marginTop: 16, fontFamily: 'Oswald-SemiBold'},
+  logoutRow:   {alignItems: 'center', marginTop: 20, paddingVertical: 8},
+  logoutTxt:   {color: 'rgba(255,255,255,0.35)', fontSize: 12, fontFamily: 'Oswald-SemiBold', textDecorationLine: 'underline'},
 });
