@@ -28,9 +28,9 @@
     "react-native-keychain": "^8.2.0",
     "react-native-safe-area-context": "^5.0.0",
     "react-native-screens": "^4.25.2",
-    "react-native-razorpay": "^2.4.0",
-    "react-native-share": "^10.0.2",
-    "react-native-view-shot": "^3.8.0",
+    "react-native-razorpay": "^2.3.1",
+    "react-native-share": "^12.3.1",
+    "react-native-view-shot": "^5.1.1",
     "react-native-vision-camera": "^4.7.3"
   },
   "devDependencies": {
