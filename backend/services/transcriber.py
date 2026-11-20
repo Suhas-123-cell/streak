@@ -4,12 +4,19 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-client = Groq(api_key=os.environ["GROQ_API_KEY"])
+_client: Groq | None = None
+
+
+def _get_client() -> Groq:
+    global _client
+    if _client is None:
+        _client = Groq(api_key=os.environ["GROQ_API_KEY"])
+    return _client
 
 
 def transcribe_audio(audio_file_path: str) -> str:
     with open(audio_file_path, "rb") as f:
-        transcription = client.audio.transcriptions.create(
+        transcription = _get_client().audio.transcriptions.create(
             file=f,
             model="whisper-large-v3",
         )
