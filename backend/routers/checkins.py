@@ -3,12 +3,14 @@ from typing import cast
 import os
 import tempfile
 from datetime import date
+from fastapi.concurrency import run_in_threadpool
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, Form
 from pydantic import BaseModel
 from database import supabase
 from redis_client import r
 from middleware.auth import get_current_user
 from services.gemini_verifier import verify_photo, verify_voice, verify_video
+from services.verdict import Verdict, VerdictError
 from services.transcriber import transcribe_audio
 from extensions import limiter
 
@@ -63,23 +65,34 @@ async def submit_checkin(
     ext = raw_ext if raw_ext in allowed_exts else default_ext
 
     today = date.today().isoformat()
-    checkin_key = f"battle:{battle_id}:checkedin:{today}"
+    battle = await run_in_threadpool(_load_battle_for_checkin, battle_id, user.id, today)
 
-    if r.sismember(checkin_key, user.id):
+    content = await proof_file.read(MAX_UPLOAD_BYTES + 1)
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(413, "File too large (max 10 MB)")
+
+    # Supabase, Redis, Gemini and Groq clients are synchronous; keep them off the event loop.
+    return await run_in_threadpool(
+        _judge_and_record, battle_id, user.id, battle, proof_type, content, ext, today
+    )
+
+
+def _load_battle_for_checkin(battle_id: str, user_id: str, today: str) -> dict:
+    if r.sismember(f"battle:{battle_id}:checkedin:{today}", user_id):
         raise HTTPException(400, "Already checked in today")
 
     membership = (
         supabase.table("battle_members")
         .select("id")
         .eq("battle_id", battle_id)
-        .eq("user_id", user.id)
+        .eq("user_id", user_id)
         .eq("status", "active")
         .execute()
     )
     if not membership.data:
         raise HTTPException(403, "You are not an active member of this battle")
 
-    battle = cast(dict, (
+    return cast(dict, (
         supabase.table("battles")
         .select("habit_name, habit_description")
         .eq("id", battle_id)
@@ -88,41 +101,57 @@ async def submit_checkin(
         .data
     ))
 
-    content = await proof_file.read(MAX_UPLOAD_BYTES + 1)
-    if len(content) > MAX_UPLOAD_BYTES:
-        raise HTTPException(413, "File too large (max 10 MB)")
+
+def _run_ai(proof_type: str, tmp_path: str, battle: dict) -> Verdict | None:
+    """Returns the AI verdict, or None if the model gave no valid verdict twice."""
+    habit, rules = battle["habit_name"], battle["habit_description"]
+    try:
+        if proof_type == "photo":
+            return verify_photo(tmp_path, habit, rules)
+        if proof_type == "video":
+            return verify_video(tmp_path, habit, rules)
+        transcript = transcribe_audio(tmp_path)
+        return verify_voice(transcript, habit, rules)
+    except VerdictError as e:
+        logging.error(f"AI returned no valid verdict, routing to jury: {e}")
+        return None
+    except Exception as e:
+        logging.error(f"AI verification failed: {e}")
+        raise HTTPException(503, f"AI verification temporarily unavailable: {str(e)[:100]}")
+
+
+def decide_outcome(verdict: Verdict | None) -> tuple[bool, bool | None, int | None, str]:
+    """Maps a verdict to (verified, ai_verified column, ai_score, reasoning).
+
+    ai_verified None means pending jury vote.
+    """
+    if verdict is None:
+        return False, None, None, "AI could not produce a verdict; sent to the jury."
+    score = verdict.score
+    if score >= SCORE_THRESHOLD:
+        return verdict.verified, verdict.verified, score, verdict.reasoning
+    if score >= JURY_THRESHOLD_LOW:
+        return False, None, score, verdict.reasoning
+    return False, False, score, verdict.reasoning
+
+
+def _judge_and_record(
+    battle_id: str, user_id: str, battle: dict, proof_type: str, content: bytes, ext: str, today: str
+) -> dict:
+    checkin_key = f"battle:{battle_id}:checkedin:{today}"
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=f".{ext}") as tmp:
         tmp.write(content)
         tmp_path = tmp.name
-
     try:
-        if proof_type == "photo":
-            result = verify_photo(tmp_path, battle["habit_name"], battle["habit_description"])
-        elif proof_type == "video":
-            result = verify_video(tmp_path, battle["habit_name"], battle["habit_description"])
-        else:
-            transcript = transcribe_audio(tmp_path)
-            result = verify_voice(transcript, battle["habit_name"], battle["habit_description"])
-    except Exception as e:
-        logging.error(f"AI verification failed: {e}")
-        raise HTTPException(503, f"AI verification temporarily unavailable: {str(e)[:100]}")
+        verdict = _run_ai(proof_type, tmp_path, battle)
     finally:
         os.unlink(tmp_path)
 
-    score = result["score"]
-    if score >= SCORE_THRESHOLD:
-        verified = result["verified"]
-        ai_verified_value = verified
-    elif score >= JURY_THRESHOLD_LOW:
-        verified = False
-        ai_verified_value = None  # pending jury vote
-    else:
-        verified = False
-        ai_verified_value = False
+    verified, ai_verified_value, ai_score, ai_reasoning = decide_outcome(verdict)
 
     try:
-        storage_path = f"checkins/{battle_id}/{user.id}/{today}.{ext}"
+        storage_path = f"checkins/{battle_id}/{user_id}/{today}.{ext}"
         supabase.storage.from_("proofs").upload(storage_path, content, {"upsert": "true"})
         proof_url = supabase.storage.from_("proofs").get_public_url(storage_path)
     except Exception as e:
@@ -134,12 +163,12 @@ async def submit_checkin(
         .insert(
             {
                 "battle_id": battle_id,
-                "user_id": user.id,
+                "user_id": user_id,
                 "proof_type": proof_type,
                 "proof_url": proof_url,
                 "ai_verified": ai_verified_value,
-                "ai_score": result["score"],
-                "ai_reasoning": result["reasoning"],
+                "ai_score": ai_score,
+                "ai_reasoning": ai_reasoning,
                 "date": today,
             }
         )
@@ -151,18 +180,18 @@ async def submit_checkin(
     r.delete(f"battle:{battle_id}:members")
 
     # Block re-submission for any outcome (verified, pending jury, or failed)
-    r.sadd(checkin_key, user.id)
+    r.sadd(checkin_key, user_id)
     r.expire(checkin_key, 172800)
 
     milestone_hit = None
     new_rank = None
 
     if verified:
-        streak_key = f"battle:{battle_id}:streak:{user.id}"
+        streak_key = f"battle:{battle_id}:streak:{user_id}"
         # Seed from DB if Redis key expired to avoid resetting a real streak to 1
         if not r.exists(streak_key):
             seed = cast(dict, supabase.table("battle_members").select("current_streak")
-                    .eq("battle_id", battle_id).eq("user_id", user.id)
+                    .eq("battle_id", battle_id).eq("user_id", user_id)
                     .single().execute().data or {}).get("current_streak", 0)
             r.set(streak_key, seed)
         new_streak = r.incr(streak_key)
@@ -171,7 +200,7 @@ async def submit_checkin(
             supabase.table("battle_members")
             .select("longest_streak, freeze_tokens")
             .eq("battle_id", battle_id)
-            .eq("user_id", user.id)
+            .eq("user_id", user_id)
             .single()
             .execute()
             .data
@@ -182,7 +211,7 @@ async def submit_checkin(
             update_data["freeze_tokens"] = (current.get("freeze_tokens") or 0) + 1
         supabase.table("battle_members").update(update_data).eq(
             "battle_id", battle_id
-        ).eq("user_id", user.id).execute()
+        ).eq("user_id", user_id).execute()
 
         r.delete(f"leaderboard:battle:{battle_id}")
 
