@@ -5,7 +5,8 @@ redis
 celery
 python-multipart
 groq
-google-genai
+google-genai>=1.0
+pydantic>=2
 firebase-admin
 httpx
 python-jose

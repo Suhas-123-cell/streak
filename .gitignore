@@ -82,3 +82,6 @@ frontend/patches/
 Thumbs.db
 *.log
 *.orig
+
+# Tests
+.pytest_cache/
