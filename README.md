@@ -5,7 +5,7 @@ A habit accountability app where you battle friends to maintain daily streaks. M
 ## What it does
 
 - Create battles around any habit (gym, reading, coding, etc.)
-- Submit photo or voice proof of your daily check-in
+- Submit photo, video or voice proof of your daily check-in
 - AI (Google Gemini) verifies each submission automatically
 - Battle members see who's checked in and who hasn't
 - Push notification reminders fire at your chosen time
@@ -19,7 +19,7 @@ A habit accountability app where you battle friends to maintain daily streaks. M
 | Backend | FastAPI + Uvicorn |
 | Database | Supabase (PostgreSQL + Auth + Storage) |
 | Cache | Redis |
-| AI | Google Gemini (photo verification + voice transcription) |
+| AI | Google Gemini 2.5 Flash (photo/video/voice verdicts), Groq Whisper (voice transcription) |
 | Push notifications | Firebase Cloud Messaging (FCM) |
 | Task queue | Celery + Celery Beat |
 
@@ -43,7 +43,9 @@ streak/
 │   │   ├── leaderboard.py       # global leaderboard
 │   │   └── penalties.py         # penalty assignment
 │   └── services/
-│       └── gemini_verifier.py   # photo + voice proof verification
+│       ├── gemini_verifier.py   # photo/video/voice verdicts (JSON schema, one retry)
+│       ├── verdict.py           # strict Verdict model + parser
+│       └── transcriber.py       # Groq Whisper transcription
 └── frontend/
     ├── App.jsx                  # navigation, FCM setup
     └── src/
@@ -91,13 +93,15 @@ celery -A tasks beat --loglevel=info
 
 ```
 SUPABASE_URL=
-SUPABASE_KEY=           # service role key
-SUPABASE_AUTH_URL=
-SUPABASE_AUTH_KEY=      # anon key
+SUPABASE_SERVICE_KEY=   # service role key
 REDIS_URL=redis://localhost:6379
 GEMINI_API_KEY=
+GROQ_API_KEY=           # Whisper transcription for voice proofs
 FIREBASE_CREDENTIALS_PATH=./firebase-service-account.json
-JWT_SECRET=
+CORS_ORIGINS=*          # optional, comma-separated
+RAZORPAY_KEY_ID=        # optional, subscriptions
+RAZORPAY_KEY_SECRET=
+RAZORPAY_WEBHOOK_SECRET=
 ```
 
 ### Frontend (iOS)
@@ -113,13 +117,26 @@ Requires `GoogleService-Info.plist` placed at `frontend/ios/StreakFightNew/Googl
 
 ## How proof verification works
 
-1. User records a photo or voice note in the app
-2. App uploads to FastAPI (`POST /api/checkins/{battle_id}/proof`)
-3. Backend writes the file to a temp path, calls Gemini:
-   - Photo → `gemini-2.0-flash` with the image bytes + habit context
-   - Voice → transcribed first, then verified as text
-4. Gemini returns `verified: true/false` + a score + feedback
-5. Result stored in `checkins` table; verified submissions update the Redis streak counter
+1. User records a photo, video or voice note in the app
+2. App uploads to FastAPI (`POST /api/checkins`, multipart: `battle_id`, `proof_type`, `proof_file`)
+3. Backend writes the file to a temp path (blocking Supabase/Redis/AI calls run in a threadpool, not on the event loop):
+   - Photo / video: sent to `gemini-2.5-flash` with the habit context
+   - Voice: transcribed by **Groq Whisper (`whisper-large-v3`)**, then the transcript text is judged by Gemini
+4. Gemini is called in JSON mode with a response schema; the reply is validated against a strict `Verdict` model (`verified: bool`, `score: int 0-100`, `reasoning: str`). An invalid reply is retried once.
+5. Outcome by score: 60+ uses the model's `verified`; 30-59 goes to a jury vote; below 30 fails. If both attempts return an invalid verdict, the check-in is stored with `ai_verified = null` and `ai_score = null` and goes to the jury. If the AI provider itself errors, the API returns 503 and nothing is recorded.
+6. Result stored in `checkins`; verified submissions update the Redis streak counter
+
+Voice transcripts are user-controlled text. They are passed to the model inside an `<untrusted_evidence>` block with a system instruction to treat it as data, and the verdict is only ever read from the schema-constrained reply. This reduces prompt-injection risk but does not eliminate it: a model can still be persuaded to score a transcript highly, which is one reason mid-range scores go to the jury.
+
+## Backend tests
+
+```bash
+cd backend
+uv venv .venv && uv pip install --python .venv/bin/python -r requirements-dev.txt
+.venv/bin/python -m pytest
+```
+
+Tests mock Gemini, Groq, Supabase and Redis; no keys or services are needed.
 
 ## Push notification reminders
 
